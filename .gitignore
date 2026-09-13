@@ -20,3 +20,7 @@ captures/
 
 # OAuth credentials must never be committed
 oauth_credentials
+
+# Release signing secrets must never be committed
+/keystore.properties
+/keystore/
