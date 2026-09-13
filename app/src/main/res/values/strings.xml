@@ -91,6 +91,8 @@
     <string name="resolving_title">Matching against Wikidata</string>
     <string name="resolving_explainer">Looking up each line before it joins the list.</string>
     <string name="resolving_label">matching…</string>
+    <string name="resolving_title_query">Running your query</string>
+    <string name="resolving_explainer_query">Executing your SPARQL query against Wikidata.</string>
     <string name="disambiguation_kicker">%1$d of %2$d to resolve</string>
     <string name="disambiguation_explainer_items">%1$d Wikidata items share this label. Pick the one you mean — or record all of them.</string>
     <string name="disambiguation_explainer_lexemes">%1$d lexemes share this spelling. Pick the one you are pronouncing — or record all of them.</string>

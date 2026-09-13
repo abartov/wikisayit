@@ -112,4 +112,4 @@ class WikidataExistenceChecker
 private fun WbForm.labelFor(
     isoCode: String,
     fallback: String,
-): String = representations[isoCode]?.value ?: representations.values.firstOrNull()?.value ?: fallback
+): String = representations.labelFor(isoCode, fallback)

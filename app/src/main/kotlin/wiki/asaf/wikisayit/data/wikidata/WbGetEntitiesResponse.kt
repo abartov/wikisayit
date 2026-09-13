@@ -17,6 +17,10 @@ data class WbEntity(
     val claims: Map<String, JsonElement> = emptyMap(),
     /** Only populated for lexemes. */
     val forms: List<WbForm> = emptyList(),
+    /** Only populated for items, when requested via `props=labels`. */
+    val labels: Map<String, WbRepresentation> = emptyMap(),
+    /** Only populated for lexemes, when requested via `props=lemmas`. */
+    val lemmas: Map<String, WbRepresentation> = emptyMap(),
 )
 
 @Serializable
@@ -31,3 +35,10 @@ data class WbRepresentation(
     val language: String,
     val value: String,
 )
+
+/** Preferred-language lookup shared by every place that resolves a Wikidata label/lemma/form
+ * representation: the requested language, else whatever's available, else [fallback]. */
+fun Map<String, WbRepresentation>.labelFor(
+    isoCode: String,
+    fallback: String,
+): String = this[isoCode]?.value ?: values.firstOrNull()?.value ?: fallback

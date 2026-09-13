@@ -315,33 +315,43 @@ private fun ResolvingContent(
     modifier: Modifier = Modifier,
 ) {
     val colors = LocalWikiSayItColors.current
+    val isQuery = uiState.listSourceType == ListSourceType.QUERY
     Column(modifier = modifier.fillMaxSize()) {
         ScreenHeader(
             kicker = stringResource(R.string.list_step_kicker),
-            title = stringResource(R.string.resolving_title),
-            explainer = stringResource(R.string.resolving_explainer),
+            title = stringResource(if (isQuery) R.string.resolving_title_query else R.string.resolving_title),
+            explainer =
+                stringResource(if (isQuery) R.string.resolving_explainer_query else R.string.resolving_explainer),
         )
         Column(modifier = Modifier.padding(horizontal = WikiSayItSpacing.screenHorizontal)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-            ) {
-                Text(
-                    text = stringResource(R.string.resolving_label),
-                    style = TextStyle(fontFamily = FontFamily.Monospace, fontSize = 12.sp),
+            if (isQuery) {
+                LinearProgressIndicator(
+                    modifier = Modifier.fillMaxWidth(),
+                    color = colors.accent,
+                    trackColor = colors.accent200,
                 )
-                Text(
-                    text = "${uiState.resolveDone}/${uiState.rawCount}",
-                    style = TextStyle(fontFamily = FontFamily.Monospace, fontSize = 12.sp),
+            } else {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                ) {
+                    Text(
+                        text = stringResource(R.string.resolving_label),
+                        style = TextStyle(fontFamily = FontFamily.Monospace, fontSize = 12.sp),
+                    )
+                    Text(
+                        text = "${uiState.resolveDone}/${uiState.rawCount}",
+                        style = TextStyle(fontFamily = FontFamily.Monospace, fontSize = 12.sp),
+                    )
+                }
+                val progress = if (uiState.rawCount > 0) uiState.resolveDone.toFloat() / uiState.rawCount else 0f
+                LinearProgressIndicator(
+                    progress = { progress },
+                    modifier = Modifier.fillMaxWidth().padding(top = WikiSayItSpacing.space2),
+                    color = colors.accent,
+                    trackColor = colors.accent200,
                 )
             }
-            val progress = if (uiState.rawCount > 0) uiState.resolveDone.toFloat() / uiState.rawCount else 0f
-            LinearProgressIndicator(
-                progress = { progress },
-                modifier = Modifier.fillMaxWidth().padding(top = WikiSayItSpacing.space2),
-                color = colors.accent,
-                trackColor = colors.accent200,
-            )
         }
     }
 }

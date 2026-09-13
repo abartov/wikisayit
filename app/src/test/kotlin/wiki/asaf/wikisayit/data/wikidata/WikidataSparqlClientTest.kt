@@ -1,0 +1,114 @@
+package wiki.asaf.wikisayit.data.wikidata
+
+import io.ktor.client.HttpClient
+import io.ktor.client.engine.mock.MockEngine
+import io.ktor.client.engine.mock.respond
+import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.http.HttpHeaders
+import io.ktor.http.HttpStatusCode
+import io.ktor.http.headersOf
+import io.ktor.serialization.kotlinx.json.json
+import kotlinx.coroutines.test.runTest
+import kotlinx.serialization.json.Json
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
+import org.junit.Test
+import wiki.asaf.wikisayit.ui.session.EntryKind
+
+class WikidataSparqlClientTest {
+    private fun clientFor(
+        responseBody: String,
+        status: HttpStatusCode = HttpStatusCode.OK,
+    ): WikidataSparqlClient {
+        val engine =
+            MockEngine { request ->
+                assertEquals("https://query.wikidata.org/sparql", request.url.toString().substringBefore('?'))
+                respond(
+                    content = responseBody,
+                    status = status,
+                    headers = headersOf(HttpHeaders.ContentType, "application/sparql-results+json"),
+                )
+            }
+        val httpClient =
+            HttpClient(engine) {
+                expectSuccess = false
+                install(ContentNegotiation) { json(Json { ignoreUnknownKeys = true }) }
+            }
+        return WikidataSparqlClient(httpClient)
+    }
+
+    @Test
+    fun `item bindings resolve to item refs`() =
+        runTest {
+            val client =
+                clientFor(
+                    """
+                    {"results":{"bindings":[
+                        {"item":{"type":"uri","value":"http://www.wikidata.org/entity/Q42"}}
+                    ]}}
+                    """.trimIndent(),
+                )
+            val refs = client.execute("SELECT ?item WHERE {}")
+
+            assertEquals(1, refs.size)
+            assertEquals(SparqlEntityRef("Q42", EntryKind.ITEM), refs[0])
+        }
+
+    @Test
+    fun `lexeme bindings resolve to form-kind refs`() =
+        runTest {
+            val client =
+                clientFor(
+                    """
+                    {"results":{"bindings":[
+                        {"lexeme":{"type":"uri","value":"http://www.wikidata.org/entity/L2"}}
+                    ]}}
+                    """.trimIndent(),
+                )
+            val refs = client.execute("SELECT ?lexeme WHERE {}")
+
+            assertEquals(1, refs.size)
+            assertEquals(SparqlEntityRef("L2", EntryKind.FORM), refs[0])
+        }
+
+    @Test
+    fun `rows without item or lexeme bindings are skipped`() =
+        runTest {
+            val client =
+                clientFor(
+                    """
+                    {"results":{"bindings":[
+                        {"itemLabel":{"type":"literal","value":"Douglas Adams"}}
+                    ]}}
+                    """.trimIndent(),
+                )
+            val refs = client.execute("SELECT ?itemLabel WHERE {}")
+
+            assertTrue(refs.isEmpty())
+        }
+
+    @Test
+    fun `http failure yields empty list`() =
+        runTest {
+            val client = clientFor("""{"error":"bad query"}""", status = HttpStatusCode.BadRequest)
+            val refs = client.execute("not sparql")
+
+            assertTrue(refs.isEmpty())
+        }
+
+    @Test
+    fun `network failure yields empty list`() =
+        runTest {
+            val engine = MockEngine { throw RuntimeException("boom") }
+            val httpClient =
+                HttpClient(engine) {
+                    expectSuccess = false
+                    install(ContentNegotiation) { json(Json { ignoreUnknownKeys = true }) }
+                }
+            val client = WikidataSparqlClient(httpClient)
+
+            val refs = client.execute("SELECT ?item WHERE {}")
+
+            assertTrue(refs.isEmpty())
+        }
+}

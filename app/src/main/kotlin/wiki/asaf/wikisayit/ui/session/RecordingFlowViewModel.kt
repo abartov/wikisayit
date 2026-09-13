@@ -19,6 +19,7 @@ import wiki.asaf.wikisayit.data.wikidata.WbEntityType
 import wiki.asaf.wikisayit.data.wikidata.WbSearchResult
 import wiki.asaf.wikisayit.data.wikidata.WikidataExistenceChecker
 import wiki.asaf.wikisayit.data.wikidata.WikidataLabelMatcher
+import wiki.asaf.wikisayit.data.wikidata.WikidataQueryListBuilder
 import javax.inject.Inject
 import kotlin.math.max
 
@@ -31,15 +32,15 @@ private const val UPLOAD_STEP_MILLIS = 500L
 
 /**
  * Drives the whole recording flow (Profile through Done) from one activity-scoped ViewModel.
- * List building against live Wikidata/SPARQL/categories (s-dbm.3, s-dbm.4) still isn't fully
- * implemented, so [buildList] simulates without fabricating results it can't back up: a pasted
- * list is matched against live Wikidata via [WikidataLabelMatcher] (one hit auto-resolves, 2+
- * hits go through [resolveDisambiguation]/[resolveDisambiguationRecordAll], zero hits are kept
- * unresolved rather than dropped), while a query/category source still seeds a small placeholder
- * queue pending s-dbm.3/s-dbm.4. [startCheck] is real: it runs the built list through
- * [WikidataExistenceChecker] against live Wikidata. The recording/review timing loops are
- * likewise simulated pending the audio engine (s-7lo) — [RecordingBlocker] and the phase timings
- * are the seams that work will plug into.
+ * List building against a Wikipedia category (s-dbm.4) still isn't implemented, so [buildList]
+ * simulates that one source without fabricating results it can't back up: a pasted list is
+ * matched against live Wikidata via [WikidataLabelMatcher] (one hit auto-resolves, 2+ hits go
+ * through [resolveDisambiguation]/[resolveDisambiguationRecordAll], zero hits are kept unresolved
+ * rather than dropped); a SPARQL query is run for real via [WikidataQueryListBuilder]; a category
+ * source still seeds a small placeholder queue pending s-dbm.4. [startCheck] is real: it runs the
+ * built list through [WikidataExistenceChecker] against live Wikidata. The recording/review
+ * timing loops are likewise simulated pending the audio engine (s-7lo) — [RecordingBlocker] and
+ * the phase timings are the seams that work will plug into.
  */
 @HiltViewModel
 class RecordingFlowViewModel
@@ -50,6 +51,7 @@ class RecordingFlowViewModel
         private val statsRepository: StatsRepository,
         private val existenceChecker: WikidataExistenceChecker,
         private val labelMatcher: WikidataLabelMatcher,
+        private val queryListBuilder: WikidataQueryListBuilder,
     ) : ViewModel() {
         private val _uiState = MutableStateFlow(RecordingFlowUiState())
         val uiState: StateFlow<RecordingFlowUiState> = _uiState.asStateFlow()
@@ -110,6 +112,7 @@ class RecordingFlowViewModel
             val state = _uiState.value
             when (state.listSourceType) {
                 ListSourceType.PASTE -> resolvePastedList(state)
+                ListSourceType.QUERY -> resolveQueryList(state)
                 else -> {
                     val entries = placeholderQueue()
                     _uiState.update {
@@ -124,6 +127,30 @@ class RecordingFlowViewModel
                     }
                 }
             }
+        }
+
+        private fun resolveQueryList(state: RecordingFlowUiState) {
+            val query = state.sourceText
+            val language = state.language?.isoCode.orEmpty()
+
+            tickerJob?.cancel()
+            _uiState.update {
+                it.copy(listBuildStage = ListBuildStage.RESOLVING, rawCount = 0, resolveDone = 0)
+            }
+            tickerJob =
+                viewModelScope.launch {
+                    val entries = queryListBuilder.build(query, language)
+                    _uiState.update {
+                        it.copy(
+                            finalQueue = entries,
+                            rawCount = entries.size,
+                            checkDone = 0,
+                            excludedCount = 0,
+                            formsAddedCount = 0,
+                            listBuildStage = ListBuildStage.FRESH,
+                        )
+                    }
+                }
         }
 
         private fun resolvePastedList(state: RecordingFlowUiState) {
