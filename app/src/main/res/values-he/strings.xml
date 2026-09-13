@@ -9,6 +9,7 @@
     <string name="sign_in_you_will_need_kicker">מה תצטרכו</string>
     <string name="sign_in_you_will_need_body">חשבון ויקימדיה · חדר שקט · כמה דקות</string>
     <string name="sign_in_primary_cta">התחברות עם חשבון ויקימדיה</string>
+    <string name="sign_in_primary_cta_in_progress">מתחברים…</string>
     <string name="sign_in_note">ההתחברות מתבצעת באתר wikimedia.org — ויקי־תגיד לעולם לא רואה את הסיסמה שלכם.</string>
     <string name="sign_in_no_account">אין לי עדיין חשבון</string>
     <string name="nav_destination_language">שפה</string>
@@ -41,6 +42,7 @@
 
     <string name="new_profile_title">פרופיל דובר/ת חדש</string>
     <string name="new_profile_username_label">שם משתמש בוויקימדיה</string>
+    <string name="new_profile_verified_tag">מאומת</string>
     <string name="new_profile_languages_heading">שפות שבהן תוכלו להקליט</string>
     <string name="new_profile_languages_explainer">רק אלה יופיעו כשתתחילו מפגש הקלטה. אפשר להוסיף כמה שפות שתרצו.</string>
     <string name="new_profile_add_language_button">+ הוספת שפה</string>

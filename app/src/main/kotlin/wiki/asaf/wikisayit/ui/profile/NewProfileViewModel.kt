@@ -6,8 +6,10 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import wiki.asaf.wikisayit.data.auth.TokenStore
 import wiki.asaf.wikisayit.data.local.db.LanguageProficiency
 import wiki.asaf.wikisayit.data.profile.ProfileLanguageInput
 import wiki.asaf.wikisayit.data.profile.ProfileRepository
@@ -28,20 +30,25 @@ data class NewProfileUiState(
 }
 
 /**
- * Backs the new-profile form (`2b`). The username field stands in for the OAuth identity
- * until s-fx6.1 lands — it's a plain editable field here rather than the design's locked
- * "verified" card, since faking that badge without real OAuth would be dishonest.
+ * Backs the new-profile form (`2b`). The username is the signed-in OAuth identity from
+ * [TokenStore] — locked, not editable, matching the design's "verified" card.
  */
 @HiltViewModel
 class NewProfileViewModel
     @Inject
     constructor(
         private val profileRepository: ProfileRepository,
+        private val tokenStore: TokenStore,
     ) : ViewModel() {
         private val _uiState = MutableStateFlow(NewProfileUiState())
         val uiState: StateFlow<NewProfileUiState> = _uiState.asStateFlow()
 
-        fun updateUsername(value: String) = _uiState.update { it.copy(username = value) }
+        init {
+            viewModelScope.launch {
+                val username = tokenStore.tokens.first()?.username.orEmpty()
+                _uiState.update { it.copy(username = username) }
+            }
+        }
 
         fun openAddLanguageSheet() =
             _uiState.update {

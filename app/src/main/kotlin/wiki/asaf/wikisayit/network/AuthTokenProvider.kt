@@ -3,8 +3,9 @@ package wiki.asaf.wikisayit.network
 /**
  * Supplies the bearer token to attach to authenticated MediaWiki REST API requests.
  *
- * The actual OAuth 2.0 login/refresh flow is implemented by the authentication epic;
- * this seam lets the shared networking layer stay agnostic of how the token was obtained.
+ * The production binding is [wiki.asaf.wikisayit.network.oauth.OAuthAuthTokenProvider]; this
+ * seam lets the shared networking layer stay agnostic of how the token was obtained (and lets
+ * tests substitute [NoAuthTokenProvider] or a fake).
  */
 interface AuthTokenProvider {
     /** Returns the current access token, or null to make the request unauthenticated. */

@@ -78,6 +78,8 @@ dependencies {
     ksp(libs.room.compiler)
     implementation(libs.datastore.preferences)
     implementation(libs.appcompat)
+    implementation(libs.axet.vorbis)
+    implementation(libs.androidx.browser)
 
     implementation(libs.ktor.client.core)
     implementation(libs.ktor.client.okhttp)

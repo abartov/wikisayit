@@ -19,6 +19,8 @@ navigationCompose = "2.8.4"
 room = "2.6.1"
 datastorePreferences = "1.1.1"
 appcompat = "1.7.0"
+axetVorbis = "1.0.6"
+androidxBrowser = "1.8.0"
 
 [libraries]
 core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -56,6 +58,8 @@ room-compiler = { group = "androidx.room", name = "room-compiler", version.ref =
 room-testing = { group = "androidx.room", name = "room-testing", version.ref = "room" }
 datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastorePreferences" }
 appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
+axet-vorbis = { group = "com.github.axet", name = "vorbis", version.ref = "axetVorbis" }
+androidx-browser = { group = "androidx.browser", name = "browser", version.ref = "androidxBrowser" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

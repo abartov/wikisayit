@@ -2,3 +2,6 @@ The app is entirely inspired by Lingua Libre's excellent browser-based flow.
 
 It is developed by Asaf Bartov <asaf.bartov@gmail.com> using Claude Code.
 
+Ogg Vorbis encoding uses the "android-vorbis" native libvorbis build by
+Alexey Kuznetsov (https://gitlab.com/axet/android-vorbis), LGPL-3.0.
+

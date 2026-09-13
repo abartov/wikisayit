@@ -9,6 +9,7 @@
     <string name="sign_in_you_will_need_kicker">you will need</string>
     <string name="sign_in_you_will_need_body">A Wikimedia account · a quiet room · a few minutes</string>
     <string name="sign_in_primary_cta">Sign in with your Wikimedia account</string>
+    <string name="sign_in_primary_cta_in_progress">Signing in…</string>
     <string name="sign_in_note">Sign-in happens on wikimedia.org — WikiSayIt never sees your password.</string>
     <string name="sign_in_no_account">I don\'t have an account yet</string>
     <string name="nav_destination_language">Language</string>
@@ -41,6 +42,7 @@
 
     <string name="new_profile_title">New speaker profile</string>
     <string name="new_profile_username_label">Wikimedia username</string>
+    <string name="new_profile_verified_tag">Verified</string>
     <string name="new_profile_languages_heading">Languages you can record</string>
     <string name="new_profile_languages_explainer">Only these appear when you start a session. Add as many as you speak.</string>
     <string name="new_profile_add_language_button">+ Add a language</string>

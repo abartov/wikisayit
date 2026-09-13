@@ -1,19 +1,29 @@
 package wiki.asaf.wikisayit.ui.signin
 
+import androidx.browser.customtabs.CustomTabsIntent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.net.toUri
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import wiki.asaf.wikisayit.R
 import wiki.asaf.wikisayit.ui.components.BlueprintBox
 import wiki.asaf.wikisayit.ui.components.WsGhostButton
@@ -29,13 +39,40 @@ import wiki.asaf.wikisayit.ui.theme.WikiSayItTheme
 
 /**
  * The app's first screen for a new install (`2a`, app-UI half only — the OAuth consent sheet
- * itself is a Custom Tab on wikimedia.org, not app UI). Real OAuth is
- * [wiki.asaf.wikisayit.network.AuthTokenProvider]'s job (tracked separately); until that
- * lands, the primary button moves straight on to profile selection.
+ * itself is a Custom Tab on meta.wikimedia.org, not app UI).
  */
 @Composable
 fun SignInScreen(
     onSignIn: () -> Unit,
+    modifier: Modifier = Modifier,
+    viewModel: SignInViewModel = hiltViewModel(),
+) {
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+
+    LaunchedEffect(uiState.authorizeUrl) {
+        val url = uiState.authorizeUrl ?: return@LaunchedEffect
+        CustomTabsIntent.Builder().build().launchUrl(context, url.toUri())
+        viewModel.onAuthorizeUrlConsumed()
+    }
+    LaunchedEffect(uiState.signedIn) {
+        if (uiState.signedIn) onSignIn()
+    }
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
+        viewModel.onResumed()
+    }
+
+    SignInScreenContent(
+        uiState = uiState,
+        onSignInClicked = viewModel::onSignInClicked,
+        modifier = modifier,
+    )
+}
+
+@Composable
+private fun SignInScreenContent(
+    uiState: SignInUiState,
+    onSignInClicked: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val colors = LocalWikiSayItColors.current
@@ -77,16 +114,22 @@ fun SignInScreen(
             verticalArrangement = Arrangement.spacedBy(WikiSayItSpacing.space2),
         ) {
             WsPrimaryButton(
-                text = stringResource(R.string.sign_in_primary_cta),
-                onClick = onSignIn,
+                text =
+                    if (uiState.isSigningIn) {
+                        stringResource(R.string.sign_in_primary_cta_in_progress)
+                    } else {
+                        stringResource(R.string.sign_in_primary_cta)
+                    },
+                onClick = onSignInClicked,
+                enabled = !uiState.isSigningIn,
                 modifier = Modifier.fillMaxWidth(),
                 minHeight = 54.dp,
                 fontSize = 16.sp,
             )
             Text(
-                text = stringResource(R.string.sign_in_note),
+                text = uiState.errorMessage ?: stringResource(R.string.sign_in_note),
                 style = typography.caption,
-                color = colors.neutral700,
+                color = if (uiState.errorMessage != null) MaterialTheme.colorScheme.error else colors.neutral700,
             )
             WsGhostButton(
                 text = stringResource(R.string.sign_in_no_account),
@@ -101,6 +144,6 @@ fun SignInScreen(
 @Composable
 private fun SignInScreenPreview() {
     WikiSayItTheme {
-        SignInScreen(onSignIn = {})
+        SignInScreenContent(uiState = SignInUiState(), onSignInClicked = {})
     }
 }

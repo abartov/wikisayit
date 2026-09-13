@@ -38,11 +38,13 @@ import wiki.asaf.wikisayit.ui.components.WsKicker
 import wiki.asaf.wikisayit.ui.components.WsPrimaryButton
 import wiki.asaf.wikisayit.ui.components.WsSecondaryButton
 import wiki.asaf.wikisayit.ui.components.WsSegmentedControl
+import wiki.asaf.wikisayit.ui.components.WsTag
+import wiki.asaf.wikisayit.ui.components.WsTagVariant
 import wiki.asaf.wikisayit.ui.theme.LocalWikiSayItColors
 import wiki.asaf.wikisayit.ui.theme.LocalWikiSayItTypography
 import wiki.asaf.wikisayit.ui.theme.WikiSayItSpacing
 
-/** New speaker profile (`2b`): OAuth username stand-in + the language sets from the spec. */
+/** New speaker profile (`2b`): the signed-in OAuth username, verified, plus the language sets from the spec. */
 @Composable
 fun NewProfileScreen(
     onBack: () -> Unit,
@@ -59,7 +61,6 @@ fun NewProfileScreen(
     NewProfileScreenContent(
         uiState = uiState,
         onBack = onBack,
-        onUsernameChange = viewModel::updateUsername,
         onAddLanguage = viewModel::openAddLanguageSheet,
         onRemoveLanguage = viewModel::removeLanguageAt,
         onSave = viewModel::save,
@@ -78,7 +79,6 @@ fun NewProfileScreen(
 private fun NewProfileScreenContent(
     uiState: NewProfileUiState,
     onBack: () -> Unit,
-    onUsernameChange: (String) -> Unit,
     onAddLanguage: () -> Unit,
     onRemoveLanguage: (Int) -> Unit,
     onSave: () -> Unit,
@@ -115,13 +115,23 @@ private fun NewProfileScreenContent(
             verticalArrangement = Arrangement.spacedBy(WikiSayItSpacing.space3),
         ) {
             item {
-                OutlinedTextField(
-                    value = uiState.username,
-                    onValueChange = onUsernameChange,
-                    label = { Text(stringResource(R.string.new_profile_username_label)) },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                )
+                BlueprintBox(modifier = Modifier.fillMaxWidth()) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(WikiSayItSpacing.space3),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(WikiSayItSpacing.space3),
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            WsKicker(text = stringResource(R.string.new_profile_username_label))
+                            Text(
+                                text = uiState.username,
+                                style = typography.cardTitle,
+                                modifier = Modifier.padding(top = WikiSayItSpacing.space1),
+                            )
+                        }
+                        WsTag(text = stringResource(R.string.new_profile_verified_tag), variant = WsTagVariant.ACCENT)
+                    }
+                }
             }
             item {
                 Column {
