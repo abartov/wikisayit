@@ -107,6 +107,34 @@
     <string name="empty_pick_different_button">בחירת רשימה אחרת</string>
     <string name="empty_record_anyway_button">הקליטו בכל זאת, כהקלטה נוספת</string>
 
+    <string name="recording_counter">%1$d מתוך %2$d</string>
+    <string name="recording_hint_speak_when_ready">דברו כשתהיו מוכנים</string>
+    <string name="recording_hint_silence">%1$.1f שניות של שקט</string>
+    <string name="recording_hint_redo_pass">סבב הקלטה מחדש</string>
+    <string name="recording_state_listening">מאזינים</string>
+    <string name="recording_state_recording">מקליטים את קולכם</string>
+    <string name="recording_state_stopping">נעצר בעוד %1$.1f שניות</string>
+    <string name="action_redo">הקלטה מחדש</string>
+    <string name="action_skip">דילוג</string>
+    <string name="action_stop_session">עצירת המפגש</string>
+    <string name="mic_blocked_title">המיקרופון כבוי</string>
+    <string name="mic_blocked_body">ויקי־תגיד מקליט רק את קולכם ולא יותר מזה — לא מתבצעת שום הקלטה כשאין מילה על המסך, ושום דבר לא נשלח לשום מקום עד שתלחצו על תרומה.</string>
+    <string name="mic_blocked_kicker">כדי להפעיל אותו</string>
+    <string name="mic_blocked_instructions">הגדרות ← אפליקציות ← ויקי־תגיד ← הרשאות ← מיקרופון</string>
+    <string name="mic_blocked_open_settings">פתיחת הגדרות אנדרואיד</string>
+    <string name="mic_blocked_back">חזרה לרשימת המילים</string>
+    <string name="interrupted_nothing_kept">שום דבר לא נשמר</string>
+    <string name="interrupted_why_kicker">למה זה נעצר</string>
+    <string name="interrupted_why_body">שיחת טלפון תפסה את המיקרופון. ההקלטה החלקית נמחקה — המילה הזו עדיין לא הוקלטה.</string>
+    <string name="interrupted_noise_body">החדר גם היה רועש במילים האחרונות — רעש רקע כזה חזק לא ניתן לחתוך בצורה נקייה.</string>
+    <string name="interrupted_carry_on">להמשיך מ־\"%1$s\"</string>
+
+    <plurals name="interrupted_stop_review">
+        <item quantity="one">עצירה וסקירה של ההקלטה שיש לי</item>
+        <item quantity="two">עצירה וסקירה של שתי ההקלטות שיש לי</item>
+        <item quantity="other">עצירה וסקירה של %1$d ההקלטות שיש לי</item>
+    </plurals>
+
     <plurals name="list_entries_found_count">
         <item quantity="one">נמצא פריט אחד</item>
         <item quantity="two">נמצאו שני פריטים</item>

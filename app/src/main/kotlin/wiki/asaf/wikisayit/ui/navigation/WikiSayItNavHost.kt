@@ -12,6 +12,7 @@ import wiki.asaf.wikisayit.ui.language.LanguageScreen
 import wiki.asaf.wikisayit.ui.listsource.ListSourceScreen
 import wiki.asaf.wikisayit.ui.profile.NewProfileScreen
 import wiki.asaf.wikisayit.ui.profile.ProfileScreen
+import wiki.asaf.wikisayit.ui.recording.RecordingScreen
 import wiki.asaf.wikisayit.ui.session.RecordingFlowViewModel
 import wiki.asaf.wikisayit.ui.signin.SignInScreen
 
@@ -70,7 +71,12 @@ fun WikiSayItNavHost(
             PlaceholderScreen(title = "Disambiguation")
         }
         composable<WikiSayItRoute.Recording> {
-            PlaceholderScreen(title = stringResource(R.string.nav_destination_recording))
+            RecordingScreen(
+                viewModel = sessionViewModel,
+                onNavigateReview = { navController.navigate(WikiSayItRoute.Review) },
+                onNavigateSummary = { navController.navigate(WikiSayItRoute.SessionSummary) },
+                onNavigateListSource = { navController.popBackStack(WikiSayItRoute.ListSource, inclusive = false) },
+            )
         }
         composable<WikiSayItRoute.Review> {
             PlaceholderScreen(title = stringResource(R.string.nav_destination_review))

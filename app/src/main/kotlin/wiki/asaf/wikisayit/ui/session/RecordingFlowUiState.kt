@@ -44,6 +44,8 @@ data class RecordingFlowUiState(
     // --- upload ---
     val uploadIndex: Int = 0,
     val uploadStepsDone: Int = 0,
+    // --- navigation ---
+    val autoNavigateTo: FlowScreen? = null,
 ) {
     val currentRecordingEntry: QueueEntry?
         get() = recordingQueue.getOrNull(recordingIndex)

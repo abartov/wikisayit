@@ -50,3 +50,13 @@ sealed interface RecordingBlocker {
 
     data object Interrupted : RecordingBlocker
 }
+
+/**
+ * One-shot signal for the transitions that happen asynchronously inside the ViewModel's
+ * timing loops rather than as the direct result of a button tap in the composable that's
+ * currently on screen (e.g. a word's silence timeout auto-advancing into review). Screens
+ * that can be left this way observe it via `LaunchedEffect(uiState.autoNavigateTo)` and act
+ * only on the values that mean "time for me to leave" — arriving at a screen because this
+ * field already holds that screen's own value is a no-op.
+ */
+enum class FlowScreen { RECORDING, REVIEW, SUMMARY, DONE, LIST_SOURCE }

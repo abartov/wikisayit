@@ -107,6 +107,33 @@
     <string name="empty_pick_different_button">Pick a different list</string>
     <string name="empty_record_anyway_button">Record them anyway, as second takes</string>
 
+    <string name="recording_counter">%1$d of %2$d</string>
+    <string name="recording_hint_speak_when_ready">speak when ready</string>
+    <string name="recording_hint_silence">%1$.1f s of silence</string>
+    <string name="recording_hint_redo_pass">redo pass</string>
+    <string name="recording_state_listening">listening</string>
+    <string name="recording_state_recording">recording your voice</string>
+    <string name="recording_state_stopping">stopping in %1$.1f s</string>
+    <string name="action_redo">Redo</string>
+    <string name="action_skip">Skip</string>
+    <string name="action_stop_session">Stop the session</string>
+    <string name="mic_blocked_title">The microphone is switched off</string>
+    <string name="mic_blocked_body">WikiSayIt records your voice and nothing else — no recording happens unless a word is on screen, and nothing is sent anywhere until you tap Contribute.</string>
+    <string name="mic_blocked_kicker">to switch it on</string>
+    <string name="mic_blocked_instructions">Settings → Apps → WikiSayIt → Permissions → Microphone</string>
+    <string name="mic_blocked_open_settings">Open Android settings</string>
+    <string name="mic_blocked_back">Back to the word list</string>
+    <string name="interrupted_nothing_kept">nothing was kept</string>
+    <string name="interrupted_why_kicker">why it stopped</string>
+    <string name="interrupted_why_body">A phone call took the microphone. The half-finished take was discarded — this word has not been recorded yet.</string>
+    <string name="interrupted_noise_body">The room has also been noisy for the last few words — background noise this loud cannot be trimmed away cleanly.</string>
+    <string name="interrupted_carry_on">Carry on from \"%1$s\"</string>
+
+    <plurals name="interrupted_stop_review">
+        <item quantity="one">Stop and review the %1$d take I have</item>
+        <item quantity="other">Stop and review the %1$d takes I have</item>
+    </plurals>
+
     <plurals name="list_entries_found_count">
         <item quantity="one">%1$d entry found</item>
         <item quantity="other">%1$d entries found</item>

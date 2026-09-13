@@ -244,7 +244,12 @@ class RecordingFlowViewModel
             if (nextIndex >= state.recordingQueue.size) {
                 tickerJob?.cancel()
                 _uiState.update {
-                    it.copy(reviewSession = it.recordingQueue, reviewIndex = 0, redoQueue = emptyList())
+                    it.copy(
+                        reviewSession = it.recordingQueue,
+                        reviewIndex = 0,
+                        redoQueue = emptyList(),
+                        autoNavigateTo = FlowScreen.REVIEW,
+                    )
                 }
                 runReviewLoop()
             } else {
@@ -263,12 +268,24 @@ class RecordingFlowViewModel
             queue.removeAt(state.recordingIndex)
             tickerJob?.cancel()
             if (queue.isEmpty()) {
-                _uiState.update { it.copy(listBuildStage = ListBuildStage.FRESH, recordingQueue = emptyList()) }
+                _uiState.update {
+                    it.copy(
+                        listBuildStage = ListBuildStage.FRESH,
+                        recordingQueue = emptyList(),
+                        autoNavigateTo = FlowScreen.LIST_SOURCE,
+                    )
+                }
                 return
             }
             if (state.recordingIndex >= queue.size) {
                 _uiState.update {
-                    it.copy(recordingQueue = queue, reviewSession = queue, reviewIndex = 0, redoQueue = emptyList())
+                    it.copy(
+                        recordingQueue = queue,
+                        reviewSession = queue,
+                        reviewIndex = 0,
+                        redoQueue = emptyList(),
+                        autoNavigateTo = FlowScreen.REVIEW,
+                    )
                 }
                 runReviewLoop()
             } else {
@@ -287,10 +304,18 @@ class RecordingFlowViewModel
                         reviewSession = emptyList(),
                         approved = emptyList(),
                         redoQueue = emptyList(),
+                        autoNavigateTo = FlowScreen.SUMMARY,
                     )
                 }
             } else {
-                _uiState.update { it.copy(reviewSession = done, reviewIndex = 0, redoQueue = emptyList()) }
+                _uiState.update {
+                    it.copy(
+                        reviewSession = done,
+                        reviewIndex = 0,
+                        redoQueue = emptyList(),
+                        autoNavigateTo = FlowScreen.REVIEW,
+                    )
+                }
                 runReviewLoop()
             }
         }
@@ -348,11 +373,14 @@ class RecordingFlowViewModel
                             recordingQueue = redoQueue,
                             recordingIndex = 0,
                             recordingPass = it.recordingPass + 1,
+                            autoNavigateTo = FlowScreen.RECORDING,
                         )
                     }
                     runRecordingLoop()
                 } else {
-                    _uiState.update { it.copy(approved = approved, redoQueue = emptyList()) }
+                    _uiState.update {
+                        it.copy(approved = approved, redoQueue = emptyList(), autoNavigateTo = FlowScreen.SUMMARY)
+                    }
                 }
             } else {
                 _uiState.update { it.copy(approved = approved, redoQueue = redoQueue, reviewIndex = nextIndex) }
@@ -408,7 +436,7 @@ class RecordingFlowViewModel
                             }
                         statsRepository.recordContribution(profileId, entryType)
                     }
-                    _uiState.update { it.copy(uploadIndex = approved.size) }
+                    _uiState.update { it.copy(uploadIndex = approved.size, autoNavigateTo = FlowScreen.DONE) }
                 }
         }
     }
