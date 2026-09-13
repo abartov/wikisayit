@@ -15,25 +15,25 @@ import wiki.asaf.wikisayit.data.local.db.SpeakerProfileWithLanguages
 import wiki.asaf.wikisayit.data.local.settings.SettingsRepository
 import wiki.asaf.wikisayit.data.profile.ProfileRepository
 import wiki.asaf.wikisayit.data.stats.StatsRepository
+import wiki.asaf.wikisayit.data.wikidata.WikidataExistenceChecker
 import javax.inject.Inject
 import kotlin.math.max
 
 private const val READY_PHASE_MILLIS = 600L
 private const val SPEAKING_PHASE_MILLIS = 1200L
 private const val TICK_MILLIS = 100L
-private const val CHECK_TICK_MILLIS = 120L
 private const val REVIEW_PLAYING_MILLIS = 1200L
 private const val REVIEW_DECISION_SECONDS = 1.5f
 private const val UPLOAD_STEP_MILLIS = 500L
 
 /**
  * Drives the whole recording flow (Profile through Done) from one activity-scoped ViewModel.
- * List building against live Wikidata/SPARQL/categories (s-dbm.3, s-dbm.4) and the P443
- * existence check (s-dbm.5) aren't implemented yet, so [buildList] and [startCheck] simulate
- * realistic timing without fabricating results they can't back up: a pasted list is split
- * line-by-line for real, a query/category source seeds a small placeholder queue, and the
- * check always passes the raw list through unchanged (0 excluded) until the real checker
- * lands. The recording/review timing loops are likewise simulated pending the audio engine
+ * List building against live Wikidata/SPARQL/categories (s-dbm.3, s-dbm.4) still isn't
+ * implemented, so [buildList] simulates without fabricating results it can't back up: a pasted
+ * list is split line-by-line for real (still with placeholder QIDs/LIDs until s-dbm.2 wires up
+ * real matching/disambiguation), while a query/category source seeds a small placeholder queue.
+ * [startCheck] is real: it runs the built list through [WikidataExistenceChecker] against live
+ * Wikidata. The recording/review timing loops are likewise simulated pending the audio engine
  * (s-7lo) — [RecordingBlocker] and the phase timings are the seams that work will plug into.
  */
 @HiltViewModel
@@ -43,6 +43,7 @@ class RecordingFlowViewModel
         private val profileRepository: ProfileRepository,
         private val settingsRepository: SettingsRepository,
         private val statsRepository: StatsRepository,
+        private val existenceChecker: WikidataExistenceChecker,
     ) : ViewModel() {
         private val _uiState = MutableStateFlow(RecordingFlowUiState())
         val uiState: StateFlow<RecordingFlowUiState> = _uiState.asStateFlow()
@@ -160,10 +161,19 @@ class RecordingFlowViewModel
             tickerJob?.cancel()
             tickerJob =
                 viewModelScope.launch {
-                    val total = _uiState.value.rawCount
-                    while (_uiState.value.checkDone < total) {
-                        delay(CHECK_TICK_MILLIS)
-                        _uiState.update { it.copy(checkDone = it.checkDone + 1) }
+                    val state = _uiState.value
+                    val result =
+                        existenceChecker.check(
+                            candidates = state.finalQueue,
+                            preferredLanguage = state.language?.isoCode.orEmpty(),
+                        ) { done -> _uiState.update { it.copy(checkDone = done) } }
+                    _uiState.update {
+                        it.copy(
+                            finalQueue = result.finalQueue,
+                            excludedCount = result.excludedCount,
+                            formsAddedCount = result.formsAddedCount,
+                            checkDone = it.rawCount,
+                        )
                     }
                     finishCheck()
                 }

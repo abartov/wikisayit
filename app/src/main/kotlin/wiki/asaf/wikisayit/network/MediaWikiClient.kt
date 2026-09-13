@@ -43,6 +43,18 @@ class MediaWikiClient(
         return response.decodeOrThrow()
     }
 
+    /** GETs the site's `action=` API (`w/api.php`) with [parameters]; `format=json` is added automatically. */
+    suspend inline fun <reified T> getAction(parameters: Map<String, String>): T {
+        val token = authTokenProvider.currentAccessToken()
+        val response =
+            httpClient.get(site.actionApiBaseUrl) {
+                parameter("format", "json")
+                parameters.forEach { (key, value) -> parameter(key, value) }
+                token?.let { header(HttpHeaders.Authorization, "Bearer $it") }
+            }
+        return response.decodeOrThrow()
+    }
+
     /** POSTs a JSON-serializable [body] to [path] (relative to the site's REST API root). */
     suspend inline fun <reified TRequest, reified TResponse> post(
         path: String,
