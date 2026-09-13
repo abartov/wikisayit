@@ -12,6 +12,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -30,7 +31,10 @@ import wiki.asaf.wikisayit.ui.theme.LocalWikiSayItTypography
 import wiki.asaf.wikisayit.ui.theme.WikiSayItSpacing
 import wiki.asaf.wikisayit.ui.theme.WikiSayItTheme
 
-/** Step 2 of 4 (`1a`): pick which of the profile's languages to record in. Tapping goes straight on. */
+/**
+ * Step 2 of 4 (`1a`): pick which of the profile's languages to record in. Tapping goes straight
+ * on. Skipped automatically when the profile only has one language to offer.
+ */
 @Composable
 fun LanguageScreen(
     viewModel: RecordingFlowViewModel,
@@ -39,6 +43,19 @@ fun LanguageScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val profile = uiState.activeProfile ?: return
+
+    LaunchedEffect(profile) {
+        val onlyLanguage = profile.languages.singleOrNull() ?: return@LaunchedEffect
+        viewModel.selectLanguage(
+            SelectedLanguage(
+                isoCode = onlyLanguage.isoCode,
+                name = onlyLanguage.languageName,
+                proficiency = onlyLanguage.proficiency,
+                dialect = onlyLanguage.dialect,
+            ),
+        )
+        onLanguagePicked()
+    }
 
     LanguageScreenContent(
         username = profile.profile.wikimediaUsername,
