@@ -73,8 +73,8 @@ bd close <id>         # Complete work
 
 The managed Beads block is task-tracking guidance, not permission to override repository, user, or orchestrator instructions.
 
-- **Conservative (default)**: Use `bd` for task tracking. Do not run git commits, git pushes, or Dolt remote sync unless explicitly asked. At handoff, report changed files, validation, and suggested next commands.
-- **Minimal**: Keep tool instruction files as pointers to `bd prime`; use the same conservative git policy unless active instructions say otherwise.
+- **Always-commit (default)**: Use `bd` for task tracking. Always commit completed work — once quality gates pass, create a git commit for finished changes rather than leaving them uncommitted. Do not push or run Dolt remote sync unless explicitly asked. At handoff, report the commit(s) made, validation, and any suggested next commands (e.g. push).
+- **Minimal**: Keep tool instruction files as pointers to `bd prime`; use the same always-commit git policy unless active instructions say otherwise.
 - **Team-maintainer**: Only when the repository explicitly opts in, agents may close beads, run quality gates, commit, and push as part of session close. A current "do not commit" or "do not push" instruction still wins.
 
 ## Session Completion
@@ -86,7 +86,9 @@ This protocol applies when ending a Beads implementation workflow. It is subordi
 3. **Update issue status** - Close finished work, update in-progress items
 4. **Handle git/sync by active profile**:
    ```bash
-   # Conservative/minimal/default: report status and proposed commands; wait for approval.
+   # Always-commit/minimal/default: commit completed work once quality gates pass.
+   git add <specific files>
+   git commit -m "..."
    git status
 
    # Team-maintainer opt-in only, unless current instructions forbid it:
@@ -94,10 +96,10 @@ This protocol applies when ending a Beads implementation workflow. It is subordi
    git push
    git status
    ```
-5. **Hand off** - Summarize changes, validation, issue status, and any blocked sync/commit/push step
+5. **Hand off** - Summarize changes, validation, issue status, the commit(s) made, and any blocked sync/push step
 
 **Critical rules:**
 - Explicit user or orchestrator instructions override this Beads block.
-- Do not commit or push without clear authority from the active profile or the current user request.
+- Always commit completed work; do not push or run Dolt remote sync without clear authority from the active profile or the current user request.
 - If a required sync or push is blocked, stop and report the exact command and error.
 <!-- END BEADS INTEGRATION -->
