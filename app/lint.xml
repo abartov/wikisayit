@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<lint>
+    <!-- Translations arrive incrementally from Translatewiki.net; don't fail the build while they lag. -->
+    <issue id="MissingTranslation" severity="warning" />
+    <!-- Every user-facing string must go through strings.xml to be translatable. -->
+    <issue id="HardcodedText" severity="error" />
+    <!-- Compose is RTL-aware by default, but keep the check on for any future View-based code. -->
+    <issue id="RtlHardcoded" severity="error" />
+    <issue id="RtlCompat" severity="error" />
+</lint>

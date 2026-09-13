@@ -1,0 +1,20 @@
+<resources>
+    <string name="app_name">ויקי־תגיד</string>
+    <string name="get_started">בואו נתחיל</string>
+
+    <string name="nav_menu_open">פתיחת התפריט</string>
+    <string name="nav_destination_language">שפה</string>
+    <string name="nav_destination_list_source">מקור הרשימה</string>
+    <string name="nav_destination_recording">הקלטה</string>
+    <string name="nav_destination_review">סקירה</string>
+    <string name="nav_destination_contribution">תרומה</string>
+    <string name="nav_destination_settings">הגדרות</string>
+    <string name="nav_destination_stats">סטטיסטיקה</string>
+    <string name="nav_destination_about">אודות</string>
+
+    <plurals name="get_started_tap_count">
+        <item quantity="one">נלחץ פעם אחת</item>
+        <item quantity="two">נלחץ פעמיים</item>
+        <item quantity="other">נלחץ %1$d פעמים</item>
+    </plurals>
+</resources>

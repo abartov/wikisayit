@@ -4,3 +4,19 @@
 *.db
 .beads-credential-key
 .beads/proxieddb/
+
+# Android / Gradle
+*.iml
+.gradle/
+build/
+/local.properties
+.idea/
+.DS_Store
+captures/
+.externalNativeBuild/
+.cxx/
+*.apk
+*.aab
+
+# OAuth credentials must never be committed
+oauth_credentials
