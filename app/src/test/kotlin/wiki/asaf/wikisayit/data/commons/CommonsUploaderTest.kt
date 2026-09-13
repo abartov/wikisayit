@@ -20,6 +20,9 @@ import wiki.asaf.wikisayit.network.WikimediaClients
 import wiki.asaf.wikisayit.ui.session.EntryKind
 import wiki.asaf.wikisayit.ui.session.QueueEntry
 import java.io.File
+import java.time.Clock
+import java.time.Instant
+import java.time.ZoneOffset
 
 class CommonsUploaderTest {
     private fun uploaderFor(responseBody: String): CommonsUploader {
@@ -84,10 +87,15 @@ class CommonsUploaderTest {
     }
 
     @Test
-    fun `wikitext carries both WikiSayIt categories and the cc-zero license`() {
+    fun `wikitext carries an Information template with date, source, author, and the cc-zero license`() {
         val entry = entryWithAudio(EntryKind.FORM)
-        val wikitext = buildUploadWikitext(entry, isoCode = "he", username = "Ijon")
+        val clock = Clock.fixed(Instant.parse("2026-09-13T00:00:00Z"), ZoneOffset.UTC)
+        val wikitext = buildUploadWikitext(entry, isoCode = "he", username = "Ijon", clock = clock)
 
+        assertTrue(wikitext.contains("{{Information"))
+        assertTrue(wikitext.contains("|date=2026-09-13"))
+        assertTrue(wikitext.contains("|source={{own}}"))
+        assertTrue(wikitext.contains("|author=[[User:Ijon|Ijon]]"))
         assertTrue(wikitext.contains("{{cc-zero}}"))
         assertTrue(wikitext.contains("[[Category:WikiSayIt pronunciations: he]]"))
         assertTrue(wikitext.contains("[[Category:WikiSayIt pronunciations by Ijon]]"))

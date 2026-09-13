@@ -5,6 +5,8 @@ import wiki.asaf.wikisayit.network.MediaWikiApiException
 import wiki.asaf.wikisayit.network.WikimediaClients
 import wiki.asaf.wikisayit.ui.session.QueueEntry
 import wiki.asaf.wikisayit.ui.session.commonsFilename
+import java.time.Clock
+import java.time.LocalDate
 import javax.inject.Inject
 
 /**
@@ -22,6 +24,7 @@ class CommonsUploader
     @Inject
     constructor(
         private val wikimediaClients: WikimediaClients,
+        private val clock: Clock = Clock.systemUTC(),
     ) {
         /** Returns the uploaded file's title. Throws [MediaWikiApiException] on any non-success result. */
         suspend fun upload(
@@ -37,7 +40,7 @@ class CommonsUploader
                         mapOf(
                             "action" to "upload",
                             "filename" to filename,
-                            "text" to buildUploadWikitext(entry, isoCode, username),
+                            "text" to buildUploadWikitext(entry, isoCode, username, clock),
                             "comment" to "Uploaded via WikiSayIt",
                             "token" to OAUTH_EDIT_TOKEN,
                         ),
@@ -49,18 +52,28 @@ class CommonsUploader
         }
     }
 
-/** The file description page wikitext: CC0 license tag, a human-readable caption, and both
+/** The file description page wikitext: a proper `{{Information}}` template (machine-readable
+ * `date=`/`source=`/`author=`, per Commons convention — without it, tools and other editors have
+ * no structured way to see who recorded this or when), the `{{cc-zero}}` license tag, and both
  * WikiSayIt categories. Internal (rather than private) so [CommonsUploaderTest] can check its
  * content directly instead of parsing the multipart request wire format. */
 internal fun buildUploadWikitext(
     entry: QueueEntry,
     isoCode: String,
     username: String,
+    clock: Clock = Clock.systemUTC(),
 ): String =
     """
-    {{cc-zero}}
+    =={{int:filedesc}}==
+    {{Information
+    |description={{en|1=Pronunciation of "${entry.label}" (${entry.evidenceId}) in $isoCode, recorded via WikiSayIt.}}
+    |date=${LocalDate.now(clock)}
+    |source={{own}}
+    |author=[[User:$username|$username]]
+    }}
 
-    Pronunciation of "${entry.label}" (${entry.evidenceId}) in $isoCode, recorded via WikiSayIt.
+    =={{int:license-header}}==
+    {{cc-zero}}
 
     [[Category:WikiSayIt pronunciations: $isoCode]]
     [[Category:WikiSayIt pronunciations by $username]]
