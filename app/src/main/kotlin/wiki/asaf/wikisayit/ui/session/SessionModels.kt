@@ -1,5 +1,6 @@
 package wiki.asaf.wikisayit.ui.session
 
+import wiki.asaf.wikisayit.data.commons.buildCommonsFilename
 import wiki.asaf.wikisayit.data.local.db.LanguageProficiency
 import java.io.File
 
@@ -28,8 +29,8 @@ fun QueueEntry.commonsFilename(
     isoCode: String,
     username: String,
 ): String {
-    val id = if (kind == EntryKind.FORM) lexemeId else qid
-    return "$isoCode-$id-$label-$username.ogg"
+    val id = (if (kind == EntryKind.FORM) lexemeId else qid).orEmpty()
+    return buildCommonsFilename(isoCode, id, label, username)
 }
 
 /** One Wikidata hit offered when a pasted line matched more than one item or lexeme. */
