@@ -183,6 +183,35 @@
         <item quantity="other">%1$d pronunciations are live</item>
     </plurals>
 
+    <string name="settings_title">Settings</string>
+    <string name="settings_auto_use_last_profile_title">Use the last profile automatically</string>
+    <string name="settings_auto_use_last_profile_explainer">Skips step 1 and goes straight to the language picker.</string>
+    <string name="settings_trim_silence_title">Trim silence automatically</string>
+    <string name="settings_trim_silence_explainer">Crops noise, then pads 0.2 s at each end before encoding to Ogg Vorbis.</string>
+    <string name="settings_interface_language_label">Interface language</string>
+    <string name="settings_interface_language_note">Translations come from translatewiki.net. Right-to-left languages mirror the whole interface.</string>
+    <string name="settings_language_english">English</string>
+    <string name="settings_language_hebrew">עברית</string>
+    <string name="settings_language_yiddish">Yiddish</string>
+    <string name="settings_silence_threshold_label">Stop recording after silence of</string>
+    <string name="settings_seconds_format">%.1f s</string>
+    <string name="settings_back_to_session">Back to the session</string>
+
+    <string name="stats_title">Stats</string>
+    <string name="stats_recordings">recordings</string>
+    <string name="stats_items">items</string>
+    <string name="stats_forms">forms</string>
+    <string name="stats_col_month">Month</string>
+    <string name="stats_col_items">Items</string>
+    <string name="stats_col_forms">Forms</string>
+    <string name="stats_col_all">All</string>
+    <string name="stats_earlier_years">Earlier years</string>
+
+    <string name="about_version_line">version %1$s · Apache-2.0 · CREDITS</string>
+    <string name="about_purpose">A free and open-source app for recording pronunciations and contributing them to Wikimedia Commons and Wikidata. Inspired by Lingua Libre; the recording pipeline follows LinguaRecorder.</string>
+    <string name="about_credits_heading">Credits</string>
+    <string name="about_closing_note">Recordings you contribute are released under CC0. The app itself carries no advertising and collects no analytics.</string>
+
     <plurals name="interrupted_stop_review">
         <item quantity="one">Stop and review the %1$d take I have</item>
         <item quantity="other">Stop and review the %1$d takes I have</item>

@@ -1,0 +1,169 @@
+package wiki.asaf.wikisayit.ui.settings
+
+import android.app.Activity
+import androidx.appcompat.app.AppCompatDelegate
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
+import androidx.core.os.LocaleListCompat
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import wiki.asaf.wikisayit.R
+import wiki.asaf.wikisayit.data.local.settings.AppSettings
+import wiki.asaf.wikisayit.ui.components.WsSecondaryButton
+import wiki.asaf.wikisayit.ui.components.WsSegmentedControl
+import wiki.asaf.wikisayit.ui.theme.LocalWikiSayItColors
+import wiki.asaf.wikisayit.ui.theme.LocalWikiSayItTypography
+
+private val SILENCE_THRESHOLD_OPTIONS = listOf(1.0f, 1.5f, 2.5f)
+private val INTERFACE_LANGUAGE_TAGS = listOf("en", "he", "yi")
+
+/** Settings (`1a`): auto-use-last-profile, auto-trim, interface language and silence threshold. */
+@Composable
+fun SettingsScreen(
+    onBack: () -> Unit,
+    modifier: Modifier = Modifier,
+    viewModel: SettingsViewModel = hiltViewModel(),
+) {
+    val settings by viewModel.settings.collectAsStateWithLifecycle()
+    val activity = LocalContext.current as? Activity
+    SettingsContent(
+        settings = settings,
+        onToggleAutoUseLastProfile = { viewModel.setAutoUseLastProfile(!settings.autoUseLastProfile) },
+        onToggleTrimSilence = { viewModel.setTrimSilenceAutomatically(!settings.trimSilenceAutomatically) },
+        onInterfaceLanguageSelected = {
+            val tag = INTERFACE_LANGUAGE_TAGS[it]
+            viewModel.setInterfaceLanguageTag(tag)
+            if (android.os.Build.VERSION.SDK_INT >= 33) {
+                val localeManager = activity?.getSystemService(android.app.LocaleManager::class.java)
+                localeManager?.applicationLocales = android.os.LocaleList.forLanguageTags(tag)
+            } else {
+                AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags(tag))
+                activity?.recreate()
+            }
+        },
+        onSilenceThresholdSelected = { viewModel.setSilenceThresholdSeconds(SILENCE_THRESHOLD_OPTIONS[it]) },
+        onBack = onBack,
+        modifier = modifier,
+    )
+}
+
+@Composable
+private fun SettingsContent(
+    settings: AppSettings,
+    onToggleAutoUseLastProfile: () -> Unit,
+    onToggleTrimSilence: () -> Unit,
+    onInterfaceLanguageSelected: (Int) -> Unit,
+    onSilenceThresholdSelected: (Int) -> Unit,
+    onBack: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val typography = LocalWikiSayItTypography.current
+    Column(modifier = modifier.fillMaxSize()) {
+        Column(modifier = Modifier.weight(1f).fillMaxWidth().padding(horizontal = 14.dp, vertical = 18.dp)) {
+            Text(text = stringResource(R.string.settings_title), style = typography.h2)
+            Column(modifier = Modifier.padding(top = 16.dp)) {
+                SettingsCheckboxRow(
+                    checked = settings.autoUseLastProfile,
+                    title = stringResource(R.string.settings_auto_use_last_profile_title),
+                    explainer = stringResource(R.string.settings_auto_use_last_profile_explainer),
+                    onToggle = onToggleAutoUseLastProfile,
+                )
+                SettingsCheckboxRow(
+                    checked = settings.trimSilenceAutomatically,
+                    title = stringResource(R.string.settings_trim_silence_title),
+                    explainer = stringResource(R.string.settings_trim_silence_explainer),
+                    onToggle = onToggleTrimSilence,
+                )
+            }
+            Column(modifier = Modifier.padding(top = 18.dp)) {
+                Text(text = stringResource(R.string.settings_interface_language_label), style = typography.caption)
+                WsSegmentedControl(
+                    options =
+                        listOf(
+                            stringResource(R.string.settings_language_english),
+                            stringResource(R.string.settings_language_hebrew),
+                            stringResource(R.string.settings_language_yiddish),
+                        ),
+                    selectedIndex = INTERFACE_LANGUAGE_TAGS.indexOf(settings.interfaceLanguageTag).coerceAtLeast(0),
+                    onSelect = onInterfaceLanguageSelected,
+                    modifier = Modifier.padding(top = 4.dp),
+                )
+                Text(
+                    text = stringResource(R.string.settings_interface_language_note),
+                    style = typography.caption,
+                    color = LocalWikiSayItColors.current.neutral700,
+                    modifier = Modifier.padding(top = 6.dp),
+                )
+            }
+            Column(modifier = Modifier.padding(top = 18.dp)) {
+                Text(text = stringResource(R.string.settings_silence_threshold_label), style = typography.caption)
+                WsSegmentedControl(
+                    options = SILENCE_THRESHOLD_OPTIONS.map { stringResource(R.string.settings_seconds_format, it) },
+                    selectedIndex =
+                        SILENCE_THRESHOLD_OPTIONS.indexOf(
+                            settings.silenceThresholdSeconds,
+                        ).coerceAtLeast(0),
+                    onSelect = onSilenceThresholdSelected,
+                    modifier = Modifier.padding(top = 4.dp),
+                )
+            }
+        }
+        Column(modifier = Modifier.fillMaxWidth().padding(14.dp)) {
+            WsSecondaryButton(
+                text = stringResource(R.string.settings_back_to_session),
+                onClick = onBack,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
+    }
+}
+
+@Composable
+private fun SettingsCheckboxRow(
+    checked: Boolean,
+    title: String,
+    explainer: String,
+    onToggle: () -> Unit,
+) {
+    val colors = LocalWikiSayItColors.current
+    val typography = LocalWikiSayItTypography.current
+    Row(
+        modifier = Modifier.fillMaxWidth().clickable(onClick = onToggle).padding(vertical = 13.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Box(
+            modifier =
+                Modifier
+                    .size(20.dp)
+                    .border(1.5.dp, colors.accent)
+                    .background(if (checked) colors.accent else Color.Transparent),
+            contentAlignment = Alignment.Center,
+        ) {
+            if (checked) {
+                Text(text = "✓", color = colors.ground, style = typography.caption)
+            }
+        }
+        Column {
+            Text(text = title, style = typography.body)
+            Text(text = explainer, style = typography.caption, color = colors.neutral700)
+        }
+    }
+}

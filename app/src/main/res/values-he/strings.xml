@@ -187,6 +187,35 @@
         <item quantity="other">%1$d הקלטות פעילות</item>
     </plurals>
 
+    <string name="settings_title">הגדרות</string>
+    <string name="settings_auto_use_last_profile_title">שימוש אוטומטי בפרופיל האחרון</string>
+    <string name="settings_auto_use_last_profile_explainer">מדלג על שלב 1 ועובר ישר לבחירת שפה.</string>
+    <string name="settings_trim_silence_title">חיתוך שקט אוטומטי</string>
+    <string name="settings_trim_silence_explainer">חותך רעש, ואז מרפד 0.2 שניות בכל קצה לפני קידוד ל-Ogg Vorbis.</string>
+    <string name="settings_interface_language_label">שפת הממשק</string>
+    <string name="settings_interface_language_note">התרגומים מגיעים מ-translatewiki.net. שפות מימין לשמאל הופכות את כל הממשק.</string>
+    <string name="settings_language_english">English</string>
+    <string name="settings_language_hebrew">עברית</string>
+    <string name="settings_language_yiddish">יידיש</string>
+    <string name="settings_silence_threshold_label">עצירת ההקלטה לאחר שקט של</string>
+    <string name="settings_seconds_format">%.1f שניות</string>
+    <string name="settings_back_to_session">חזרה למפגש</string>
+
+    <string name="stats_title">סטטיסטיקה</string>
+    <string name="stats_recordings">הקלטות</string>
+    <string name="stats_items">פריטים</string>
+    <string name="stats_forms">צורות</string>
+    <string name="stats_col_month">חודש</string>
+    <string name="stats_col_items">פריטים</string>
+    <string name="stats_col_forms">צורות</string>
+    <string name="stats_col_all">סה"כ</string>
+    <string name="stats_earlier_years">שנים קודמות</string>
+
+    <string name="about_version_line">גרסה %1$s · Apache-2.0 · CREDITS</string>
+    <string name="about_purpose">אפליקציה חופשית וקוד-פתוח להקלטת הגיות ותרומתן ל-Wikimedia Commons ולוויקינתונים. בהשראת Lingua Libre; צינור ההקלטה מבוסס על LinguaRecorder.</string>
+    <string name="about_credits_heading">קרדיטים</string>
+    <string name="about_closing_note">ההקלטות שאתם תורמים משוחררות תחת CC0. האפליקציה עצמה לא כוללת פרסומות ולא אוספת נתוני שימוש.</string>
+
     <plurals name="interrupted_stop_review">
         <item quantity="one">עצירה וסקירה של ההקלטה שיש לי</item>
         <item quantity="two">עצירה וסקירה של שתי ההקלטות שיש לי</item>

@@ -1,0 +1,3 @@
+The app is entirely inspired by Lingua Libre's excellent browser-based flow.
+
+It is developed by Asaf Bartov <asaf.bartov@gmail.com> using Claude Code.

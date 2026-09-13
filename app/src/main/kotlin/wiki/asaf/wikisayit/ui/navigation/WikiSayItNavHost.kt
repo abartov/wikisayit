@@ -2,11 +2,10 @@ package wiki.asaf.wikisayit.ui.navigation
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import wiki.asaf.wikisayit.R
+import wiki.asaf.wikisayit.ui.about.AboutScreen
 import wiki.asaf.wikisayit.ui.common.PlaceholderScreen
 import wiki.asaf.wikisayit.ui.contribution.ContributionScreen
 import wiki.asaf.wikisayit.ui.done.DoneScreen
@@ -17,7 +16,9 @@ import wiki.asaf.wikisayit.ui.profile.ProfileScreen
 import wiki.asaf.wikisayit.ui.recording.RecordingScreen
 import wiki.asaf.wikisayit.ui.review.ReviewScreen
 import wiki.asaf.wikisayit.ui.session.RecordingFlowViewModel
+import wiki.asaf.wikisayit.ui.settings.SettingsScreen
 import wiki.asaf.wikisayit.ui.signin.SignInScreen
+import wiki.asaf.wikisayit.ui.stats.StatsScreen
 import wiki.asaf.wikisayit.ui.summary.SessionSummaryScreen
 
 /**
@@ -125,13 +126,13 @@ fun WikiSayItNavHost(
             )
         }
         composable<WikiSayItRoute.Settings> {
-            PlaceholderScreen(title = stringResource(R.string.nav_destination_settings))
+            SettingsScreen(onBack = { navController.popBackStack() })
         }
         composable<WikiSayItRoute.Stats> {
-            PlaceholderScreen(title = stringResource(R.string.nav_destination_stats))
+            StatsScreen(onBack = { navController.popBackStack() })
         }
         composable<WikiSayItRoute.About> {
-            PlaceholderScreen(title = stringResource(R.string.nav_destination_about))
+            AboutScreen(onBack = { navController.popBackStack() })
         }
     }
 }
