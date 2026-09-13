@@ -2,6 +2,8 @@ package wiki.asaf.wikisayit.network
 
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
+import io.ktor.client.request.forms.formData
+import io.ktor.client.request.forms.submitFormWithBinaryData
 import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.request.parameter
@@ -9,6 +11,7 @@ import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.HttpResponse
 import io.ktor.http.ContentType
+import io.ktor.http.Headers
 import io.ktor.http.HttpHeaders
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
@@ -16,6 +19,7 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.jsonObject
+import java.io.File
 
 /**
  * Thin, authenticated JSON client for one MediaWiki [site]'s REST API.
@@ -65,6 +69,40 @@ class MediaWikiClient(
             httpClient.post(resolve(path)) {
                 contentType(ContentType.Application.Json)
                 setBody(body)
+                token?.let { header(HttpHeaders.Authorization, "Bearer $it") }
+            }
+        return response.decodeOrThrow()
+    }
+
+    /**
+     * POSTs [parameters] plus [file] as `multipart/form-data` to the site's `action=` API
+     * (`w/api.php`) — needed for `action=upload`, since core REST API has no file upload
+     * endpoint. `format=json` is added automatically.
+     */
+    suspend inline fun <reified T> postActionMultipart(
+        parameters: Map<String, String>,
+        fileFieldName: String,
+        file: File,
+        fileContentType: ContentType,
+    ): T {
+        val token = authTokenProvider.currentAccessToken()
+        val response =
+            httpClient.submitFormWithBinaryData(
+                url = site.actionApiBaseUrl,
+                formData =
+                    formData {
+                        parameters.forEach { (key, value) -> append(key, value) }
+                        append(
+                            fileFieldName,
+                            file.readBytes(),
+                            Headers.build {
+                                append(HttpHeaders.ContentType, fileContentType.toString())
+                                append(HttpHeaders.ContentDisposition, "filename=\"${file.name}\"")
+                            },
+                        )
+                    },
+            ) {
+                parameter("format", "json")
                 token?.let { header(HttpHeaders.Authorization, "Bearer $it") }
             }
         return response.decodeOrThrow()
