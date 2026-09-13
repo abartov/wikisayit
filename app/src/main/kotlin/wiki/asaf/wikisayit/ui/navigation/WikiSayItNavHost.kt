@@ -6,7 +6,6 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import wiki.asaf.wikisayit.ui.about.AboutScreen
-import wiki.asaf.wikisayit.ui.common.PlaceholderScreen
 import wiki.asaf.wikisayit.ui.contribution.ContributionScreen
 import wiki.asaf.wikisayit.ui.done.DoneScreen
 import wiki.asaf.wikisayit.ui.language.LanguageScreen
@@ -71,9 +70,6 @@ fun WikiSayItNavHost(
                 viewModel = sessionViewModel,
                 onStartRecording = { navController.navigate(WikiSayItRoute.Recording) },
             )
-        }
-        composable<WikiSayItRoute.Disambiguation> {
-            PlaceholderScreen(title = "Disambiguation")
         }
         composable<WikiSayItRoute.Recording> {
             RecordingScreen(

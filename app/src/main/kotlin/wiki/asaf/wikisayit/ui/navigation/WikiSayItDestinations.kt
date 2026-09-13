@@ -24,9 +24,6 @@ sealed interface WikiSayItRoute {
     data object ListSource : WikiSayItRoute
 
     @Serializable
-    data object Disambiguation : WikiSayItRoute
-
-    @Serializable
     data object Recording : WikiSayItRoute
 
     @Serializable
