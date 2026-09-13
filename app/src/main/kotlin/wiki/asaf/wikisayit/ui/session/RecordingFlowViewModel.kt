@@ -20,6 +20,7 @@ import wiki.asaf.wikisayit.data.wikidata.WbSearchResult
 import wiki.asaf.wikisayit.data.wikidata.WikidataExistenceChecker
 import wiki.asaf.wikisayit.data.wikidata.WikidataLabelMatcher
 import wiki.asaf.wikisayit.data.wikidata.WikidataQueryListBuilder
+import wiki.asaf.wikisayit.data.wikipedia.WikipediaCategorySource
 import javax.inject.Inject
 import kotlin.math.max
 
@@ -32,15 +33,14 @@ private const val UPLOAD_STEP_MILLIS = 500L
 
 /**
  * Drives the whole recording flow (Profile through Done) from one activity-scoped ViewModel.
- * List building against a Wikipedia category (s-dbm.4) still isn't implemented, so [buildList]
- * simulates that one source without fabricating results it can't back up: a pasted list is
- * matched against live Wikidata via [WikidataLabelMatcher] (one hit auto-resolves, 2+ hits go
- * through [resolveDisambiguation]/[resolveDisambiguationRecordAll], zero hits are kept unresolved
- * rather than dropped); a SPARQL query is run for real via [WikidataQueryListBuilder]; a category
- * source still seeds a small placeholder queue pending s-dbm.4. [startCheck] is real: it runs the
- * built list through [WikidataExistenceChecker] against live Wikidata. The recording/review
- * timing loops are likewise simulated pending the audio engine (s-7lo) — [RecordingBlocker] and
- * the phase timings are the seams that work will plug into.
+ * All three list sources are real: a pasted list is matched against live Wikidata via
+ * [WikidataLabelMatcher] (one hit auto-resolves, 2+ hits go through
+ * [resolveDisambiguation]/[resolveDisambiguationRecordAll], zero hits are kept unresolved rather
+ * than dropped); a SPARQL query is run via [WikidataQueryListBuilder]; a Wikipedia category is
+ * traversed via [WikipediaCategorySource]. [startCheck] is real too: it runs the built list
+ * through [WikidataExistenceChecker] against live Wikidata. The recording/review timing loops are
+ * likewise simulated pending the audio engine (s-7lo) — [RecordingBlocker] and the phase timings
+ * are the seams that work will plug into.
  */
 @HiltViewModel
 class RecordingFlowViewModel
@@ -52,6 +52,7 @@ class RecordingFlowViewModel
         private val existenceChecker: WikidataExistenceChecker,
         private val labelMatcher: WikidataLabelMatcher,
         private val queryListBuilder: WikidataQueryListBuilder,
+        private val categorySource: WikipediaCategorySource,
     ) : ViewModel() {
         private val _uiState = MutableStateFlow(RecordingFlowUiState())
         val uiState: StateFlow<RecordingFlowUiState> = _uiState.asStateFlow()
@@ -112,34 +113,26 @@ class RecordingFlowViewModel
             val state = _uiState.value
             when (state.listSourceType) {
                 ListSourceType.PASTE -> resolvePastedList(state)
-                ListSourceType.QUERY -> resolveQueryList(state)
-                else -> {
-                    val entries = placeholderQueue()
-                    _uiState.update {
-                        it.copy(
-                            finalQueue = entries,
-                            rawCount = entries.size,
-                            checkDone = 0,
-                            excludedCount = 0,
-                            formsAddedCount = 0,
-                            listBuildStage = ListBuildStage.FRESH,
-                        )
-                    }
+                ListSourceType.QUERY -> {
+                    val language = state.language?.isoCode.orEmpty()
+                    resolveAsyncList { queryListBuilder.build(state.sourceText, language) }
                 }
+                ListSourceType.CATEGORY -> {
+                    val language = state.language?.isoCode.orEmpty()
+                    resolveAsyncList { categorySource.build(state.sourceText, language, state.categoryDepth) }
+                }
+                null -> Unit
             }
         }
 
-        private fun resolveQueryList(state: RecordingFlowUiState) {
-            val query = state.sourceText
-            val language = state.language?.isoCode.orEmpty()
-
+        /** Runs [build] (a SPARQL query execution or a category traversal) on a background job
+         * while the RESOLVING stage shows an indeterminate spinner, then lands on FRESH. */
+        private fun resolveAsyncList(build: suspend () -> List<QueueEntry>) {
             tickerJob?.cancel()
-            _uiState.update {
-                it.copy(listBuildStage = ListBuildStage.RESOLVING, rawCount = 0, resolveDone = 0)
-            }
+            _uiState.update { it.copy(listBuildStage = ListBuildStage.RESOLVING, rawCount = 0, resolveDone = 0) }
             tickerJob =
                 viewModelScope.launch {
-                    val entries = queryListBuilder.build(query, language)
+                    val entries = build()
                     _uiState.update {
                         it.copy(
                             finalQueue = entries,
@@ -245,19 +238,6 @@ class RecordingFlowViewModel
                 )
             }
         }
-
-        private fun placeholderQueue(): List<QueueEntry> =
-            listOf(
-                QueueEntry("water", EntryKind.FORM, "lexeme form · singular", lexemeId = "L3302", formId = "L3302-F1"),
-                QueueEntry("Jerusalem", EntryKind.ITEM, "Wikidata item · city", qid = "Q1218"),
-                QueueEntry(
-                    "hedgehog",
-                    EntryKind.FORM,
-                    "lexeme form · singular",
-                    lexemeId = "L45032",
-                    formId = "L45032-F1",
-                ),
-            )
 
         fun startCheck() {
             _uiState.update { it.copy(listBuildStage = ListBuildStage.CHECKING, checkDone = 0) }

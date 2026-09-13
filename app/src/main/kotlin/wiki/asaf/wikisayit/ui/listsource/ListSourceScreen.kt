@@ -220,7 +220,8 @@ private fun SourceFormContent(
         when (sourceType) {
             ListSourceType.PASTE -> stringResource(R.string.form_label_paste)
             ListSourceType.QUERY -> stringResource(R.string.form_label_query)
-            ListSourceType.CATEGORY -> stringResource(R.string.form_label_category)
+            ListSourceType.CATEGORY ->
+                stringResource(R.string.form_label_category, uiState.language?.isoCode?.ifBlank { "en" } ?: "en")
         }
 
     Column(modifier = modifier.fillMaxSize()) {
@@ -315,16 +316,27 @@ private fun ResolvingContent(
     modifier: Modifier = Modifier,
 ) {
     val colors = LocalWikiSayItColors.current
-    val isQuery = uiState.listSourceType == ListSourceType.QUERY
+    val showLineProgress = uiState.listSourceType == ListSourceType.PASTE
+    val title =
+        when (uiState.listSourceType) {
+            ListSourceType.QUERY -> stringResource(R.string.resolving_title_query)
+            ListSourceType.CATEGORY -> stringResource(R.string.resolving_title_category)
+            else -> stringResource(R.string.resolving_title)
+        }
+    val explainer =
+        when (uiState.listSourceType) {
+            ListSourceType.QUERY -> stringResource(R.string.resolving_explainer_query)
+            ListSourceType.CATEGORY -> stringResource(R.string.resolving_explainer_category)
+            else -> stringResource(R.string.resolving_explainer)
+        }
     Column(modifier = modifier.fillMaxSize()) {
         ScreenHeader(
             kicker = stringResource(R.string.list_step_kicker),
-            title = stringResource(if (isQuery) R.string.resolving_title_query else R.string.resolving_title),
-            explainer =
-                stringResource(if (isQuery) R.string.resolving_explainer_query else R.string.resolving_explainer),
+            title = title,
+            explainer = explainer,
         )
         Column(modifier = Modifier.padding(horizontal = WikiSayItSpacing.screenHorizontal)) {
-            if (isQuery) {
+            if (!showLineProgress) {
                 LinearProgressIndicator(
                     modifier = Modifier.fillMaxWidth(),
                     color = colors.accent,

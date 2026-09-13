@@ -77,7 +77,7 @@
     <string name="form_title_category">Name the category</string>
     <string name="form_label_paste">One word, name or phrase per line</string>
     <string name="form_label_query">SPARQL returning ?item or ?lexeme</string>
-    <string name="form_label_category">Category on en.wikipedia.org</string>
+    <string name="form_label_category">Category on %1$s.wikipedia.org</string>
     <string name="match_as_label">These lines should match</string>
     <string name="match_as_items">Wikidata items</string>
     <string name="match_as_lexemes">Lexemes</string>
@@ -93,6 +93,8 @@
     <string name="resolving_label">matching…</string>
     <string name="resolving_title_query">Running your query</string>
     <string name="resolving_explainer_query">Executing your SPARQL query against Wikidata.</string>
+    <string name="resolving_title_category">Walking the category</string>
+    <string name="resolving_explainer_category">Fetching category members from Wikipedia, following sub-categories where you asked for them.</string>
     <string name="disambiguation_kicker">%1$d of %2$d to resolve</string>
     <string name="disambiguation_explainer_items">%1$d Wikidata items share this label. Pick the one you mean — or record all of them.</string>
     <string name="disambiguation_explainer_lexemes">%1$d lexemes share this spelling. Pick the one you are pronouncing — or record all of them.</string>
