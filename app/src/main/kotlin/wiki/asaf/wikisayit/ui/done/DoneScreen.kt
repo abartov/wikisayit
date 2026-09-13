@@ -38,7 +38,8 @@ fun DoneScreen(
     val username = uiState.username
 
     DoneContent(
-        approvedCount = uiState.approved.size,
+        liveCount = uiState.uploadDoneCount,
+        pendingCount = uiState.approved.size - uiState.uploadDoneCount,
         onOpenCommonsContributions = {
             uriHandler.openUri("https://commons.wikimedia.org/wiki/Special:Contributions/$username")
         },
@@ -55,7 +56,8 @@ fun DoneScreen(
 
 @Composable
 private fun DoneContent(
-    approvedCount: Int,
+    liveCount: Int,
+    pendingCount: Int,
     onOpenCommonsContributions: () -> Unit,
     onOpenWikidataContributions: () -> Unit,
     onRecordAnotherList: () -> Unit,
@@ -74,12 +76,17 @@ private fun DoneContent(
                 )
             }
             Text(
-                text = pluralStringResource(R.plurals.done_headline, approvedCount, approvedCount),
+                text = pluralStringResource(R.plurals.done_headline, liveCount, liveCount),
                 style = typography.h2,
                 modifier = Modifier.padding(top = 16.dp),
             )
             Text(
-                text = stringResource(R.string.done_explainer),
+                text =
+                    if (pendingCount > 0) {
+                        pluralStringResource(R.plurals.done_explainer_partial, pendingCount, pendingCount)
+                    } else {
+                        stringResource(R.string.done_explainer)
+                    },
                 style = typography.secondary,
                 color = colors.neutral700,
                 modifier = Modifier.padding(top = 6.dp),

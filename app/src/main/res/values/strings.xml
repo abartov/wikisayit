@@ -213,6 +213,11 @@
         <item quantity="other">%1$d pronunciations are live</item>
     </plurals>
 
+    <plurals name="done_explainer_partial">
+        <item quantity="one">%1$d recording didn\'t finish uploading, so it wasn\'t added to Commons or Wikidata.</item>
+        <item quantity="other">%1$d recordings didn\'t finish uploading, so they weren\'t added to Commons or Wikidata.</item>
+    </plurals>
+
     <string name="settings_title">Settings</string>
     <string name="settings_auto_use_last_profile_title">Use the last profile automatically</string>
     <string name="settings_auto_use_last_profile_explainer">Skips step 1 and goes straight to the language picker.</string>
