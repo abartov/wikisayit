@@ -204,7 +204,7 @@ private fun RecordingRingContent(
             verticalArrangement = Arrangement.Center,
         ) {
             Text(
-                text = entry.label,
+                text = entry.displayText,
                 style = typography.displayWord,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.padding(horizontal = WikiSayItSpacing.space2),

@@ -45,4 +45,36 @@ class SessionModelsTest {
         assertEquals(false, healthy.needsAttention)
         assertEquals(true, failed.needsAttention)
     }
+
+    @Test
+    fun `display text is the plain label when there are no script variants`() {
+        val entry = QueueEntry(label = "בית", kind = EntryKind.FORM, detail = "lexeme form", formId = "L1-F1")
+        assertEquals("בית", entry.displayText)
+    }
+
+    @Test
+    fun `display text is the plain label when there is only one script variant`() {
+        val entry =
+            QueueEntry(
+                label = "בית",
+                kind = EntryKind.FORM,
+                detail = "lexeme form",
+                formId = "L1-F1",
+                scriptVariants = listOf("בית"),
+            )
+        assertEquals("בית", entry.displayText)
+    }
+
+    @Test
+    fun `display text joins every script variant, such as plain and niqqud spellings`() {
+        val entry =
+            QueueEntry(
+                label = "בית",
+                kind = EntryKind.FORM,
+                detail = "lexeme form",
+                formId = "L64262-F2",
+                scriptVariants = listOf("בית", "בֵּית"),
+            )
+        assertEquals("בית  ·  בֵּית", entry.displayText)
+    }
 }

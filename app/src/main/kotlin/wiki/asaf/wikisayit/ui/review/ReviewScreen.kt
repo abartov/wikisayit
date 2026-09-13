@@ -125,7 +125,7 @@ private fun ReviewContent(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
         ) {
-            Text(text = entry.label, style = typography.h2.copy(fontSize = 48.sp), textAlign = TextAlign.Center)
+            Text(text = entry.displayText, style = typography.h2.copy(fontSize = 48.sp), textAlign = TextAlign.Center)
             BlueprintBox(modifier = Modifier.fillMaxWidth().padding(top = 24.dp)) {
                 Column(
                     modifier = Modifier.fillMaxWidth().padding(14.dp),

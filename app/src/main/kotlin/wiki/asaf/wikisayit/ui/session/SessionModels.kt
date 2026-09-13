@@ -20,9 +20,17 @@ data class QueueEntry(
     /** The cropped, padded, Ogg Vorbis-encoded take from [wiki.asaf.wikisayit.audio.RecordingEngine],
      * set once recording finishes; null until then. */
     val audioFile: File? = null,
+    /** Every representation Wikidata has for this form (e.g. a Hebrew form's plain and
+     * niqqud/diacritics spellings) — see s-51l. Empty for items, and for forms with only one. */
+    val scriptVariants: List<String> = emptyList(),
 ) {
     /** The monospace evidence id shown under the word: the QID, or the specific form id. */
     val evidenceId: String get() = formId ?: qid.orEmpty()
+
+    /** What to actually show the user for this word: every known spelling variant when there's
+     * more than one — recording from just [label] risks guessing at unwritten diacritics — else
+     * [label] alone. */
+    val displayText: String get() = scriptVariants.takeIf { it.size > 1 }?.joinToString("  ·  ") ?: label
 }
 
 /** Commons filename scheme from the product spec: `<iso>-<QID|LID>-<label>-<username>.ogg`,

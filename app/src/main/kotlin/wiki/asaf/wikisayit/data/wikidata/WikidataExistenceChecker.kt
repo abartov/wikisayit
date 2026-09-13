@@ -75,6 +75,7 @@ class WikidataExistenceChecker
                                         candidate.copy(
                                             label = form.labelFor(preferredLanguage, fallback = candidate.label),
                                             formId = form.id,
+                                            scriptVariants = form.representations.values.map { it.value }.distinct(),
                                         )
                                     if (index > 0) formsAddedCount++
                                 }

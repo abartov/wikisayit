@@ -153,6 +153,25 @@ class WikidataExistenceCheckerTest {
         }
 
     @Test
+    fun `form carries every representation as a script variant, not just the preferred language`() =
+        runTest {
+            val checker =
+                checkerFor(
+                    """
+                    {"entities":{"L1":{"claims":{},"forms":[
+                        {"id":"L1-F1","representations":{
+                            "he":{"language":"he","value":"בית"},
+                            "he-x-Q21283070":{"language":"he-x-Q21283070","value":"בֵּית"}
+                        },"claims":{}}
+                    ]}}}
+                    """.trimIndent(),
+                )
+            val result = checker.check(listOf(formEntry("בית", "L1")), preferredLanguage = "he")
+
+            assertEquals(setOf("בית", "בֵּית"), result.finalQueue[0].scriptVariants.toSet())
+        }
+
+    @Test
     fun `form label falls back to another language then to the original label`() =
         runTest {
             val checker =
