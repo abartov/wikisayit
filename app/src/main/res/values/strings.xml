@@ -28,6 +28,28 @@
     <string name="profile_footer_note">Choosing a profile signs you in to Commons and Wikidata with that account (OAuth). Recording without an account is not possible.</string>
     <string name="proficiency_native">native</string>
     <string name="proficiency_proficient">proficient</string>
+    <string name="proficiency_native_titlecase">Native</string>
+    <string name="proficiency_proficient_titlecase">Proficient</string>
+    <string name="dialect_standard">standard</string>
+
+    <string name="action_back">Back</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="action_add">Add</string>
+
+    <string name="new_profile_title">New speaker profile</string>
+    <string name="new_profile_username_label">Wikimedia username</string>
+    <string name="new_profile_languages_heading">Languages you can record</string>
+    <string name="new_profile_languages_explainer">Only these appear when you start a session. Add as many as you speak.</string>
+    <string name="new_profile_add_language_button">+ Add a language</string>
+    <string name="new_profile_footer_note">Proficiency and dialect are published with each recording so listeners know whose accent they are hearing.</string>
+    <string name="new_profile_save_button">Save profile</string>
+    <string name="new_profile_remove_language">Remove %1$s</string>
+
+    <string name="add_language_title">Add a language</string>
+    <string name="add_language_name_label">Language name</string>
+    <string name="add_language_iso_label">ISO code</string>
+    <string name="add_language_proficiency_label">How well do you speak it?</string>
+    <string name="add_language_dialect_label">Dialect or region — leave empty for the standard form</string>
 
     <plurals name="profile_recordings_count">
         <item quantity="one">%1$d recording</item>

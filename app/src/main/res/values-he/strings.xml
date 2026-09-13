@@ -28,6 +28,28 @@
     <string name="profile_footer_note">בחירת פרופיל מחברת אתכם ל-Commons ול-Wikidata עם החשבון הזה (OAuth). לא ניתן להקליט בלי חשבון.</string>
     <string name="proficiency_native">שפת אם</string>
     <string name="proficiency_proficient">שולט/ת</string>
+    <string name="proficiency_native_titlecase">שפת אם</string>
+    <string name="proficiency_proficient_titlecase">שולט/ת</string>
+    <string name="dialect_standard">הצורה הרגילה</string>
+
+    <string name="action_back">חזרה</string>
+    <string name="action_cancel">ביטול</string>
+    <string name="action_add">הוספה</string>
+
+    <string name="new_profile_title">פרופיל דובר/ת חדש</string>
+    <string name="new_profile_username_label">שם משתמש בוויקימדיה</string>
+    <string name="new_profile_languages_heading">שפות שבהן תוכלו להקליט</string>
+    <string name="new_profile_languages_explainer">רק אלה יופיעו כשתתחילו מפגש הקלטה. אפשר להוסיף כמה שפות שתרצו.</string>
+    <string name="new_profile_add_language_button">+ הוספת שפה</string>
+    <string name="new_profile_footer_note">רמת השליטה והניב מתפרסמים עם כל הקלטה, כדי שהמאזינים ידעו של מי המבטא ששמעו.</string>
+    <string name="new_profile_save_button">שמירת הפרופיל</string>
+    <string name="new_profile_remove_language">הסרת %1$s</string>
+
+    <string name="add_language_title">הוספת שפה</string>
+    <string name="add_language_name_label">שם השפה</string>
+    <string name="add_language_iso_label">קוד ISO</string>
+    <string name="add_language_proficiency_label">עד כמה אתם שולטים בשפה?</string>
+    <string name="add_language_dialect_label">ניב או אזור — השאירו ריק עבור הצורה הרגילה</string>
 
     <plurals name="profile_recordings_count">
         <item quantity="one">הקלטה אחת</item>

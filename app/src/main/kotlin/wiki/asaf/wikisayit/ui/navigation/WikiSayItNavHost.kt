@@ -8,6 +8,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import wiki.asaf.wikisayit.R
 import wiki.asaf.wikisayit.ui.common.PlaceholderScreen
+import wiki.asaf.wikisayit.ui.profile.NewProfileScreen
 import wiki.asaf.wikisayit.ui.profile.ProfileScreen
 import wiki.asaf.wikisayit.ui.session.RecordingFlowViewModel
 import wiki.asaf.wikisayit.ui.signin.SignInScreen
@@ -39,7 +40,10 @@ fun WikiSayItNavHost(
             )
         }
         composable<WikiSayItRoute.NewProfile> {
-            PlaceholderScreen(title = "New profile")
+            NewProfileScreen(
+                onBack = { navController.popBackStack() },
+                onSaved = { navController.popBackStack() },
+            )
         }
         composable<WikiSayItRoute.Profile> {
             ProfileScreen(
