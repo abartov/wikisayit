@@ -25,13 +25,15 @@ data class QueueEntry(
     val evidenceId: String get() = formId ?: qid.orEmpty()
 }
 
-/** Commons filename scheme from the product spec: `<iso>-<QID|LID>-<label>-<username>.ogg`. */
+/** Commons filename scheme from the product spec: `<iso>-<QID|LID>-<label>-<username>.ogg`,
+ * plus the speaker's name when it differs from [username] (see [buildCommonsFilename]). */
 fun QueueEntry.commonsFilename(
     isoCode: String,
     username: String,
+    speakerName: String = "",
 ): String {
     val id = (if (kind == EntryKind.FORM) lexemeId else qid).orEmpty()
-    return buildCommonsFilename(isoCode, id, label, username)
+    return buildCommonsFilename(isoCode, id, label, username, speakerName)
 }
 
 /** One Wikidata hit offered when a pasted line matched more than one item or lexeme. */

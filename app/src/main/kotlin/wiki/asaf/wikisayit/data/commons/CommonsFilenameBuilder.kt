@@ -10,20 +10,29 @@ private const val EXTENSION = ".ogg"
 
 /**
  * Builds a Commons filename per the product spec: `<iso>-<QID|LID>-<label>-<username>.ogg`
- * (e.g. `uk-L708539-мова-Ijon.ogg`, `he-Q432522-יונתן רטוש-Ijon.ogg`).
+ * (e.g. `uk-L708539-мова-Ijon.ogg`, `he-Q432522-יונתן רטוש-Ijon.ogg`). When [speakerName] is
+ * non-blank — the speaker differs from the Wikimedia account name, e.g. a shared account — it's
+ * appended after the username: `<iso>-<QID|LID>-<label>-<username>-<speakerName>.ogg`.
  *
- * [label] is sanitized for MediaWiki title syntax and, if the result would exceed Commons'
- * title length cap, truncated — the iso code, entity id, username, and extension never are,
- * since those are what make the filename findable and attributable.
+ * [label] and [speakerName] are sanitized for MediaWiki title syntax and, if the result would
+ * exceed Commons' title length cap, [label] is truncated — the iso code, entity id, username,
+ * and extension never are, since those are what make the filename findable and attributable.
  */
 fun buildCommonsFilename(
     isoCode: String,
     entityId: String,
     label: String,
     username: String,
+    speakerName: String = "",
 ): String {
     val prefix = "$isoCode-$entityId-"
-    val suffix = "-$username$EXTENSION"
+    val sanitizedSpeakerName = sanitizeTitleLabel(speakerName)
+    val suffix =
+        if (sanitizedSpeakerName.isNotBlank()) {
+            "-$username-$sanitizedSpeakerName$EXTENSION"
+        } else {
+            "-$username$EXTENSION"
+        }
     val maxLabelBytes = MAX_TITLE_BYTES - prefix.utf8Length() - suffix.utf8Length()
     val sanitizedLabel = truncateToUtf8Bytes(sanitizeTitleLabel(label), maxLabelBytes.coerceAtLeast(0))
     return "$prefix$sanitizedLabel$suffix"

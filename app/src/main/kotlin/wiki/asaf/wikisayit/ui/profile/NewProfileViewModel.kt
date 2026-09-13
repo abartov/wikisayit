@@ -18,6 +18,7 @@ import javax.inject.Inject
 
 data class NewProfileUiState(
     val username: String = "",
+    val speakerName: String = "",
     val languages: List<ProfileLanguageInput> = emptyList(),
     val isAddSheetOpen: Boolean = false,
     val draftLanguageName: String = "",
@@ -64,6 +65,8 @@ class NewProfileViewModel
 
         fun closeAddLanguageSheet() = _uiState.update { it.copy(isAddSheetOpen = false) }
 
+        fun updateSpeakerName(value: String) = _uiState.update { it.copy(speakerName = value) }
+
         fun updateDraftLanguageName(value: String) =
             _uiState.update { it.copy(draftLanguageName = value, draftIsoCode = "") }
 
@@ -95,7 +98,11 @@ class NewProfileViewModel
             val state = _uiState.value
             if (!state.canSave) return
             viewModelScope.launch {
-                profileRepository.saveProfile(wikimediaUsername = state.username.trim(), languages = state.languages)
+                profileRepository.saveProfile(
+                    wikimediaUsername = state.username.trim(),
+                    languages = state.languages,
+                    speakerName = state.speakerName.trim(),
+                )
                 _uiState.update { it.copy(saved = true) }
             }
         }

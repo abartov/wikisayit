@@ -4,6 +4,8 @@ import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverter
 import androidx.room.TypeConverters
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 
 class RecordingEnumConverters {
     @TypeConverter
@@ -21,7 +23,7 @@ class RecordingEnumConverters {
 
 @Database(
     entities = [SpeakerProfileEntity::class, ProfileLanguageEntity::class, RecordingStatEntity::class],
-    version = 1,
+    version = 2,
     exportSchema = false,
 )
 @TypeConverters(RecordingEnumConverters::class)
@@ -32,5 +34,12 @@ abstract class WikiSayItDatabase : RoomDatabase() {
 
     companion object {
         const val DATABASE_NAME = "wikisayit.db"
+
+        val MIGRATION_1_2 =
+            object : Migration(1, 2) {
+                override fun migrate(db: SupportSQLiteDatabase) {
+                    db.execSQL("ALTER TABLE speaker_profiles ADD COLUMN speaker_name TEXT NOT NULL DEFAULT ''")
+                }
+            }
     }
 }

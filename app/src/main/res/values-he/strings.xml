@@ -43,6 +43,8 @@
     <string name="new_profile_title">פרופיל דובר/ת חדש</string>
     <string name="new_profile_username_label">שם משתמש בוויקימדיה</string>
     <string name="new_profile_verified_tag">מאומת</string>
+    <string name="new_profile_speaker_name_label">שם הדובר/ת (אופציונלי)</string>
+    <string name="new_profile_speaker_name_explainer">אם מי שמדבר/ת שונה מבעל/ת חשבון הוויקימדיה, אפשר להוסיף כאן את שמו/ה — הוא ייכלל בשמות הקבצים המועלים לצד שם המשתמש.</string>
     <string name="new_profile_languages_heading">שפות שבהן תוכלו להקליט</string>
     <string name="new_profile_languages_explainer">רק אלה יופיעו כשתתחילו מפגש הקלטה. אפשר להוסיף כמה שפות שתרצו.</string>
     <string name="new_profile_add_language_button">+ הוספת שפה</string>

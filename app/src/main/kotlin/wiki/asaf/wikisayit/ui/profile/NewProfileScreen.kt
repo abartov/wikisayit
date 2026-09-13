@@ -72,6 +72,7 @@ fun NewProfileScreen(
         onDraftProficiencyChange = viewModel::updateDraftProficiency,
         onDraftDialectChange = viewModel::updateDraftDialect,
         onConfirmAddLanguage = viewModel::confirmAddLanguage,
+        onSpeakerNameChange = viewModel::updateSpeakerName,
         modifier = modifier,
     )
 }
@@ -90,6 +91,7 @@ private fun NewProfileScreenContent(
     onDraftProficiencyChange: (LanguageProficiency) -> Unit,
     onDraftDialectChange: (String) -> Unit,
     onConfirmAddLanguage: () -> Unit,
+    onSpeakerNameChange: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val colors = LocalWikiSayItColors.current
@@ -133,6 +135,23 @@ private fun NewProfileScreenContent(
                         }
                         WsTag(text = stringResource(R.string.new_profile_verified_tag), variant = WsTagVariant.ACCENT)
                     }
+                }
+            }
+            item {
+                Column {
+                    OutlinedTextField(
+                        value = uiState.speakerName,
+                        onValueChange = onSpeakerNameChange,
+                        label = { Text(stringResource(R.string.new_profile_speaker_name_label)) },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                    )
+                    Text(
+                        text = stringResource(R.string.new_profile_speaker_name_explainer),
+                        style = typography.caption,
+                        color = colors.neutral700,
+                        modifier = Modifier.padding(top = WikiSayItSpacing.space1),
+                    )
                 }
             }
             item {

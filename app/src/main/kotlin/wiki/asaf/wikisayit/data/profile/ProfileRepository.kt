@@ -24,6 +24,7 @@ interface ProfileRepository {
         wikimediaUsername: String,
         languages: List<ProfileLanguageInput>,
         profileId: Long? = null,
+        speakerName: String = "",
     ): Long
 
     suspend fun deleteProfile(profile: SpeakerProfileEntity)
@@ -44,12 +45,17 @@ class RoomProfileRepository
             wikimediaUsername: String,
             languages: List<ProfileLanguageInput>,
             profileId: Long?,
+            speakerName: String,
         ): Long {
             // @Upsert returns -1 (not the row id) when it takes the update path, so an explicit
             // profileId must win over the return value; only a brand-new insert needs it.
             val insertedId =
                 profileDao.upsertProfile(
-                    SpeakerProfileEntity(id = profileId ?: 0, wikimediaUsername = wikimediaUsername),
+                    SpeakerProfileEntity(
+                        id = profileId ?: 0,
+                        wikimediaUsername = wikimediaUsername,
+                        speakerName = speakerName,
+                    ),
                 )
             val savedId = profileId ?: insertedId
             profileDao.deleteLanguagesForProfile(savedId)

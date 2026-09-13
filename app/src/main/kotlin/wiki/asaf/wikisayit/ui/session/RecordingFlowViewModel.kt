@@ -644,10 +644,11 @@ class RecordingFlowViewModel
             val profileId = _uiState.value.activeProfile?.profile?.id ?: return
             val isoCode = _uiState.value.language?.isoCode.orEmpty()
             val username = _uiState.value.username
+            val speakerName = _uiState.value.speakerName
             for (index in indices) {
                 val entry = _uiState.value.approved.getOrNull(index) ?: continue
                 _uiState.update { it.copy(activeUploadIndex = index) }
-                uploadEntry(index, entry, isoCode, username, profileId)
+                uploadEntry(index, entry, isoCode, username, speakerName, profileId)
             }
             _uiState.update { it.copy(activeUploadIndex = null) }
             finishContributionIfComplete()
@@ -665,6 +666,7 @@ class RecordingFlowViewModel
             entry: QueueEntry,
             isoCode: String,
             username: String,
+            speakerName: String,
             profileId: Long,
         ) {
             val entryState = _uiState.value.uploadStates.getOrNull(index) ?: return
@@ -680,7 +682,7 @@ class RecordingFlowViewModel
             if (!entryState.commonsDone) {
                 filename =
                     try {
-                        commonsUploader.upload(renamedEntry, isoCode, username)
+                        commonsUploader.upload(renamedEntry, isoCode, username, speakerName)
                     } catch (cancellation: CancellationException) {
                         throw cancellation
                     } catch (error: Exception) {
@@ -690,7 +692,7 @@ class RecordingFlowViewModel
                 updateUploadState(index) { it.copy(commonsDone = true, categoriesDone = true) }
                 _uiState.update { it.copy(connectivityLost = false) }
             } else {
-                filename = renamedEntry.commonsFilename(isoCode, username)
+                filename = renamedEntry.commonsFilename(isoCode, username, speakerName)
             }
             try {
                 p443StatementWriter.addPronunciation(entry, filename)

@@ -65,6 +65,9 @@ data class RecordingFlowUiState(
     val username: String
         get() = activeProfile?.profile?.wikimediaUsername.orEmpty()
 
+    val speakerName: String
+        get() = activeProfile?.profile?.speakerName.orEmpty()
+
     val uploadDoneCount: Int
         get() = uploadStates.count { it.isComplete }
 

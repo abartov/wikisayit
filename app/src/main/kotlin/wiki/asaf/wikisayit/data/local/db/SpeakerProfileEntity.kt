@@ -12,6 +12,9 @@ import androidx.room.Relation
 data class SpeakerProfileEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     @ColumnInfo(name = "wikimedia_username") val wikimediaUsername: String,
+    /** Optional name for the person speaking, when different from [wikimediaUsername] (e.g. a
+     * shared account). Included alongside the username in Commons filenames when set. */
+    @ColumnInfo(name = "speaker_name", defaultValue = "") val speakerName: String = "",
 )
 
 enum class LanguageProficiency { NATIVE, PROFICIENT }

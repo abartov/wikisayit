@@ -47,4 +47,31 @@ class CommonsFilenameBuilderTest {
         assertFalse(filename.contains("null"))
         assertEquals("en--word-u.ogg", filename)
     }
+
+    @Test
+    fun `appends speaker name after the username when provided`() {
+        val filename =
+            buildCommonsFilename(
+                isoCode = "uk",
+                entityId = "L708539",
+                label = "мова",
+                username = "Ijon",
+                speakerName = "Halyna",
+            )
+        assertEquals("uk-L708539-мова-Ijon-Halyna.ogg", filename)
+    }
+
+    @Test
+    fun `omits speaker name from filename when blank`() {
+        val filename =
+            buildCommonsFilename(isoCode = "en", entityId = "Q1", label = "word", username = "u", speakerName = "  ")
+        assertEquals("en-Q1-word-u.ogg", filename)
+    }
+
+    @Test
+    fun `sanitizes illegal title characters in speaker name`() {
+        val filename =
+            buildCommonsFilename(isoCode = "en", entityId = "Q1", label = "word", username = "u", speakerName = "a[b]c")
+        assertEquals("en-Q1-word-u-a b c.ogg", filename)
+    }
 }

@@ -26,9 +26,10 @@ class CommonsUploader
             entry: QueueEntry,
             isoCode: String,
             username: String,
+            speakerName: String = "",
         ): String {
             val audioFile = requireNotNull(entry.audioFile) { "Cannot upload '${entry.label}': no recorded audio" }
-            val filename = entry.commonsFilename(isoCode, username)
+            val filename = entry.commonsFilename(isoCode, username, speakerName)
             val csrfToken = wikimediaClients.commons.fetchCsrfToken()
             val response =
                 wikimediaClients.commons.postActionMultipart<UploadActionResponse>(

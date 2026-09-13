@@ -33,7 +33,9 @@ object DataModule {
     fun provideDatabase(
         @ApplicationContext context: Context,
     ): WikiSayItDatabase =
-        Room.databaseBuilder(context, WikiSayItDatabase::class.java, WikiSayItDatabase.DATABASE_NAME).build()
+        Room.databaseBuilder(context, WikiSayItDatabase::class.java, WikiSayItDatabase.DATABASE_NAME)
+            .addMigrations(WikiSayItDatabase.MIGRATION_1_2)
+            .build()
 
     @Provides
     fun provideProfileDao(database: WikiSayItDatabase): ProfileDao = database.profileDao()
