@@ -11,6 +11,15 @@ enum class WbEntityType(val apiValue: String) {
 
 private const val SEARCH_LIMIT = "10"
 
+/** Hits for one pasted line, plus whether the search request itself failed — a network error
+ * or bad response looks the same as a genuine zero-hit line from [candidates] alone, so callers
+ * that need to tell them apart (e.g. to avoid mislabeling a failed lookup as "no match found")
+ * use [hadError]. */
+data class LabelSearchResult(
+    val candidates: List<WbSearchResult>,
+    val hadError: Boolean,
+)
+
 /**
  * Matches one pasted list-sourcing line against Wikidata via `action=wbsearchentities`, per the
  * s-dbm.2 spec: [RecordingFlowViewModel] auto-resolves a single hit, sends 2+ hits to the
@@ -26,17 +35,20 @@ class WikidataLabelMatcher
             label: String,
             type: WbEntityType,
             language: String,
-        ): List<WbSearchResult> =
-            runCatching {
-                wikimediaClients.wikidata.getAction<WbSearchEntitiesResponse>(
-                    mapOf(
-                        "action" to "wbsearchentities",
-                        "search" to label,
-                        "language" to language,
-                        "uselang" to language,
-                        "type" to type.apiValue,
-                        "limit" to SEARCH_LIMIT,
-                    ),
-                ).search
-            }.getOrDefault(emptyList())
+        ): LabelSearchResult {
+            val result =
+                runCatching {
+                    wikimediaClients.wikidata.getAction<WbSearchEntitiesResponse>(
+                        mapOf(
+                            "action" to "wbsearchentities",
+                            "search" to label,
+                            "language" to language,
+                            "uselang" to language,
+                            "type" to type.apiValue,
+                            "limit" to SEARCH_LIMIT,
+                        ),
+                    ).search
+                }.getOrNull()
+            return LabelSearchResult(result ?: emptyList(), hadError = result == null)
+        }
     }

@@ -471,6 +471,14 @@ private fun ListCheckContent(
                 explainer = blurb,
             )
             Column(modifier = Modifier.padding(horizontal = WikiSayItSpacing.screenHorizontal)) {
+                if (uiState.listBuildHadError) {
+                    Text(
+                        text = stringResource(R.string.list_build_partial_error_banner),
+                        style = typography.caption,
+                        color = colors.accent800,
+                        modifier = Modifier.padding(bottom = WikiSayItSpacing.space3),
+                    )
+                }
                 BlueprintBox(modifier = Modifier.fillMaxWidth()) {
                     Column(
                         modifier = Modifier.fillMaxWidth().padding(WikiSayItSpacing.space3),
@@ -596,34 +604,45 @@ private fun EmptyOutcomeContent(
 ) {
     val typography = LocalWikiSayItTypography.current
     val colors = LocalWikiSayItColors.current
+    val hadError = uiState.listBuildHadError
     Column(modifier = modifier.fillMaxSize()) {
         Column(modifier = Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState())) {
             ScreenHeader(
-                kicker = stringResource(R.string.empty_check_complete_kicker),
-                title = pluralStringResource(R.plurals.empty_title, uiState.rawCount, uiState.rawCount),
-                explainer = stringResource(R.string.empty_body),
+                kicker =
+                    stringResource(
+                        if (hadError) R.string.list_build_error_kicker else R.string.empty_check_complete_kicker,
+                    ),
+                title =
+                    if (hadError) {
+                        stringResource(R.string.list_build_error_title)
+                    } else {
+                        pluralStringResource(R.plurals.empty_title, uiState.rawCount, uiState.rawCount)
+                    },
+                explainer = stringResource(if (hadError) R.string.list_build_error_body else R.string.empty_body),
             )
             Column(modifier = Modifier.padding(horizontal = WikiSayItSpacing.screenHorizontal)) {
-                WsTable(
-                    rows =
-                        listOf(
+                if (!hadError) {
+                    WsTable(
+                        rows =
                             listOf(
-                                { EvidenceCell(uiState.rawCount.toString()) },
-                                { Text(stringResource(R.string.check_row_entries), style = typography.secondary) },
+                                listOf(
+                                    { EvidenceCell(uiState.rawCount.toString()) },
+                                    { Text(stringResource(R.string.check_row_entries), style = typography.secondary) },
+                                ),
+                                listOf(
+                                    { EvidenceCell("0", emphasized = true) },
+                                    { Text(stringResource(R.string.check_row_final), style = typography.secondary) },
+                                ),
                             ),
-                            listOf(
-                                { EvidenceCell("0", emphasized = true) },
-                                { Text(stringResource(R.string.check_row_final), style = typography.secondary) },
-                            ),
-                        ),
-                )
-                BlueprintBox(modifier = Modifier.fillMaxWidth().padding(top = WikiSayItSpacing.space4)) {
-                    Column(
-                        modifier = Modifier.fillMaxWidth().padding(WikiSayItSpacing.space3),
-                        verticalArrangement = Arrangement.spacedBy(WikiSayItSpacing.space1),
-                    ) {
-                        WsKicker(text = stringResource(R.string.empty_where_gaps_kicker))
-                        Text(text = stringResource(R.string.empty_where_gaps_body), style = typography.secondary)
+                    )
+                    BlueprintBox(modifier = Modifier.fillMaxWidth().padding(top = WikiSayItSpacing.space4)) {
+                        Column(
+                            modifier = Modifier.fillMaxWidth().padding(WikiSayItSpacing.space3),
+                            verticalArrangement = Arrangement.spacedBy(WikiSayItSpacing.space1),
+                        ) {
+                            WsKicker(text = stringResource(R.string.empty_where_gaps_kicker))
+                            Text(text = stringResource(R.string.empty_where_gaps_body), style = typography.secondary)
+                        }
                     }
                 }
             }
@@ -638,11 +657,13 @@ private fun EmptyOutcomeContent(
                 onClick = onPickDifferentList,
                 modifier = Modifier.fillMaxWidth(),
             )
-            WsGhostButton(
-                text = stringResource(R.string.empty_record_anyway_button),
-                onClick = onRecordAnyway,
-                modifier = Modifier.fillMaxWidth(),
-            )
+            if (!hadError) {
+                WsGhostButton(
+                    text = stringResource(R.string.empty_record_anyway_button),
+                    onClick = onRecordAnyway,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
         }
     }
 }

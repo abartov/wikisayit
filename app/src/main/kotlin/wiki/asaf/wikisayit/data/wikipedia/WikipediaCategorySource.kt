@@ -9,6 +9,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import wiki.asaf.wikisayit.ui.session.CategoryDepth
 import wiki.asaf.wikisayit.ui.session.EntryKind
+import wiki.asaf.wikisayit.ui.session.ListBuildResult
 import wiki.asaf.wikisayit.ui.session.QueueEntry
 import javax.inject.Inject
 
@@ -49,42 +50,49 @@ class WikipediaCategorySource
             categoryName: String,
             languageCode: String,
             depth: CategoryDepth,
-        ): List<QueueEntry> {
+        ): ListBuildResult {
             val apiBaseUrl = "https://${languageCode.ifBlank { "en" }}.wikipedia.org/w/api.php"
-            val titles = traverse(normalizeCategoryTitle(categoryName), depth.maxSubcategoryLevels, apiBaseUrl)
-            return resolveToQueueEntries(titles, apiBaseUrl)
+            val (titles, traverseHadError) =
+                traverse(normalizeCategoryTitle(categoryName), depth.maxSubcategoryLevels, apiBaseUrl)
+            val (entries, resolveHadError) = resolveToQueueEntries(titles, apiBaseUrl)
+            return ListBuildResult(entries, hadFetchError = traverseHadError || resolveHadError)
         }
 
+        /** @return (collected page titles, whether any `categorymembers` request failed). */
         private suspend fun traverse(
             rootTitle: String,
             maxLevels: Int,
             apiBaseUrl: String,
-        ): List<String> {
+        ): Pair<List<String>, Boolean> {
             val visitedCategories = mutableSetOf<String>()
             val pageTitles = LinkedHashSet<String>()
             val queue = ArrayDeque<Pair<String, Int>>()
             queue.add(rootTitle to 0)
+            var hadError = false
             while (queue.isNotEmpty() && pageTitles.size < MAX_PAGES) {
                 val (title, level) = queue.removeFirst()
                 if (!visitedCategories.add(title)) continue
-                val (pages, subcats) = fetchMembers(title, apiBaseUrl)
+                val (pages, subcats, fetchHadError) = fetchMembers(title, apiBaseUrl)
+                if (fetchHadError) hadError = true
                 pageTitles += pages
                 if (level < maxLevels) {
                     subcats.forEach { sub -> if (sub !in visitedCategories) queue.add(sub to level + 1) }
                 }
             }
-            return pageTitles.toList()
+            return pageTitles.toList() to hadError
         }
 
-        /** Returns (article page titles, subcategory titles) among [categoryTitle]'s direct members. */
+        /** @return (article page titles, subcategory titles, whether a request failed) among
+         * [categoryTitle]'s direct members. */
         private suspend fun fetchMembers(
             categoryTitle: String,
             apiBaseUrl: String,
-        ): Pair<List<String>, List<String>> {
+        ): Triple<List<String>, List<String>, Boolean> {
             val pages = mutableListOf<String>()
             val subcats = mutableListOf<String>()
             var cmContinue: String? = null
             var continuations = 0
+            var hadError = false
             do {
                 val response =
                     runCatching {
@@ -98,7 +106,10 @@ class WikipediaCategorySource
                                 cmContinue?.let { parameter("cmcontinue", it) }
                             }.let { if (it.status.isSuccess()) it.body<WikiCategoryMembersResponse>() else null }
                     }.getOrNull()
-                if (response == null) break
+                if (response == null) {
+                    hadError = true
+                    break
+                }
                 response.query.categorymembers.forEach { member ->
                     when (member.ns) {
                         CATEGORY_NAMESPACE -> subcats += member.title
@@ -108,15 +119,17 @@ class WikipediaCategorySource
                 cmContinue = response.continueToken?.cmcontinue
                 continuations++
             } while (cmContinue != null && continuations < MAX_CONTINUATIONS_PER_CATEGORY)
-            return pages to subcats
+            return Triple(pages, subcats, hadError)
         }
 
+        /** @return (resolved entries, whether a `pageprops` request failed). */
         private suspend fun resolveToQueueEntries(
             titles: List<String>,
             apiBaseUrl: String,
-        ): List<QueueEntry> {
-            if (titles.isEmpty()) return emptyList()
+        ): Pair<List<QueueEntry>, Boolean> {
+            if (titles.isEmpty()) return emptyList<QueueEntry>() to false
             val entries = mutableListOf<QueueEntry>()
+            var hadError = false
             for (batch in titles.chunked(PAGEPROPS_BATCH_SIZE)) {
                 val response =
                     runCatching {
@@ -129,6 +142,7 @@ class WikipediaCategorySource
                                 parameter("format", "json")
                             }.body<WikiPagePropsResponse>()
                     }.getOrNull()
+                if (response == null) hadError = true
                 response?.query?.pages?.values?.forEach { page ->
                     val qid = page.pageprops.wikibaseItem
                     if (qid != null) {
@@ -137,7 +151,7 @@ class WikipediaCategorySource
                     }
                 }
             }
-            return entries
+            return entries to hadError
         }
     }
 

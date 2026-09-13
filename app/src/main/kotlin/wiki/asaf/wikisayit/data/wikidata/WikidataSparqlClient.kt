@@ -21,29 +21,41 @@ data class SparqlEntityRef(
     val kind: EntryKind,
 )
 
+/** [SparqlEntityRef]s from a query, plus whether the request itself failed (network error, bad
+ * HTTP status, or an unparseable response) as opposed to the query genuinely matching nothing —
+ * the two look identical from [refs] alone, so callers that need to tell them apart use [hadError]. */
+data class SparqlQueryResult(
+    val refs: List<SparqlEntityRef>,
+    val hadError: Boolean,
+)
+
 /**
  * Runs a user-supplied SPARQL query against the public Wikidata Query Service, per the s-dbm.3
  * spec: the query is expected to bind `?item` and/or `?lexeme` to entity URIs (the form's hint
- * text tells the user so). Any other shape, or a request/parse failure, yields no results rather
- * than throwing — a bad query surfaces as an empty list to build on top of, same fail-open
- * philosophy as [WikidataExistenceChecker], instead of crashing the flow.
+ * text tells the user so). A query of any other shape yields no results without that being an
+ * error — same fail-open philosophy as [WikidataExistenceChecker]. A request/parse failure also
+ * yields no results (nothing to build on top of), but is reported via [SparqlQueryResult.hadError]
+ * so callers can tell "genuinely no matches" apart from "couldn't find out."
  */
 class WikidataSparqlClient
     @Inject
     constructor(
         private val httpClient: HttpClient,
     ) {
-        suspend fun execute(query: String): List<SparqlEntityRef> =
-            runCatching {
-                val response =
-                    httpClient.get(SPARQL_ENDPOINT) {
-                        parameter("query", query)
-                        parameter("format", "json")
-                    }
-                if (!response.status.isSuccess()) return@runCatching emptyList()
-                val parsed = sparqlJson.decodeFromString<SparqlResultsResponse>(response.bodyAsText())
-                parsed.results.bindings.mapNotNull { it.toEntityRef() }
-            }.getOrDefault(emptyList())
+        suspend fun execute(query: String): SparqlQueryResult {
+            val result =
+                runCatching {
+                    val response =
+                        httpClient.get(SPARQL_ENDPOINT) {
+                            parameter("query", query)
+                            parameter("format", "json")
+                        }
+                    if (!response.status.isSuccess()) return@runCatching null
+                    val parsed = sparqlJson.decodeFromString<SparqlResultsResponse>(response.bodyAsText())
+                    parsed.results.bindings.mapNotNull { it.toEntityRef() }
+                }.getOrNull()
+            return SparqlQueryResult(result ?: emptyList(), hadError = result == null)
+        }
 
         private fun Map<String, SparqlBindingValue>.toEntityRef(): SparqlEntityRef? {
             this["item"]?.value?.let { return uriToId(it)?.let { id -> SparqlEntityRef(id, EntryKind.ITEM) } }

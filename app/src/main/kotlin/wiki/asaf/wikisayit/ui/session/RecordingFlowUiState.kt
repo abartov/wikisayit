@@ -21,6 +21,10 @@ data class RecordingFlowUiState(
     val categoryDepth: CategoryDepth = CategoryDepth.TWO,
     val rawCount: Int = 0,
     val resolveDone: Int = 0,
+    /** True when the most recent list build hit a network failure it couldn't recover from —
+     * lets the UI tell a genuinely empty/complete result apart from one where fetching silently
+     * dropped data (s-fns). */
+    val listBuildHadError: Boolean = false,
     val checkDone: Int = 0,
     val excludedCount: Int = 0,
     val formsAddedCount: Int = 0,

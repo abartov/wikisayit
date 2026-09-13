@@ -137,21 +137,37 @@ class RecordingFlowViewModel
         }
 
         /** Runs [build] (a SPARQL query execution or a category traversal) on a background job
-         * while the RESOLVING stage shows an indeterminate spinner, then lands on FRESH. */
-        private fun resolveAsyncList(build: suspend () -> List<QueueEntry>) {
+         * while the RESOLVING stage shows an indeterminate spinner, then lands on FRESH — or, if
+         * fetching failed and left nothing to show, jumps straight to EMPTY with
+         * [RecordingFlowUiState.listBuildHadError] set so that screen can explain the list
+         * couldn't be fetched rather than claiming it's genuinely empty (s-fns). */
+        private fun resolveAsyncList(build: suspend () -> ListBuildResult) {
             tickerJob?.cancel()
-            _uiState.update { it.copy(listBuildStage = ListBuildStage.RESOLVING, rawCount = 0, resolveDone = 0) }
+            _uiState.update {
+                it.copy(
+                    listBuildStage = ListBuildStage.RESOLVING,
+                    rawCount = 0,
+                    resolveDone = 0,
+                    listBuildHadError = false,
+                )
+            }
             tickerJob =
                 viewModelScope.launch {
-                    val entries = build()
+                    val result = build()
                     _uiState.update {
                         it.copy(
-                            finalQueue = entries,
-                            rawCount = entries.size,
+                            finalQueue = result.entries,
+                            rawCount = result.entries.size,
                             checkDone = 0,
                             excludedCount = 0,
                             formsAddedCount = 0,
-                            listBuildStage = ListBuildStage.FRESH,
+                            listBuildHadError = result.hadFetchError,
+                            listBuildStage =
+                                if (result.entries.isEmpty() && result.hadFetchError) {
+                                    ListBuildStage.EMPTY
+                                } else {
+                                    ListBuildStage.FRESH
+                                },
                         )
                     }
                 }
@@ -177,10 +193,14 @@ class RecordingFlowViewModel
                 viewModelScope.launch {
                     val resolved = mutableListOf<QueueEntry>()
                     val pending = mutableListOf<DisambiguationCase>()
+                    var hadError = false
                     lines.forEachIndexed { index, line ->
-                        val candidates = labelMatcher.search(line, entityType, language)
+                        val searchResult = labelMatcher.search(line, entityType, language)
+                        val candidates = searchResult.candidates
+                        if (searchResult.hadError) hadError = true
                         when {
-                            candidates.isEmpty() -> resolved += unresolvedEntry(line, entryKind)
+                            candidates.isEmpty() ->
+                                resolved += unresolvedEntry(line, entryKind, networkError = searchResult.hadError)
                             candidates.size == 1 ->
                                 resolved += candidates[0].toDisambiguationCandidate(line).toQueueEntry(entryKind)
                             else ->
@@ -194,7 +214,12 @@ class RecordingFlowViewModel
                         _uiState.update { it.copy(resolveDone = index + 1) }
                     }
                     _uiState.update {
-                        it.copy(finalQueue = resolved, disambiguationQueue = pending, disambiguationIndex = 0)
+                        it.copy(
+                            finalQueue = resolved,
+                            disambiguationQueue = pending,
+                            disambiguationIndex = 0,
+                            listBuildHadError = hadError,
+                        )
                     }
                     advanceListBuild()
                 }
@@ -203,7 +228,13 @@ class RecordingFlowViewModel
         private fun unresolvedEntry(
             label: String,
             kind: EntryKind,
-        ): QueueEntry = QueueEntry(label = label, kind = kind, detail = "no Wikidata match found")
+            networkError: Boolean,
+        ): QueueEntry =
+            QueueEntry(
+                label = label,
+                kind = kind,
+                detail = if (networkError) "couldn't check — try again" else "no Wikidata match found",
+            )
 
         private fun advanceListBuild() {
             _uiState.update {
@@ -294,6 +325,7 @@ class RecordingFlowViewModel
                     sourceText = "",
                     finalQueue = emptyList(),
                     rawCount = 0,
+                    listBuildHadError = false,
                     disambiguationQueue = emptyList(),
                     disambiguationIndex = 0,
                 )

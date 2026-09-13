@@ -121,6 +121,10 @@
     <string name="empty_where_gaps_body">Try a different word list, or search Wikidata directly for entries that are still missing audio.</string>
     <string name="empty_pick_different_button">Pick a different list</string>
     <string name="empty_record_anyway_button">Record them anyway, as second takes</string>
+    <string name="list_build_error_kicker">Couldn\'t fetch this list</string>
+    <string name="list_build_error_title">Something went wrong</string>
+    <string name="list_build_error_body">Some requests to Wikipedia or Wikidata failed, so this list may be missing entries — it\'s not necessarily empty. Check your connection and try again, or pick a different list.</string>
+    <string name="list_build_partial_error_banner">Some requests failed while building this list — it may be missing entries. Try again if this looks incomplete.</string>
 
     <string name="recording_counter">%1$d of %2$d</string>
     <string name="recording_hint_speak_when_ready">speak when ready</string>
@@ -187,7 +191,7 @@
     <string name="contribution_step_commons">file on Commons</string>
     <string name="contribution_step_categories">categories added</string>
     <string name="contribution_step_p443">P443 added to %1$s</string>
-    <string name="contribution_leaving_note">Leaving the app is safe — uploads continue and failures are retried on the next launch.</string>
+    <string name="contribution_leaving_note">You can switch away — uploads keep going as long as the app stays open. Don\'t force-close it until this finishes.</string>
     <string name="contribution_connectivity_banner">Connection dropped — waiting for it to come back.</string>
     <string name="contribution_needs_attention_kicker">needs attention</string>
     <string name="contribution_status_retrying">retrying</string>
@@ -198,6 +202,7 @@
     <string name="action_rename_and_upload">Rename and upload</string>
     <string name="action_discard_this_one">Discard this one</string>
     <string name="action_leave_for_later">Leave them for later</string>
+    <string name="contribution_leave_for_later_note">These stay on your device only, not on Commons or Wikidata, until you come back here and retry them — closing the app won\'t retry them for you.</string>
     <plurals name="contribution_retry_all_now">
         <item quantity="one">Retry %1$d now</item>
         <item quantity="other">Retry all %1$d now</item>

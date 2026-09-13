@@ -175,6 +175,11 @@ fun ContributionScreen(
                     onClick = viewModel::leaveFailuresForLater,
                     modifier = Modifier.fillMaxWidth(),
                 )
+                Text(
+                    text = stringResource(R.string.contribution_leave_for_later_note),
+                    style = typography.caption,
+                    color = colors.neutral700,
+                )
             }
         } else {
             Text(

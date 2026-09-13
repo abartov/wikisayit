@@ -11,6 +11,7 @@ import io.ktor.serialization.kotlinx.json.json
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import wiki.asaf.wikisayit.ui.session.CategoryDepth
@@ -71,42 +72,54 @@ class WikipediaCategorySourceTest {
     fun `depth NONE only collects the root category's own pages`() =
         runTest {
             val source = sourceFor(categoryGraphEngine())
-            val entries = source.build("Root", "en", CategoryDepth.NONE)
+            val result = source.build("Root", "en", CategoryDepth.NONE)
 
-            assertEquals(1, entries.size)
-            assertEquals("Sparrow", entries[0].label)
-            assertEquals("Q1", entries[0].qid)
-            assertEquals(EntryKind.ITEM, entries[0].kind)
+            assertEquals(1, result.entries.size)
+            assertEquals("Sparrow", result.entries[0].label)
+            assertEquals("Q1", result.entries[0].qid)
+            assertEquals(EntryKind.ITEM, result.entries[0].kind)
+            assertFalse(result.hadFetchError)
         }
 
     @Test
     fun `depth TWO recurses into subcategories and detects the cycle back to root`() =
         runTest {
             val source = sourceFor(categoryGraphEngine())
-            val entries = source.build("Category:Root", "en", CategoryDepth.TWO)
+            val result = source.build("Category:Root", "en", CategoryDepth.TWO)
 
             // Owl has no wikibase_item, so it's dropped; Sparrow is the only resolvable entry.
-            assertEquals(1, entries.size)
-            assertEquals("Sparrow", entries[0].label)
+            assertEquals(1, result.entries.size)
+            assertEquals("Sparrow", result.entries[0].label)
         }
 
     @Test
     fun `page without a linked Wikidata item is dropped`() =
         runTest {
             val source = sourceFor(categoryGraphEngine())
-            val entries = source.build("Sub", "en", CategoryDepth.NONE)
+            val result = source.build("Sub", "en", CategoryDepth.NONE)
 
-            assertTrue(entries.none { it.label == "Owl" })
+            assertTrue(result.entries.none { it.label == "Owl" })
         }
 
     @Test
-    fun `network failure yields an empty list rather than throwing`() =
+    fun `network failure yields an empty list flagged as an error rather than throwing`() =
         runTest {
             val engine = MockEngine { throw RuntimeException("boom") }
             val source = sourceFor(engine)
 
-            val entries = source.build("Anything", "en", CategoryDepth.FIVE)
+            val result = source.build("Anything", "en", CategoryDepth.FIVE)
 
-            assertTrue(entries.isEmpty())
+            assertTrue(result.entries.isEmpty())
+            assertTrue(result.hadFetchError)
+        }
+
+    @Test
+    fun `a genuinely empty category is not flagged as an error`() =
+        runTest {
+            val source = sourceFor(categoryGraphEngine())
+            val result = source.build("Category:Nonexistent", "en", CategoryDepth.NONE)
+
+            assertTrue(result.entries.isEmpty())
+            assertFalse(result.hadFetchError)
         }
 }

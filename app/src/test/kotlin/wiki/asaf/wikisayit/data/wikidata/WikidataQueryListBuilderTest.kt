@@ -11,6 +11,7 @@ import io.ktor.serialization.kotlinx.json.json
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import wiki.asaf.wikisayit.network.NoAuthTokenProvider
@@ -60,12 +61,13 @@ class WikidataQueryListBuilderTest {
                     entitiesBody =
                         """{"entities":{"Q42":{"labels":{"en":{"language":"en","value":"Douglas Adams"}}}}}""",
                 )
-            val entries = builder.build("SELECT ?item WHERE {}", preferredLanguage = "en")
+            val result = builder.build("SELECT ?item WHERE {}", preferredLanguage = "en")
 
-            assertEquals(1, entries.size)
-            assertEquals("Douglas Adams", entries[0].label)
-            assertEquals(EntryKind.ITEM, entries[0].kind)
-            assertEquals("Q42", entries[0].qid)
+            assertEquals(1, result.entries.size)
+            assertEquals("Douglas Adams", result.entries[0].label)
+            assertEquals(EntryKind.ITEM, result.entries[0].kind)
+            assertEquals("Q42", result.entries[0].qid)
+            assertFalse(result.hadFetchError)
         }
 
     @Test
@@ -82,12 +84,12 @@ class WikidataQueryListBuilderTest {
                     entitiesBody =
                         """{"entities":{"L2":{"lemmas":{"en":{"language":"en","value":"water"}}}}}""",
                 )
-            val entries = builder.build("SELECT ?lexeme WHERE {}", preferredLanguage = "en")
+            val result = builder.build("SELECT ?lexeme WHERE {}", preferredLanguage = "en")
 
-            assertEquals(1, entries.size)
-            assertEquals("water", entries[0].label)
-            assertEquals(EntryKind.FORM, entries[0].kind)
-            assertEquals("L2", entries[0].lexemeId)
+            assertEquals(1, result.entries.size)
+            assertEquals("water", result.entries[0].label)
+            assertEquals(EntryKind.FORM, result.entries[0].kind)
+            assertEquals("L2", result.entries[0].lexemeId)
         }
 
     @Test
@@ -104,17 +106,39 @@ class WikidataQueryListBuilderTest {
                     entitiesBody =
                         """{"entities":{"Q1":{"labels":{"fr":{"language":"fr","value":"Terre"}}}}}""",
                 )
-            val entries = builder.build("SELECT ?item WHERE {}", preferredLanguage = "en")
+            val result = builder.build("SELECT ?item WHERE {}", preferredLanguage = "en")
 
-            assertEquals("Terre", entries[0].label)
+            assertEquals("Terre", result.entries[0].label)
         }
 
     @Test
     fun `no sparql results yields empty list without calling wbgetentities`() =
         runTest {
             val builder = builderFor("""{"results":{"bindings":[]}}""", entitiesBody = """{"entities":{}}""")
-            val entries = builder.build("SELECT ?item WHERE {}", preferredLanguage = "en")
+            val result = builder.build("SELECT ?item WHERE {}", preferredLanguage = "en")
 
-            assertTrue(entries.isEmpty())
+            assertTrue(result.entries.isEmpty())
+            assertFalse(result.hadFetchError)
+        }
+
+    @Test
+    fun `sparql request failure is reported distinctly from a genuinely empty result`() =
+        runTest {
+            val engine = MockEngine { throw RuntimeException("boom") }
+            val httpClient =
+                HttpClient(engine) {
+                    expectSuccess = false
+                    install(ContentNegotiation) { json(Json { ignoreUnknownKeys = true }) }
+                }
+            val builder =
+                WikidataQueryListBuilder(
+                    WikidataSparqlClient(httpClient),
+                    WikimediaClients(httpClient, NoAuthTokenProvider),
+                )
+
+            val result = builder.build("SELECT ?item WHERE {}", preferredLanguage = "en")
+
+            assertTrue(result.entries.isEmpty())
+            assertTrue(result.hadFetchError)
         }
 }

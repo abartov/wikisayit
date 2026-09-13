@@ -11,6 +11,7 @@ import io.ktor.serialization.kotlinx.json.json
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import wiki.asaf.wikisayit.ui.session.EntryKind
@@ -48,10 +49,11 @@ class WikidataSparqlClientTest {
                     ]}}
                     """.trimIndent(),
                 )
-            val refs = client.execute("SELECT ?item WHERE {}")
+            val result = client.execute("SELECT ?item WHERE {}")
 
-            assertEquals(1, refs.size)
-            assertEquals(SparqlEntityRef("Q42", EntryKind.ITEM), refs[0])
+            assertEquals(1, result.refs.size)
+            assertEquals(SparqlEntityRef("Q42", EntryKind.ITEM), result.refs[0])
+            assertFalse(result.hadError)
         }
 
     @Test
@@ -65,14 +67,15 @@ class WikidataSparqlClientTest {
                     ]}}
                     """.trimIndent(),
                 )
-            val refs = client.execute("SELECT ?lexeme WHERE {}")
+            val result = client.execute("SELECT ?lexeme WHERE {}")
 
-            assertEquals(1, refs.size)
-            assertEquals(SparqlEntityRef("L2", EntryKind.FORM), refs[0])
+            assertEquals(1, result.refs.size)
+            assertEquals(SparqlEntityRef("L2", EntryKind.FORM), result.refs[0])
+            assertFalse(result.hadError)
         }
 
     @Test
-    fun `rows without item or lexeme bindings are skipped`() =
+    fun `rows without item or lexeme bindings are skipped without an error`() =
         runTest {
             val client =
                 clientFor(
@@ -82,22 +85,24 @@ class WikidataSparqlClientTest {
                     ]}}
                     """.trimIndent(),
                 )
-            val refs = client.execute("SELECT ?itemLabel WHERE {}")
+            val result = client.execute("SELECT ?itemLabel WHERE {}")
 
-            assertTrue(refs.isEmpty())
+            assertTrue(result.refs.isEmpty())
+            assertFalse(result.hadError)
         }
 
     @Test
-    fun `http failure yields empty list`() =
+    fun `http failure yields empty list flagged as an error`() =
         runTest {
             val client = clientFor("""{"error":"bad query"}""", status = HttpStatusCode.BadRequest)
-            val refs = client.execute("not sparql")
+            val result = client.execute("not sparql")
 
-            assertTrue(refs.isEmpty())
+            assertTrue(result.refs.isEmpty())
+            assertTrue(result.hadError)
         }
 
     @Test
-    fun `network failure yields empty list`() =
+    fun `network failure yields empty list flagged as an error`() =
         runTest {
             val engine = MockEngine { throw RuntimeException("boom") }
             val httpClient =
@@ -107,8 +112,9 @@ class WikidataSparqlClientTest {
                 }
             val client = WikidataSparqlClient(httpClient)
 
-            val refs = client.execute("SELECT ?item WHERE {}")
+            val result = client.execute("SELECT ?item WHERE {}")
 
-            assertTrue(refs.isEmpty())
+            assertTrue(result.refs.isEmpty())
+            assertTrue(result.hadError)
         }
 }

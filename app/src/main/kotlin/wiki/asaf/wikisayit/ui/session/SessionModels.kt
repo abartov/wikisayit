@@ -80,6 +80,14 @@ enum class CategoryDepth { NONE, TWO, FIVE }
 
 enum class ListBuildStage { PICK_SOURCE, SOURCE_FORM, RESOLVING, DISAMBIGUATING, FRESH, CHECKING, CHECKED, EMPTY }
 
+/** A list source's built entries, plus whether any underlying network request failed along the
+ * way — a category/query that's genuinely empty looks identical to one where fetching silently
+ * dropped data unless callers can check [hadFetchError] to tell them apart. */
+data class ListBuildResult(
+    val entries: List<QueueEntry>,
+    val hadFetchError: Boolean,
+)
+
 enum class RecordingPhase { READY, SPEAKING, SILENCE }
 
 sealed interface RecordingBlocker {

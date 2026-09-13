@@ -178,7 +178,8 @@
     <string name="contribution_step_commons">הקובץ ב-Commons</string>
     <string name="contribution_step_categories">הקטגוריות נוספו</string>
     <string name="contribution_step_p443">P443 נוסף ל-%1$s</string>
-    <string name="contribution_leaving_note">אפשר לצאת מהאפליקציה בבטחה — ההעלאות ממשיכות וכשלונות ינוסו שוב בהפעלה הבאה.</string>
+    <string name="contribution_leaving_note">אפשר לעבור לאפליקציה אחרת — ההעלאות ממשיכות כל עוד האפליקציה פתוחה. כדאי לא לסגור אותה בכוח עד שזה נגמר.</string>
+    <string name="contribution_leave_for_later_note">אלה יישארו רק על המכשיר, ולא ב-Commons או בוויקינתונים, עד שתחזרו לכאן ותנסו שוב — סגירת האפליקציה לא תנסה שוב עבורכם.</string>
 
     <string name="done_explainer">כל קובץ נמצא ב-Commons ומקושר מוויקינתונים באמצעות P443. מעכשיו קוראים ישמעו את קולכם.</string>
     <string name="done_commons_uploads">ההעלאות שלכם ב-Commons</string>

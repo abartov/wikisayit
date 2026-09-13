@@ -2,6 +2,7 @@ package wiki.asaf.wikisayit.data.wikidata
 
 import wiki.asaf.wikisayit.network.WikimediaClients
 import wiki.asaf.wikisayit.ui.session.EntryKind
+import wiki.asaf.wikisayit.ui.session.ListBuildResult
 import wiki.asaf.wikisayit.ui.session.QueueEntry
 import javax.inject.Inject
 
@@ -23,33 +24,41 @@ class WikidataQueryListBuilder
         suspend fun build(
             query: String,
             preferredLanguage: String,
-        ): List<QueueEntry> {
-            val refs = sparqlClient.execute(query)
-            if (refs.isEmpty()) return emptyList()
+        ): ListBuildResult {
+            val sparqlResult = sparqlClient.execute(query)
+            val refs = sparqlResult.refs
+            if (refs.isEmpty()) return ListBuildResult(emptyList(), hadFetchError = sparqlResult.hadError)
 
             val itemIds = refs.filter { it.kind == EntryKind.ITEM }.map { it.id }.distinct()
             val lexemeIds = refs.filter { it.kind == EntryKind.FORM }.map { it.id }.distinct()
-            val itemLabels = fetchRepresentations(itemIds, props = "labels") { it.labels }
-            val lexemeLemmas = fetchRepresentations(lexemeIds, props = "lemmas") { it.lemmas }
+            val (itemLabels, itemLabelsHadError) = fetchRepresentations(itemIds, props = "labels") { it.labels }
+            val (lexemeLemmas, lexemeLemmasHadError) = fetchRepresentations(lexemeIds, props = "lemmas") { it.lemmas }
 
-            return refs.map { ref ->
-                if (ref.kind == EntryKind.ITEM) {
-                    val label = itemLabels[ref.id]?.labelFor(preferredLanguage, fallback = ref.id) ?: ref.id
-                    QueueEntry(label = label, kind = EntryKind.ITEM, detail = "Wikidata item", qid = ref.id)
-                } else {
-                    val label = lexemeLemmas[ref.id]?.labelFor(preferredLanguage, fallback = ref.id) ?: ref.id
-                    QueueEntry(label = label, kind = EntryKind.FORM, detail = "lexeme", lexemeId = ref.id)
+            val entries =
+                refs.map { ref ->
+                    if (ref.kind == EntryKind.ITEM) {
+                        val label = itemLabels[ref.id]?.labelFor(preferredLanguage, fallback = ref.id) ?: ref.id
+                        QueueEntry(label = label, kind = EntryKind.ITEM, detail = "Wikidata item", qid = ref.id)
+                    } else {
+                        val label = lexemeLemmas[ref.id]?.labelFor(preferredLanguage, fallback = ref.id) ?: ref.id
+                        QueueEntry(label = label, kind = EntryKind.FORM, detail = "lexeme", lexemeId = ref.id)
+                    }
                 }
-            }
+            return ListBuildResult(
+                entries,
+                hadFetchError = sparqlResult.hadError || itemLabelsHadError || lexemeLemmasHadError,
+            )
         }
 
+        /** @return the resolved representations, plus whether any batch's request failed. */
         private suspend fun fetchRepresentations(
             ids: List<String>,
             props: String,
             representationsOf: (WbEntity) -> Map<String, WbRepresentation>,
-        ): Map<String, Map<String, WbRepresentation>> {
-            if (ids.isEmpty()) return emptyMap()
+        ): Pair<Map<String, Map<String, WbRepresentation>>, Boolean> {
+            if (ids.isEmpty()) return emptyMap<String, Map<String, WbRepresentation>>() to false
             val result = mutableMapOf<String, Map<String, WbRepresentation>>()
+            var hadError = false
             for (batch in ids.chunked(BATCH_SIZE)) {
                 val response =
                     runCatching {
@@ -61,8 +70,9 @@ class WikidataQueryListBuilder
                             ),
                         )
                     }.getOrNull()
+                if (response == null) hadError = true
                 response?.entities?.forEach { (id, entity) -> result[id] = representationsOf(entity) }
             }
-            return result
+            return result to hadError
         }
     }

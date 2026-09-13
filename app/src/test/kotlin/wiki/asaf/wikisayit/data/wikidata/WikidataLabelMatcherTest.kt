@@ -11,6 +11,7 @@ import io.ktor.serialization.kotlinx.json.json
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import wiki.asaf.wikisayit.network.NoAuthTokenProvider
@@ -43,12 +44,13 @@ class WikidataLabelMatcherTest {
                 matcherFor(
                     """{"search":[{"id":"Q1218","label":"Jerusalem","description":"capital city"}]}""",
                 )
-            val results = matcher.search("Jerusalem", WbEntityType.ITEM, "en")
+            val result = matcher.search("Jerusalem", WbEntityType.ITEM, "en")
 
-            assertEquals(1, results.size)
-            assertEquals("Q1218", results[0].id)
-            assertEquals("Jerusalem", results[0].label)
-            assertEquals("capital city", results[0].description)
+            assertEquals(1, result.candidates.size)
+            assertEquals("Q1218", result.candidates[0].id)
+            assertEquals("Jerusalem", result.candidates[0].label)
+            assertEquals("capital city", result.candidates[0].description)
+            assertFalse(result.hadError)
         }
 
     @Test
@@ -63,24 +65,26 @@ class WikidataLabelMatcherTest {
                     ]}
                     """.trimIndent(),
                 )
-            val results = matcher.search("kestrel", WbEntityType.LEXEME, "en")
+            val result = matcher.search("kestrel", WbEntityType.LEXEME, "en")
 
-            assertEquals(2, results.size)
-            assertTrue(results.any { it.id == "L8842" })
-            assertTrue(results.any { it.id == "L44120" })
+            assertEquals(2, result.candidates.size)
+            assertTrue(result.candidates.any { it.id == "L8842" })
+            assertTrue(result.candidates.any { it.id == "L44120" })
+            assertFalse(result.hadError)
         }
 
     @Test
-    fun `no hits returns empty list`() =
+    fun `no hits returns empty list without an error`() =
         runTest {
             val matcher = matcherFor("""{"search":[]}""")
-            val results = matcher.search("zzzznotaword", WbEntityType.ITEM, "en")
+            val result = matcher.search("zzzznotaword", WbEntityType.ITEM, "en")
 
-            assertEquals(0, results.size)
+            assertEquals(0, result.candidates.size)
+            assertFalse(result.hadError)
         }
 
     @Test
-    fun `network failure returns empty list`() =
+    fun `network failure returns empty list flagged as an error`() =
         runTest {
             val engine = MockEngine { throw RuntimeException("boom") }
             val httpClient =
@@ -90,8 +94,9 @@ class WikidataLabelMatcherTest {
                 }
             val matcher = WikidataLabelMatcher(WikimediaClients(httpClient, NoAuthTokenProvider))
 
-            val results = matcher.search("water", WbEntityType.LEXEME, "en")
+            val result = matcher.search("water", WbEntityType.LEXEME, "en")
 
-            assertEquals(0, results.size)
+            assertEquals(0, result.candidates.size)
+            assertTrue(result.hadError)
         }
 }
