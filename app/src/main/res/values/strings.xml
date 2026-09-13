@@ -12,6 +12,9 @@
     <string name="sign_in_note">Sign-in happens on wikimedia.org — WikiSayIt never sees your password.</string>
     <string name="sign_in_no_account">I don\'t have an account yet</string>
     <string name="nav_destination_language">Language</string>
+    <string name="language_step_kicker">Step 2 of 4 — language</string>
+    <string name="language_title">What will you speak?</string>
+    <string name="language_explainer">From the languages on %1$s\'s profile.</string>
     <string name="nav_destination_list_source">List source</string>
     <string name="nav_destination_recording">Recording</string>
     <string name="nav_destination_review">Review</string>
@@ -50,6 +53,69 @@
     <string name="add_language_iso_label">ISO code</string>
     <string name="add_language_proficiency_label">How well do you speak it?</string>
     <string name="add_language_dialect_label">Dialect or region — leave empty for the standard form</string>
+
+    <string name="list_source_step_kicker">Step 3 of 4 — word list</string>
+    <string name="list_source_title">Where do the words come from?</string>
+    <string name="list_source_explainer">Pick one source. You can edit the list before recording.</string>
+    <string name="source_paste_kicker">paste</string>
+    <string name="source_paste_title">Your own list</string>
+    <string name="source_paste_body">One word, name or phrase per line. Say whether they are item labels or lexemes.</string>
+    <string name="source_query_kicker">sparql</string>
+    <string name="source_query_title">A Wikidata query</string>
+    <string name="source_query_body">Paste a query that returns items or lexemes. Missing labels fall back to the default label.</string>
+    <string name="source_category_kicker">wikipedia</string>
+    <string name="source_category_title">A Wikipedia category</string>
+    <string name="source_category_body">Everything in a category, optionally down through sub-categories.</string>
+    <string name="source_name_paste">your own list</string>
+    <string name="source_name_query">Wikidata query</string>
+    <string name="source_name_category">Wikipedia category</string>
+    <string name="form_step_kicker">Step 3 of 4 — %1$s</string>
+    <string name="form_title_paste">Paste your words</string>
+    <string name="form_title_query">Paste your query</string>
+    <string name="form_title_category">Name the category</string>
+    <string name="form_label_paste">One word, name or phrase per line</string>
+    <string name="form_label_query">SPARQL returning ?item or ?lexeme</string>
+    <string name="form_label_category">Category on en.wikipedia.org</string>
+    <string name="match_as_label">These lines should match</string>
+    <string name="match_as_items">Wikidata items</string>
+    <string name="match_as_lexemes">Lexemes</string>
+    <string name="match_as_note">Ambiguous lines get a disambiguation card before recording starts.</string>
+    <string name="depth_label">Include sub-categories, depth</string>
+    <string name="depth_none">None</string>
+    <string name="depth_two">2</string>
+    <string name="depth_five">5 (max)</string>
+    <string name="depth_note">Loops are detected and skipped.</string>
+    <string name="list_source_build_button">Build the list</string>
+    <string name="list_step_kicker">Step 4 of 4 — the list</string>
+    <string name="list_blurb_paste">Matched against Wikidata.</string>
+    <string name="list_blurb_query">Returned by your query.</string>
+    <string name="list_blurb_category">From your chosen category.</string>
+    <string name="worth_checking_kicker">Worth checking first</string>
+    <string name="worth_checking_body">WikiSayIt exists to fill gaps, so it can drop every entry that already has a recording on Wikidata before you open your mouth.</string>
+    <string name="checking_label">checking for existing audio…</string>
+    <string name="check_button">Check for existing recordings</string>
+    <string name="skip_check_button">Skip the check, use the list as-is</string>
+    <string name="check_row_entries">entries in the list</string>
+    <string name="check_row_excluded">already have audio (P443)</string>
+    <string name="check_row_forms_added">lexeme forms still missing audio</string>
+    <string name="check_row_final">to record</string>
+    <string name="start_button">START</string>
+    <string name="empty_check_complete_kicker">Check complete</string>
+    <string name="empty_body">Somebody got there first — every item and every lexeme form in this list already carries a pronunciation (P443). Nothing here needs your voice.</string>
+    <string name="empty_where_gaps_kicker">where the gaps are</string>
+    <string name="empty_where_gaps_body">Try a different word list, or search Wikidata directly for entries that are still missing audio.</string>
+    <string name="empty_pick_different_button">Pick a different list</string>
+    <string name="empty_record_anyway_button">Record them anyway, as second takes</string>
+
+    <plurals name="list_entries_found_count">
+        <item quantity="one">%1$d entry found</item>
+        <item quantity="other">%1$d entries found</item>
+    </plurals>
+
+    <plurals name="empty_title">
+        <item quantity="one">All %1$d already has audio</item>
+        <item quantity="other">All %1$d already have audio</item>
+    </plurals>
 
     <plurals name="profile_recordings_count">
         <item quantity="one">%1$d recording</item>

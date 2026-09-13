@@ -12,6 +12,9 @@
     <string name="sign_in_note">ההתחברות מתבצעת באתר wikimedia.org — ויקי־תגיד לעולם לא רואה את הסיסמה שלכם.</string>
     <string name="sign_in_no_account">אין לי עדיין חשבון</string>
     <string name="nav_destination_language">שפה</string>
+    <string name="language_step_kicker">שלב 2 מתוך 4 — שפה</string>
+    <string name="language_title">באיזו שפה תדברו?</string>
+    <string name="language_explainer">מתוך השפות בפרופיל של %1$s.</string>
     <string name="nav_destination_list_source">מקור הרשימה</string>
     <string name="nav_destination_recording">הקלטה</string>
     <string name="nav_destination_review">סקירה</string>
@@ -50,6 +53,71 @@
     <string name="add_language_iso_label">קוד ISO</string>
     <string name="add_language_proficiency_label">עד כמה אתם שולטים בשפה?</string>
     <string name="add_language_dialect_label">ניב או אזור — השאירו ריק עבור הצורה הרגילה</string>
+
+    <string name="list_source_step_kicker">שלב 3 מתוך 4 — רשימת מילים</string>
+    <string name="list_source_title">מאיפה יגיעו המילים?</string>
+    <string name="list_source_explainer">בחרו מקור אחד. אפשר לערוך את הרשימה לפני ההקלטה.</string>
+    <string name="source_paste_kicker">הדבקה</string>
+    <string name="source_paste_title">הרשימה שלכם</string>
+    <string name="source_paste_body">מילה, שם או ביטוי אחד בכל שורה. ציינו אם מדובר בפריטים או בלקסמות.</string>
+    <string name="source_query_kicker">שאילתה</string>
+    <string name="source_query_title">שאילתת ויקינתונים</string>
+    <string name="source_query_body">הדביקו שאילתה שמחזירה פריטים או לקסמות. תוויות חסרות ייפלו חזרה לתווית ברירת המחדל.</string>
+    <string name="source_category_kicker">ויקיפדיה</string>
+    <string name="source_category_title">קטגוריה בוויקיפדיה</string>
+    <string name="source_category_body">כל מה שבקטגוריה, ואפשר גם דרך תת-קטגוריות.</string>
+    <string name="source_name_paste">הרשימה שלכם</string>
+    <string name="source_name_query">שאילתת ויקינתונים</string>
+    <string name="source_name_category">קטגוריה בוויקיפדיה</string>
+    <string name="form_step_kicker">שלב 3 מתוך 4 — %1$s</string>
+    <string name="form_title_paste">הדביקו את המילים שלכם</string>
+    <string name="form_title_query">הדביקו את השאילתה שלכם</string>
+    <string name="form_title_category">ציינו את הקטגוריה</string>
+    <string name="form_label_paste">מילה, שם או ביטוי אחד בכל שורה</string>
+    <string name="form_label_query">שאילתת SPARQL שמחזירה ?item או ?lexeme</string>
+    <string name="form_label_category">קטגוריה ב-he.wikipedia.org</string>
+    <string name="match_as_label">השורות האלה צריכות להתאים ל</string>
+    <string name="match_as_items">פריטי ויקינתונים</string>
+    <string name="match_as_lexemes">לקסמות</string>
+    <string name="match_as_note">שורות דו-משמעיות יקבלו כרטיס לבירור לפני תחילת ההקלטה.</string>
+    <string name="depth_label">כולל תת-קטגוריות, לעומק</string>
+    <string name="depth_none">ללא</string>
+    <string name="depth_two">2</string>
+    <string name="depth_five">5 (מקסימום)</string>
+    <string name="depth_note">לולאות מתגלות ומדולגות.</string>
+    <string name="list_source_build_button">בניית הרשימה</string>
+    <string name="list_step_kicker">שלב 4 מתוך 4 — הרשימה</string>
+    <string name="list_blurb_paste">הותאם מול ויקינתונים.</string>
+    <string name="list_blurb_query">הוחזר על ידי השאילתה שלכם.</string>
+    <string name="list_blurb_category">מתוך הקטגוריה שבחרתם.</string>
+    <string name="worth_checking_kicker">כדאי לבדוק קודם</string>
+    <string name="worth_checking_body">ויקי־תגיד קיים כדי למלא פערים, ולכן הוא יכול להסיר כל פריט שכבר יש לו הקלטה בוויקינתונים לפני שתפתחו את הפה.</string>
+    <string name="checking_label">בודקים אם יש כבר הקלטה…</string>
+    <string name="check_button">בדיקת הקלטות קיימות</string>
+    <string name="skip_check_button">דילוג על הבדיקה, שימוש ברשימה כמות שהיא</string>
+    <string name="check_row_entries">פריטים ברשימה</string>
+    <string name="check_row_excluded">כבר יש להם הקלטה (P443)</string>
+    <string name="check_row_forms_added">צורות לקסמה שעדיין חסרה להן הקלטה</string>
+    <string name="check_row_final">להקלטה</string>
+    <string name="start_button">התחלה</string>
+    <string name="empty_check_complete_kicker">הבדיקה הושלמה</string>
+    <string name="empty_body">מישהו כבר הקדים אתכם — לכל פריט ולכל צורת לקסמה ברשימה הזו כבר יש הקלטה (P443). שום דבר כאן לא זקוק לקול שלכם.</string>
+    <string name="empty_where_gaps_kicker">איפה הפערים</string>
+    <string name="empty_where_gaps_body">נסו רשימת מילים אחרת, או חפשו ישירות בוויקינתונים פריטים שעדיין חסרה להם הקלטה.</string>
+    <string name="empty_pick_different_button">בחירת רשימה אחרת</string>
+    <string name="empty_record_anyway_button">הקליטו בכל זאת, כהקלטה נוספת</string>
+
+    <plurals name="list_entries_found_count">
+        <item quantity="one">נמצא פריט אחד</item>
+        <item quantity="two">נמצאו שני פריטים</item>
+        <item quantity="other">נמצאו %1$d פריטים</item>
+    </plurals>
+
+    <plurals name="empty_title">
+        <item quantity="one">לפריט האחד כבר יש הקלטה</item>
+        <item quantity="two">לשני הפריטים כבר יש הקלטה</item>
+        <item quantity="other">לכל %1$d הפריטים כבר יש הקלטה</item>
+    </plurals>
 
     <plurals name="profile_recordings_count">
         <item quantity="one">הקלטה אחת</item>

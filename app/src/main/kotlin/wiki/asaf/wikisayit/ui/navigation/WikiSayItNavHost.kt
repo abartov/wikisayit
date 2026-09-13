@@ -8,6 +8,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import wiki.asaf.wikisayit.R
 import wiki.asaf.wikisayit.ui.common.PlaceholderScreen
+import wiki.asaf.wikisayit.ui.language.LanguageScreen
+import wiki.asaf.wikisayit.ui.listsource.ListSourceScreen
 import wiki.asaf.wikisayit.ui.profile.NewProfileScreen
 import wiki.asaf.wikisayit.ui.profile.ProfileScreen
 import wiki.asaf.wikisayit.ui.session.RecordingFlowViewModel
@@ -53,10 +55,16 @@ fun WikiSayItNavHost(
             )
         }
         composable<WikiSayItRoute.Language> {
-            PlaceholderScreen(title = stringResource(R.string.nav_destination_language))
+            LanguageScreen(
+                viewModel = sessionViewModel,
+                onLanguagePicked = { navController.navigate(WikiSayItRoute.ListSource) },
+            )
         }
         composable<WikiSayItRoute.ListSource> {
-            PlaceholderScreen(title = stringResource(R.string.nav_destination_list_source))
+            ListSourceScreen(
+                viewModel = sessionViewModel,
+                onStartRecording = { navController.navigate(WikiSayItRoute.Recording) },
+            )
         }
         composable<WikiSayItRoute.Disambiguation> {
             PlaceholderScreen(title = "Disambiguation")
