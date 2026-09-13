@@ -3,6 +3,7 @@ package wiki.asaf.wikisayit.ui.session
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -10,6 +11,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import wiki.asaf.wikisayit.audio.RecordingEngine
+import wiki.asaf.wikisayit.audio.RecordingFileStore
 import wiki.asaf.wikisayit.data.local.db.RecordingEntryType
 import wiki.asaf.wikisayit.data.local.db.SpeakerProfileWithLanguages
 import wiki.asaf.wikisayit.data.local.settings.SettingsRepository
@@ -21,11 +24,10 @@ import wiki.asaf.wikisayit.data.wikidata.WikidataExistenceChecker
 import wiki.asaf.wikisayit.data.wikidata.WikidataLabelMatcher
 import wiki.asaf.wikisayit.data.wikidata.WikidataQueryListBuilder
 import wiki.asaf.wikisayit.data.wikipedia.WikipediaCategorySource
+import java.io.File
 import javax.inject.Inject
 import kotlin.math.max
 
-private const val READY_PHASE_MILLIS = 600L
-private const val SPEAKING_PHASE_MILLIS = 1200L
 private const val TICK_MILLIS = 100L
 private const val REVIEW_PLAYING_MILLIS = 1200L
 private const val REVIEW_DECISION_SECONDS = 1.5f
@@ -38,9 +40,11 @@ private const val UPLOAD_STEP_MILLIS = 500L
  * [resolveDisambiguation]/[resolveDisambiguationRecordAll], zero hits are kept unresolved rather
  * than dropped); a SPARQL query is run via [WikidataQueryListBuilder]; a Wikipedia category is
  * traversed via [WikipediaCategorySource]. [startCheck] is real too: it runs the built list
- * through [WikidataExistenceChecker] against live Wikidata. The recording/review timing loops are
- * likewise simulated pending the audio engine (s-7lo) — [RecordingBlocker] and the phase timings
- * are the seams that work will plug into.
+ * through [WikidataExistenceChecker] against live Wikidata. The recording loop ([runRecordingLoop])
+ * is real as well, driven by [RecordingEngine]'s event stream (s-7lo/s-lfi.3); Skip/Redo/Stop
+ * abandon an in-progress take by cancelling [tickerJob], which the engine's docs call out as the
+ * supported way to release the mic mid-word. The review loop is still simulated pending real
+ * playback — that's tracked separately, outside s-lfi's scope.
  */
 @HiltViewModel
 class RecordingFlowViewModel
@@ -53,6 +57,8 @@ class RecordingFlowViewModel
         private val labelMatcher: WikidataLabelMatcher,
         private val queryListBuilder: WikidataQueryListBuilder,
         private val categorySource: WikipediaCategorySource,
+        private val recordingEngine: RecordingEngine,
+        private val recordingFileStore: RecordingFileStore,
     ) : ViewModel() {
         private val _uiState = MutableStateFlow(RecordingFlowUiState())
         val uiState: StateFlow<RecordingFlowUiState> = _uiState.asStateFlow()
@@ -310,33 +316,74 @@ class RecordingFlowViewModel
             runRecordingLoop()
         }
 
+        private enum class RecordOutcome { FINISHED, TOO_SHORT, INTERRUPTED }
+
         private fun runRecordingLoop() {
             tickerJob?.cancel()
+            _uiState.update { it.copy(recordingBlocker = null) }
             tickerJob =
                 viewModelScope.launch {
                     while (_uiState.value.currentRecordingEntry != null) {
-                        _uiState.update { it.copy(recordingPhase = RecordingPhase.READY) }
-                        delay(READY_PHASE_MILLIS)
-                        _uiState.update { it.copy(recordingPhase = RecordingPhase.SPEAKING) }
-                        delay(SPEAKING_PHASE_MILLIS)
-                        var remaining = _uiState.value.settings.silenceThresholdSeconds
-                        _uiState.update {
-                            it.copy(recordingPhase = RecordingPhase.SILENCE, silenceRemainingSeconds = remaining)
+                        when (recordCurrentWord()) {
+                            RecordOutcome.FINISHED -> if (commitWord()) return@launch
+                            RecordOutcome.TOO_SHORT -> Unit
+                            RecordOutcome.INTERRUPTED -> return@launch
                         }
-                        while (remaining > 0f) {
-                            delay(TICK_MILLIS)
-                            remaining = max(0f, remaining - TICK_MILLIS / 1000f)
-                            _uiState.update { it.copy(silenceRemainingSeconds = remaining) }
-                        }
-                        commitWord()
                     }
                 }
         }
 
-        private fun commitWord() {
+        /** Records the current word via [recordingEngine], translating its event stream into
+         * [RecordingPhase]/[RecordingFlowUiState.silenceRemainingSeconds] updates. Cancelling
+         * [tickerJob] (Skip/Redo/Stop) abandons the take cleanly — the engine releases the mic
+         * and emits nothing further, so there's no outcome to handle for that case here. */
+        private suspend fun recordCurrentWord(): RecordOutcome {
+            val outputFile = recordingFileStore.newRecordingFile()
+            val silenceThresholdSeconds = _uiState.value.settings.silenceThresholdSeconds
+            var finishedFile: File? = null
+            try {
+                recordingEngine.recordWord(outputFile, silenceThresholdSeconds).collect { event ->
+                    when (event) {
+                        RecordingEngine.Event.Listening ->
+                            _uiState.update { it.copy(recordingPhase = RecordingPhase.READY) }
+                        RecordingEngine.Event.Speaking ->
+                            _uiState.update { it.copy(recordingPhase = RecordingPhase.SPEAKING) }
+                        is RecordingEngine.Event.Silence ->
+                            _uiState.update {
+                                it.copy(
+                                    recordingPhase = RecordingPhase.SILENCE,
+                                    silenceRemainingSeconds = event.remainingSeconds,
+                                )
+                            }
+                        is RecordingEngine.Event.Finished -> finishedFile = event.file
+                        RecordingEngine.Event.TooShort -> Unit
+                    }
+                }
+            } catch (cancellation: CancellationException) {
+                throw cancellation
+            } catch (_: Exception) {
+                _uiState.update { it.copy(recordingBlocker = RecordingBlocker.Interrupted) }
+                return RecordOutcome.INTERRUPTED
+            }
+            val file = finishedFile ?: return RecordOutcome.TOO_SHORT
+            attachRecordedFile(file)
+            return RecordOutcome.FINISHED
+        }
+
+        private fun attachRecordedFile(file: File) {
+            _uiState.update { state ->
+                val index = state.recordingIndex
+                val entry = state.recordingQueue.getOrNull(index) ?: return@update state
+                val queue = state.recordingQueue.toMutableList().apply { this[index] = entry.copy(audioFile = file) }
+                state.copy(recordingQueue = queue)
+            }
+        }
+
+        /** @return true if this was the last word (the session moved on to review). */
+        private fun commitWord(): Boolean {
             val state = _uiState.value
             val nextIndex = state.recordingIndex + 1
-            if (nextIndex >= state.recordingQueue.size) {
+            return if (nextIndex >= state.recordingQueue.size) {
                 tickerJob?.cancel()
                 _uiState.update {
                     it.copy(
@@ -347,8 +394,10 @@ class RecordingFlowViewModel
                     )
                 }
                 runReviewLoop()
+                true
             } else {
                 _uiState.update { it.copy(recordingIndex = nextIndex) }
+                false
             }
         }
 

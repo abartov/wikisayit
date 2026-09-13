@@ -1,6 +1,7 @@
 package wiki.asaf.wikisayit.ui.session
 
 import wiki.asaf.wikisayit.data.local.db.LanguageProficiency
+import java.io.File
 
 enum class EntryKind { ITEM, FORM }
 
@@ -14,6 +15,9 @@ data class QueueEntry(
     val lexemeId: String? = null,
     /** Specific form, e.g. "L3302-F1" — where the P443 statement is added. */
     val formId: String? = null,
+    /** The cropped, padded, Ogg Vorbis-encoded take from [wiki.asaf.wikisayit.audio.RecordingEngine],
+     * set once recording finishes; null until then. */
+    val audioFile: File? = null,
 ) {
     /** The monospace evidence id shown under the word: the QID, or the specific form id. */
     val evidenceId: String get() = formId ?: qid.orEmpty()
