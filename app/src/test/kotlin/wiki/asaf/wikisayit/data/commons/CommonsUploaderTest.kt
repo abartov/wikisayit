@@ -27,9 +27,15 @@ import java.time.ZoneOffset
 class CommonsUploaderTest {
     private fun uploaderFor(responseBody: String): CommonsUploader {
         val engine =
-            MockEngine {
+            MockEngine { request ->
+                val body =
+                    if (request.url.parameters["action"] == "query") {
+                        """{"query":{"tokens":{"csrftoken":"fake+csrf+token"}}}"""
+                    } else {
+                        responseBody
+                    }
                 respond(
-                    content = responseBody,
+                    content = body,
                     status = HttpStatusCode.OK,
                     headers = headersOf(HttpHeaders.ContentType, "application/json"),
                 )

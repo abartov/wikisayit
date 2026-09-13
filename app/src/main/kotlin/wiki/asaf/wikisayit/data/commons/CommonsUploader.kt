@@ -9,11 +9,6 @@ import java.time.Clock
 import java.time.LocalDate
 import javax.inject.Inject
 
-/**
- * MediaWiki bypasses CSRF-token verification for OAuth-authenticated write requests (the check
- * only guards cookie-based sessions); any non-empty placeholder is accepted in its place.
- */
-private const val OAUTH_EDIT_TOKEN = "+\\"
 private val OGG_CONTENT_TYPE = ContentType("audio", "ogg")
 
 /**
@@ -34,6 +29,7 @@ class CommonsUploader
         ): String {
             val audioFile = requireNotNull(entry.audioFile) { "Cannot upload '${entry.label}': no recorded audio" }
             val filename = entry.commonsFilename(isoCode, username)
+            val csrfToken = wikimediaClients.commons.fetchCsrfToken()
             val response =
                 wikimediaClients.commons.postActionMultipart<UploadActionResponse>(
                     parameters =
@@ -42,7 +38,7 @@ class CommonsUploader
                             "filename" to filename,
                             "text" to buildUploadWikitext(entry, isoCode, username, clock),
                             "comment" to "Uploaded via WikiSayIt",
-                            "token" to OAUTH_EDIT_TOKEN,
+                            "token" to csrfToken,
                         ),
                     fileFieldName = "file",
                     file = audioFile,

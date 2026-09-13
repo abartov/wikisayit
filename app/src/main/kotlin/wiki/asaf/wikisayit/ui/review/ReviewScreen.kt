@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -72,6 +73,7 @@ fun ReviewScreen(
         username = uiState.username,
         onRedo = viewModel::reviewRedo,
         onDrop = viewModel::reviewDrop,
+        onReplay = { viewModel.replayEntry(entry) },
         modifier = modifier,
     )
 }
@@ -87,6 +89,7 @@ private fun ReviewContent(
     username: String,
     onRedo: () -> Unit,
     onDrop: () -> Unit,
+    onReplay: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val colors = LocalWikiSayItColors.current
@@ -133,12 +136,14 @@ private fun ReviewContent(
                         horizontalArrangement = Arrangement.spacedBy(12.dp),
                     ) {
                         BlueprintBox(modifier = Modifier.size(40.dp)) {
-                            Icon(
-                                painter = painterResource(R.drawable.ic_play),
-                                contentDescription = null,
-                                tint = colors.accent700,
-                                modifier = Modifier.size(18.dp).align(Alignment.Center),
-                            )
+                            IconButton(onClick = onReplay, modifier = Modifier.align(Alignment.Center)) {
+                                Icon(
+                                    painter = painterResource(R.drawable.ic_play),
+                                    contentDescription = stringResource(R.string.review_listen_back),
+                                    tint = colors.accent700,
+                                    modifier = Modifier.size(18.dp),
+                                )
+                            }
                         }
                         Column(modifier = Modifier.weight(1f)) {
                             Box(

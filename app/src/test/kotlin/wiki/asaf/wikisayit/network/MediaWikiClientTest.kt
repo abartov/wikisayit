@@ -100,6 +100,24 @@ class MediaWikiClientTest {
         }
 
     @Test
+    fun `fetchCsrfToken parses the token out of a tokens response`() =
+        runTest {
+            val engine =
+                MockEngine { request ->
+                    assertEquals("query", request.url.parameters["action"])
+                    assertEquals("csrf", request.url.parameters["type"])
+                    respond(
+                        content = """{"query":{"tokens":{"csrftoken":"abc123+\\"}}}""",
+                        status = HttpStatusCode.OK,
+                        headers = headersOf(HttpHeaders.ContentType, "application/json"),
+                    )
+                }
+            val client = MediaWikiClient(MediaWikiSite.COMMONS, clientWith(engine), NoAuthTokenProvider)
+
+            assertEquals("abc123+\\", client.fetchCsrfToken())
+        }
+
+    @Test
     fun `post sends json body to resolved url`() =
         runTest {
             var capturedBody: String? = null

@@ -17,6 +17,7 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.Parameters
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
@@ -132,6 +133,17 @@ class MediaWikiClient(
         return response.decodeOrThrow()
     }
 
+    /**
+     * Fetches a fresh CSRF token via `action=query&meta=tokens&type=csrf`, required before any
+     * write action (`action=upload`, `wbcreateclaim`, ...). A hardcoded placeholder doesn't work
+     * here: this app authenticates with OAuth 2.0 bearer tokens, and the server rejects a token
+     * it didn't just hand out.
+     */
+    suspend fun fetchCsrfToken(): String {
+        val response = getAction<CsrfTokenResponse>(mapOf("action" to "query", "meta" to "tokens", "type" to "csrf"))
+        return requireNotNull(response.query?.tokens?.csrftoken) { "No CSRF token in tokens response" }
+    }
+
     /** Resolves [path] against the site's REST API root, tolerating either leading/trailing slash. */
     fun resolve(path: String): String = site.restApiBaseUrl.trimEnd('/') + "/" + path.trimStart('/')
 
@@ -143,6 +155,15 @@ class MediaWikiClient(
         throw toMediaWikiApiException(status.value, rawBody)
     }
 }
+
+@Serializable
+data class CsrfTokenResponse(val query: CsrfTokenQuery? = null)
+
+@Serializable
+data class CsrfTokenQuery(val tokens: CsrfTokens? = null)
+
+@Serializable
+data class CsrfTokens(val csrftoken: String? = null)
 
 private val lenientJson = Json { ignoreUnknownKeys = true }
 

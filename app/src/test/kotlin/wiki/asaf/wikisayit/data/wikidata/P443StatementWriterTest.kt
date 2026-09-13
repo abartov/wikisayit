@@ -6,6 +6,7 @@ import io.ktor.client.engine.mock.respond
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.request.forms.FormDataContent
 import io.ktor.http.HttpHeaders
+import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.headersOf
 import io.ktor.serialization.kotlinx.json.json
@@ -28,12 +29,20 @@ class P443StatementWriterTest {
     ): P443StatementWriter {
         val engine =
             MockEngine { request ->
-                captureRequestBody((request.body as FormDataContent).formData.toString())
-                respond(
-                    content = responseBody,
-                    status = HttpStatusCode.OK,
-                    headers = headersOf(HttpHeaders.ContentType, "application/json"),
-                )
+                if (request.method == HttpMethod.Get) {
+                    respond(
+                        content = """{"query":{"tokens":{"csrftoken":"fake+csrf+token"}}}""",
+                        status = HttpStatusCode.OK,
+                        headers = headersOf(HttpHeaders.ContentType, "application/json"),
+                    )
+                } else {
+                    captureRequestBody((request.body as FormDataContent).formData.toString())
+                    respond(
+                        content = responseBody,
+                        status = HttpStatusCode.OK,
+                        headers = headersOf(HttpHeaders.ContentType, "application/json"),
+                    )
+                }
             }
         val httpClient =
             HttpClient(engine) {

@@ -1,10 +1,13 @@
 package wiki.asaf.wikisayit.di
 
+import dagger.Binds
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import wiki.asaf.wikisayit.audio.AndroidAudioPlayer
 import wiki.asaf.wikisayit.audio.AndroidAudioSource
+import wiki.asaf.wikisayit.audio.AudioPlayer
 import wiki.asaf.wikisayit.audio.AudioSource
 import wiki.asaf.wikisayit.audio.RecordingEngine
 import javax.inject.Singleton
@@ -21,4 +24,11 @@ object AudioModule {
     @Provides
     @Singleton
     fun provideRecordingEngine(audioSource: AudioSource): RecordingEngine = RecordingEngine(audioSource)
+}
+
+@Module
+@InstallIn(SingletonComponent::class)
+interface AudioBindingsModule {
+    @Binds
+    fun bindAudioPlayer(impl: AndroidAudioPlayer): AudioPlayer
 }

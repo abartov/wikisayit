@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import wiki.asaf.wikisayit.audio.AudioPlayer
 import wiki.asaf.wikisayit.audio.RecordingEngine
 import wiki.asaf.wikisayit.audio.RecordingFileStore
 import wiki.asaf.wikisayit.data.commons.CommonsUploader
@@ -31,7 +32,6 @@ import javax.inject.Inject
 import kotlin.math.max
 
 private const val TICK_MILLIS = 100L
-private const val REVIEW_PLAYING_MILLIS = 1200L
 private const val REVIEW_DECISION_SECONDS = 1.5f
 
 /**
@@ -44,8 +44,8 @@ private const val REVIEW_DECISION_SECONDS = 1.5f
  * through [WikidataExistenceChecker] against live Wikidata. The recording loop ([runRecordingLoop])
  * is real as well, driven by [RecordingEngine]'s event stream (s-7lo/s-lfi.3); Skip/Redo/Stop
  * abandon an in-progress take by cancelling [tickerJob], which the engine's docs call out as the
- * supported way to release the mic mid-word. The review loop is still simulated pending real
- * playback — that's tracked separately, outside s-lfi's scope.
+ * supported way to release the mic mid-word. The review loop plays each take back for real via
+ * [audioPlayer] before its Redo/Drop decision window opens.
  */
 @HiltViewModel
 class RecordingFlowViewModel
@@ -60,6 +60,7 @@ class RecordingFlowViewModel
         private val categorySource: WikipediaCategorySource,
         private val recordingEngine: RecordingEngine,
         private val recordingFileStore: RecordingFileStore,
+        private val audioPlayer: AudioPlayer,
         private val commonsUploader: CommonsUploader,
         private val p443StatementWriter: P443StatementWriter,
     ) : ViewModel() {
@@ -67,6 +68,7 @@ class RecordingFlowViewModel
         val uiState: StateFlow<RecordingFlowUiState> = _uiState.asStateFlow()
 
         private var tickerJob: Job? = null
+        private var replayJob: Job? = null
 
         init {
             viewModelScope.launch {
@@ -484,7 +486,7 @@ class RecordingFlowViewModel
                 viewModelScope.launch {
                     while (_uiState.value.currentReviewEntry != null) {
                         _uiState.update { it.copy(reviewPlaying = true) }
-                        delay(REVIEW_PLAYING_MILLIS)
+                        _uiState.value.currentReviewEntry?.audioFile?.let { audioPlayer.play(it) }
                         var remaining = REVIEW_DECISION_SECONDS
                         _uiState.update { it.copy(reviewPlaying = false, reviewDecisionRemainingSeconds = remaining) }
                         while (remaining > 0f) {
@@ -540,6 +542,24 @@ class RecordingFlowViewModel
             return state.reviewSession.isNotEmpty() && state.reviewIndex >= state.reviewSession.size
         }
 
+        /** Replays one recording on demand, independent of the auto-advancing review loop — e.g.
+         * from a play icon next to a row in the approved list. */
+        fun replayEntry(entry: QueueEntry) {
+            val file = entry.audioFile ?: return
+            replayJob?.cancel()
+            _uiState.update { it.copy(replayingEntryId = entry.evidenceId) }
+            replayJob =
+                viewModelScope.launch {
+                    try {
+                        audioPlayer.play(file)
+                    } finally {
+                        _uiState.update {
+                            if (it.replayingEntryId == entry.evidenceId) it.copy(replayingEntryId = null) else it
+                        }
+                    }
+                }
+        }
+
         // --- summary / abandon ---
 
         fun askAbandon() {
@@ -556,6 +576,7 @@ class RecordingFlowViewModel
 
         private fun resetFlow() {
             tickerJob?.cancel()
+            replayJob?.cancel()
             val state = _uiState.value
             _uiState.value = RecordingFlowUiState(profiles = state.profiles, settings = state.settings)
         }

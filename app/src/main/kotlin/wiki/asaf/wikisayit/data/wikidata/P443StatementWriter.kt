@@ -12,12 +12,6 @@ import javax.inject.Inject
 private const val P443 = "P443"
 
 /**
- * MediaWiki bypasses CSRF-token verification for OAuth-authenticated write requests (the check
- * only guards cookie-based sessions); any non-empty placeholder is accepted in its place.
- */
-private const val OAUTH_EDIT_TOKEN = "+\\"
-
-/**
  * Adds the P443 ("pronunciation audio") statement once a [entry]'s recording has been uploaded
  * to Commons, per s-1s5.3 (item level) and s-1s5.4 (form level). One `wbcreateclaim` call covers
  * both: [QueueEntry.evidenceId] is already the right target for either case — the specific form
@@ -36,6 +30,7 @@ class P443StatementWriter
             val entityId = entry.evidenceId
             require(entityId.isNotEmpty()) { "Cannot add P443 for '${entry.label}': no Wikidata id" }
 
+            val csrfToken = wikimediaClients.wikidata.fetchCsrfToken()
             val response =
                 wikimediaClients.wikidata.postAction<CreateClaimResponse>(
                     mapOf(
@@ -44,7 +39,7 @@ class P443StatementWriter
                         "property" to P443,
                         "snaktype" to "value",
                         "value" to Json.encodeToString(commonsFilename),
-                        "token" to OAUTH_EDIT_TOKEN,
+                        "token" to csrfToken,
                         "summary" to "Added pronunciation recorded via WikiSayIt",
                     ),
                 )

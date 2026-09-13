@@ -43,6 +43,9 @@ data class RecordingFlowUiState(
     val redoQueue: List<QueueEntry> = emptyList(),
     val approved: List<QueueEntry> = emptyList(),
     val showAbandonDialog: Boolean = false,
+    /** Set while an on-demand replay ([wiki.asaf.wikisayit.ui.session.RecordingFlowViewModel.replayEntry])
+     * is playing, so the triggering row can show it's active. */
+    val replayingEntryId: String? = null,
     // --- upload (2e: per-entry state so contribution failures can be surfaced and retried) ---
     val uploadStates: List<UploadEntryState> = emptyList(),
     val activeUploadIndex: Int? = null,
