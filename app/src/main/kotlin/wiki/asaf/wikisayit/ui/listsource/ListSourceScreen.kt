@@ -35,6 +35,8 @@ import wiki.asaf.wikisayit.ui.components.WsSecondaryButton
 import wiki.asaf.wikisayit.ui.components.WsSegmentedControl
 import wiki.asaf.wikisayit.ui.components.WsTable
 import wiki.asaf.wikisayit.ui.session.CategoryDepth
+import wiki.asaf.wikisayit.ui.session.DisambiguationCandidate
+import wiki.asaf.wikisayit.ui.session.EntryKind
 import wiki.asaf.wikisayit.ui.session.ListBuildStage
 import wiki.asaf.wikisayit.ui.session.ListSourceType
 import wiki.asaf.wikisayit.ui.session.MatchAs
@@ -68,6 +70,16 @@ fun ListSourceScreen(
                 onDepthChange = viewModel::updateCategoryDepth,
                 onBack = viewModel::backToSourcePick,
                 onBuildList = viewModel::buildList,
+                modifier = modifier,
+            )
+        ListBuildStage.RESOLVING ->
+            ResolvingContent(uiState = uiState, modifier = modifier)
+        ListBuildStage.DISAMBIGUATING ->
+            DisambiguationContent(
+                uiState = uiState,
+                onPick = viewModel::resolveDisambiguation,
+                onRecordAll = viewModel::resolveDisambiguationRecordAll,
+                onBack = viewModel::backFromDisambiguation,
                 modifier = modifier,
             )
         ListBuildStage.FRESH, ListBuildStage.CHECKING, ListBuildStage.CHECKED ->
@@ -292,6 +304,121 @@ private fun SourceFormContent(
                 onClick = onBuildList,
                 enabled = uiState.sourceText.isNotBlank(),
                 modifier = Modifier.weight(1f),
+            )
+        }
+    }
+}
+
+@Composable
+private fun ResolvingContent(
+    uiState: RecordingFlowUiState,
+    modifier: Modifier = Modifier,
+) {
+    val colors = LocalWikiSayItColors.current
+    Column(modifier = modifier.fillMaxSize()) {
+        ScreenHeader(
+            kicker = stringResource(R.string.list_step_kicker),
+            title = stringResource(R.string.resolving_title),
+            explainer = stringResource(R.string.resolving_explainer),
+        )
+        Column(modifier = Modifier.padding(horizontal = WikiSayItSpacing.screenHorizontal)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                Text(
+                    text = stringResource(R.string.resolving_label),
+                    style = TextStyle(fontFamily = FontFamily.Monospace, fontSize = 12.sp),
+                )
+                Text(
+                    text = "${uiState.resolveDone}/${uiState.rawCount}",
+                    style = TextStyle(fontFamily = FontFamily.Monospace, fontSize = 12.sp),
+                )
+            }
+            val progress = if (uiState.rawCount > 0) uiState.resolveDone.toFloat() / uiState.rawCount else 0f
+            LinearProgressIndicator(
+                progress = { progress },
+                modifier = Modifier.fillMaxWidth().padding(top = WikiSayItSpacing.space2),
+                color = colors.accent,
+                trackColor = colors.accent200,
+            )
+        }
+    }
+}
+
+@Composable
+private fun DisambiguationContent(
+    uiState: RecordingFlowUiState,
+    onPick: (DisambiguationCandidate) -> Unit,
+    onRecordAll: () -> Unit,
+    onBack: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val case = uiState.currentDisambiguation ?: return
+    val explainer =
+        if (case.kind == EntryKind.ITEM) {
+            stringResource(R.string.disambiguation_explainer_items, case.candidates.size)
+        } else {
+            stringResource(R.string.disambiguation_explainer_lexemes, case.candidates.size)
+        }
+
+    Column(modifier = modifier.fillMaxSize()) {
+        Column(modifier = Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState())) {
+            ScreenHeader(
+                kicker =
+                    stringResource(
+                        R.string.disambiguation_kicker,
+                        uiState.disambiguationIndex + 1,
+                        uiState.disambiguationQueue.size,
+                    ),
+                title = case.originalLabel,
+                explainer = explainer,
+            )
+            Column(
+                modifier = Modifier.padding(horizontal = WikiSayItSpacing.screenHorizontal),
+                verticalArrangement = Arrangement.spacedBy(WikiSayItSpacing.space3),
+            ) {
+                case.candidates.forEach { candidate ->
+                    DisambiguationCandidateCard(candidate = candidate, onClick = { onPick(candidate) })
+                }
+                WsGhostButton(
+                    text = stringResource(R.string.disambiguation_record_all_button, case.candidates.size),
+                    onClick = onRecordAll,
+                    modifier = Modifier.fillMaxWidth().padding(top = WikiSayItSpacing.space1),
+                )
+            }
+        }
+        WsHairlineDivider()
+        Row(modifier = Modifier.fillMaxWidth().padding(WikiSayItSpacing.screenHorizontal)) {
+            WsSecondaryButton(
+                text = stringResource(R.string.action_back),
+                onClick = onBack,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
+    }
+}
+
+@Composable
+private fun DisambiguationCandidateCard(
+    candidate: DisambiguationCandidate,
+    onClick: () -> Unit,
+) {
+    val typography = LocalWikiSayItTypography.current
+    val colors = LocalWikiSayItColors.current
+    BlueprintBox(modifier = Modifier.fillMaxWidth().clickable(onClick = onClick)) {
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(WikiSayItSpacing.space3),
+            verticalArrangement = Arrangement.spacedBy(WikiSayItSpacing.space1),
+        ) {
+            Text(text = candidate.label, style = typography.cardTitle)
+            if (!candidate.description.isNullOrBlank()) {
+                Text(text = candidate.description, style = typography.secondary)
+            }
+            Text(
+                text = candidate.id,
+                style = TextStyle(fontFamily = MonospaceEvidence, fontSize = 10.5.sp),
+                color = colors.neutral700,
             )
         }
     }

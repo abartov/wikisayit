@@ -28,6 +28,27 @@ fun QueueEntry.commonsFilename(
     return "$isoCode-$id-$label-$username.ogg"
 }
 
+/** One Wikidata hit offered when a pasted line matched more than one item or lexeme. */
+data class DisambiguationCandidate(
+    val id: String,
+    val label: String,
+    val description: String?,
+)
+
+fun DisambiguationCandidate.toQueueEntry(kind: EntryKind): QueueEntry =
+    if (kind == EntryKind.ITEM) {
+        QueueEntry(label = label, kind = EntryKind.ITEM, detail = description ?: "Wikidata item", qid = id)
+    } else {
+        QueueEntry(label = label, kind = EntryKind.FORM, detail = description ?: "lexeme", lexemeId = id)
+    }
+
+/** A pasted line still waiting for the user to pick which Wikidata entity it means. */
+data class DisambiguationCase(
+    val originalLabel: String,
+    val kind: EntryKind,
+    val candidates: List<DisambiguationCandidate>,
+)
+
 data class SelectedLanguage(
     val isoCode: String,
     val name: String,
@@ -41,7 +62,7 @@ enum class MatchAs { ITEMS, LEXEMES }
 
 enum class CategoryDepth { NONE, TWO, FIVE }
 
-enum class ListBuildStage { PICK_SOURCE, SOURCE_FORM, FRESH, CHECKING, CHECKED, EMPTY }
+enum class ListBuildStage { PICK_SOURCE, SOURCE_FORM, RESOLVING, DISAMBIGUATING, FRESH, CHECKING, CHECKED, EMPTY }
 
 enum class RecordingPhase { READY, SPEAKING, SILENCE }
 

@@ -20,12 +20,14 @@ data class RecordingFlowUiState(
     val matchAs: MatchAs = MatchAs.ITEMS,
     val categoryDepth: CategoryDepth = CategoryDepth.TWO,
     val rawCount: Int = 0,
+    val resolveDone: Int = 0,
     val checkDone: Int = 0,
     val excludedCount: Int = 0,
     val formsAddedCount: Int = 0,
     val finalQueue: List<QueueEntry> = emptyList(),
     // --- disambiguation ---
-    val disambiguationsRemaining: Int = 0,
+    val disambiguationQueue: List<DisambiguationCase> = emptyList(),
+    val disambiguationIndex: Int = 0,
     // --- recording ---
     val recordingQueue: List<QueueEntry> = emptyList(),
     val recordingIndex: Int = 0,
@@ -47,6 +49,9 @@ data class RecordingFlowUiState(
     // --- navigation ---
     val autoNavigateTo: FlowScreen? = null,
 ) {
+    val currentDisambiguation: DisambiguationCase?
+        get() = disambiguationQueue.getOrNull(disambiguationIndex)
+
     val currentRecordingEntry: QueueEntry?
         get() = recordingQueue.getOrNull(recordingIndex)
 

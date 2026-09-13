@@ -15,7 +15,10 @@ import wiki.asaf.wikisayit.data.local.db.SpeakerProfileWithLanguages
 import wiki.asaf.wikisayit.data.local.settings.SettingsRepository
 import wiki.asaf.wikisayit.data.profile.ProfileRepository
 import wiki.asaf.wikisayit.data.stats.StatsRepository
+import wiki.asaf.wikisayit.data.wikidata.WbEntityType
+import wiki.asaf.wikisayit.data.wikidata.WbSearchResult
 import wiki.asaf.wikisayit.data.wikidata.WikidataExistenceChecker
+import wiki.asaf.wikisayit.data.wikidata.WikidataLabelMatcher
 import javax.inject.Inject
 import kotlin.math.max
 
@@ -28,13 +31,15 @@ private const val UPLOAD_STEP_MILLIS = 500L
 
 /**
  * Drives the whole recording flow (Profile through Done) from one activity-scoped ViewModel.
- * List building against live Wikidata/SPARQL/categories (s-dbm.3, s-dbm.4) still isn't
+ * List building against live Wikidata/SPARQL/categories (s-dbm.3, s-dbm.4) still isn't fully
  * implemented, so [buildList] simulates without fabricating results it can't back up: a pasted
- * list is split line-by-line for real (still with placeholder QIDs/LIDs until s-dbm.2 wires up
- * real matching/disambiguation), while a query/category source seeds a small placeholder queue.
- * [startCheck] is real: it runs the built list through [WikidataExistenceChecker] against live
- * Wikidata. The recording/review timing loops are likewise simulated pending the audio engine
- * (s-7lo) — [RecordingBlocker] and the phase timings are the seams that work will plug into.
+ * list is matched against live Wikidata via [WikidataLabelMatcher] (one hit auto-resolves, 2+
+ * hits go through [resolveDisambiguation]/[resolveDisambiguationRecordAll], zero hits are kept
+ * unresolved rather than dropped), while a query/category source still seeds a small placeholder
+ * queue pending s-dbm.3/s-dbm.4. [startCheck] is real: it runs the built list through
+ * [WikidataExistenceChecker] against live Wikidata. The recording/review timing loops are
+ * likewise simulated pending the audio engine (s-7lo) — [RecordingBlocker] and the phase timings
+ * are the seams that work will plug into.
  */
 @HiltViewModel
 class RecordingFlowViewModel
@@ -44,6 +49,7 @@ class RecordingFlowViewModel
         private val settingsRepository: SettingsRepository,
         private val statsRepository: StatsRepository,
         private val existenceChecker: WikidataExistenceChecker,
+        private val labelMatcher: WikidataLabelMatcher,
     ) : ViewModel() {
         private val _uiState = MutableStateFlow(RecordingFlowUiState())
         val uiState: StateFlow<RecordingFlowUiState> = _uiState.asStateFlow()
@@ -102,46 +108,116 @@ class RecordingFlowViewModel
 
         fun buildList() {
             val state = _uiState.value
-            val entries =
-                when (state.listSourceType) {
-                    ListSourceType.PASTE -> parsePastedLines(state.sourceText, state.matchAs)
-                    else -> placeholderQueue()
+            when (state.listSourceType) {
+                ListSourceType.PASTE -> resolvePastedList(state)
+                else -> {
+                    val entries = placeholderQueue()
+                    _uiState.update {
+                        it.copy(
+                            finalQueue = entries,
+                            rawCount = entries.size,
+                            checkDone = 0,
+                            excludedCount = 0,
+                            formsAddedCount = 0,
+                            listBuildStage = ListBuildStage.FRESH,
+                        )
+                    }
                 }
-            _uiState.update {
-                it.copy(
-                    finalQueue = entries,
-                    rawCount = entries.size,
-                    checkDone = 0,
-                    excludedCount = 0,
-                    formsAddedCount = 0,
-                    listBuildStage = ListBuildStage.FRESH,
-                )
             }
         }
 
-        private fun parsePastedLines(
-            text: String,
-            matchAs: MatchAs,
-        ): List<QueueEntry> =
-            text.lines().map { it.trim() }.filter { it.isNotEmpty() }.mapIndexed { index, line ->
-                if (matchAs == MatchAs.ITEMS) {
-                    QueueEntry(
-                        label = line,
-                        kind = EntryKind.ITEM,
-                        detail = "Wikidata item",
-                        qid = "Q${100000 + index}",
-                    )
+        private fun resolvePastedList(state: RecordingFlowUiState) {
+            val lines = state.sourceText.lines().map { it.trim() }.filter { it.isNotEmpty() }
+            val language = state.language?.isoCode.orEmpty()
+            val entryKind = if (state.matchAs == MatchAs.ITEMS) EntryKind.ITEM else EntryKind.FORM
+            val entityType = if (state.matchAs == MatchAs.ITEMS) WbEntityType.ITEM else WbEntityType.LEXEME
+
+            tickerJob?.cancel()
+            _uiState.update {
+                it.copy(
+                    listBuildStage = ListBuildStage.RESOLVING,
+                    rawCount = lines.size,
+                    resolveDone = 0,
+                    disambiguationQueue = emptyList(),
+                    disambiguationIndex = 0,
+                )
+            }
+            tickerJob =
+                viewModelScope.launch {
+                    val resolved = mutableListOf<QueueEntry>()
+                    val pending = mutableListOf<DisambiguationCase>()
+                    lines.forEachIndexed { index, line ->
+                        val candidates = labelMatcher.search(line, entityType, language)
+                        when {
+                            candidates.isEmpty() -> resolved += unresolvedEntry(line, entryKind)
+                            candidates.size == 1 ->
+                                resolved += candidates[0].toDisambiguationCandidate(line).toQueueEntry(entryKind)
+                            else ->
+                                pending +=
+                                    DisambiguationCase(
+                                        originalLabel = line,
+                                        kind = entryKind,
+                                        candidates = candidates.map { it.toDisambiguationCandidate(line) },
+                                    )
+                        }
+                        _uiState.update { it.copy(resolveDone = index + 1) }
+                    }
+                    _uiState.update {
+                        it.copy(finalQueue = resolved, disambiguationQueue = pending, disambiguationIndex = 0)
+                    }
+                    advanceListBuild()
+                }
+        }
+
+        private fun unresolvedEntry(
+            label: String,
+            kind: EntryKind,
+        ): QueueEntry = QueueEntry(label = label, kind = kind, detail = "no Wikidata match found")
+
+        private fun advanceListBuild() {
+            _uiState.update {
+                if (it.disambiguationIndex < it.disambiguationQueue.size) {
+                    it.copy(listBuildStage = ListBuildStage.DISAMBIGUATING)
                 } else {
-                    val lexemeId = "L${200000 + index}"
-                    QueueEntry(
-                        label = line,
-                        kind = EntryKind.FORM,
-                        detail = "lexeme form",
-                        lexemeId = lexemeId,
-                        formId = "$lexemeId-F1",
+                    it.copy(
+                        rawCount = it.finalQueue.size,
+                        checkDone = 0,
+                        excludedCount = 0,
+                        formsAddedCount = 0,
+                        listBuildStage = ListBuildStage.FRESH,
                     )
                 }
             }
+        }
+
+        fun resolveDisambiguation(candidate: DisambiguationCandidate) {
+            val case = _uiState.value.currentDisambiguation ?: return
+            val entry = candidate.toQueueEntry(case.kind)
+            _uiState.update {
+                it.copy(finalQueue = it.finalQueue + entry, disambiguationIndex = it.disambiguationIndex + 1)
+            }
+            advanceListBuild()
+        }
+
+        fun resolveDisambiguationRecordAll() {
+            val case = _uiState.value.currentDisambiguation ?: return
+            val entries = case.candidates.map { it.toQueueEntry(case.kind) }
+            _uiState.update {
+                it.copy(finalQueue = it.finalQueue + entries, disambiguationIndex = it.disambiguationIndex + 1)
+            }
+            advanceListBuild()
+        }
+
+        fun backFromDisambiguation() {
+            tickerJob?.cancel()
+            _uiState.update {
+                it.copy(
+                    listBuildStage = ListBuildStage.SOURCE_FORM,
+                    disambiguationQueue = emptyList(),
+                    disambiguationIndex = 0,
+                )
+            }
+        }
 
         private fun placeholderQueue(): List<QueueEntry> =
             listOf(
@@ -200,6 +276,8 @@ class RecordingFlowViewModel
                     sourceText = "",
                     finalQueue = emptyList(),
                     rawCount = 0,
+                    disambiguationQueue = emptyList(),
+                    disambiguationIndex = 0,
                 )
             }
         }
@@ -450,3 +528,6 @@ class RecordingFlowViewModel
                 }
         }
     }
+
+private fun WbSearchResult.toDisambiguationCandidate(fallbackLabel: String) =
+    DisambiguationCandidate(id = id, label = label ?: fallbackLabel, description = description)

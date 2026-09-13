@@ -88,6 +88,13 @@
     <string name="depth_five">5 (max)</string>
     <string name="depth_note">Loops are detected and skipped.</string>
     <string name="list_source_build_button">Build the list</string>
+    <string name="resolving_title">Matching against Wikidata</string>
+    <string name="resolving_explainer">Looking up each line before it joins the list.</string>
+    <string name="resolving_label">matching…</string>
+    <string name="disambiguation_kicker">%1$d of %2$d to resolve</string>
+    <string name="disambiguation_explainer_items">%1$d Wikidata items share this label. Pick the one you mean — or record all of them.</string>
+    <string name="disambiguation_explainer_lexemes">%1$d lexemes share this spelling. Pick the one you are pronouncing — or record all of them.</string>
+    <string name="disambiguation_record_all_button">Record all %1$d · drop this word</string>
     <string name="list_step_kicker">Step 4 of 4 — the list</string>
     <string name="list_blurb_paste">Matched against Wikidata.</string>
     <string name="list_blurb_query">Returned by your query.</string>
