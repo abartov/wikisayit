@@ -8,11 +8,12 @@ import io.ktor.client.plugins.logging.LogLevel
 import io.ktor.client.plugins.logging.Logging
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
+import wiki.asaf.wikisayit.BuildConfig
 
 /** Required by the Wikimedia User-Agent policy
  * (https://meta.wikimedia.org/wiki/User-Agent_policy): requests without a descriptive
  * User-Agent identifying the client and a contact point are liable to be throttled or blocked. */
-private const val WIKISAYIT_USER_AGENT = "WikiSayIt/0.1.0 (https://github.com/abartov/wikisayit)"
+private val WIKISAYIT_USER_AGENT = "WikiSayIt/${BuildConfig.VERSION_NAME} (https://github.com/abartov/wikisayit)"
 
 /** Builds the single [HttpClient] instance shared by all [MediaWikiClient]s. */
 fun createMediaWikiHttpClient(): HttpClient =

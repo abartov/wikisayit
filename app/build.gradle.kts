@@ -21,6 +21,10 @@ val keystoreProperties = Properties().apply {
 }
 val hasReleaseSigning = keystorePropertiesFile.exists()
 
+// The single source of truth for the app's version, so it never drifts out of sync
+// across the manifest, the About screen, and anywhere else it's displayed.
+val appVersionName = rootProject.file("VERSION").readText().trim()
+
 // Interface languages offered in Settings, computed from which `values-<lang>` resource
 // directories actually exist — so translations landing from Translatewiki.net become
 // selectable with nothing but a rebuild, per s-614. Locale aliases Android normalizes away
@@ -52,7 +56,7 @@ android {
         minSdk = 26
         targetSdk = 34
         versionCode = 1
-        versionName = "0.1.0"
+        versionName = appVersionName
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
