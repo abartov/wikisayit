@@ -185,6 +185,20 @@
     <string name="contribution_step_categories">categories added</string>
     <string name="contribution_step_p443">P443 added to %1$s</string>
     <string name="contribution_leaving_note">Leaving the app is safe — uploads continue and failures are retried on the next launch.</string>
+    <string name="contribution_connectivity_banner">Connection dropped — waiting for it to come back.</string>
+    <string name="contribution_needs_attention_kicker">needs attention</string>
+    <string name="contribution_status_retrying">retrying</string>
+    <string name="contribution_status_name_taken">name taken</string>
+    <string name="contribution_status_waiting">waiting</string>
+    <string name="contribution_failed_step_commons">The Commons upload failed: %1$s</string>
+    <string name="contribution_failed_step_p443">The Wikidata P443 statement failed: %1$s</string>
+    <string name="action_rename_and_upload">Rename and upload</string>
+    <string name="action_discard_this_one">Discard this one</string>
+    <string name="action_leave_for_later">Leave them for later</string>
+    <plurals name="contribution_retry_all_now">
+        <item quantity="one">Retry %1$d now</item>
+        <item quantity="other">Retry all %1$d now</item>
+    </plurals>
 
     <string name="done_explainer">Every file is on Commons and linked from Wikidata with P443. Readers hear your voice from now on.</string>
     <string name="done_commons_uploads">Your Commons uploads</string>

@@ -2,6 +2,7 @@ package wiki.asaf.wikisayit.ui.session
 
 import wiki.asaf.wikisayit.data.commons.buildCommonsFilename
 import wiki.asaf.wikisayit.data.local.db.LanguageProficiency
+import wiki.asaf.wikisayit.network.MediaWikiApiException
 import java.io.File
 
 enum class EntryKind { ITEM, FORM }
@@ -86,3 +87,42 @@ sealed interface RecordingBlocker {
  * field already holds that screen's own value is a no-op.
  */
 enum class FlowScreen { RECORDING, REVIEW, SUMMARY, DONE, LIST_SOURCE }
+
+/** Which of the two per-entry contribution steps failed (2e). */
+enum class UploadStepFailure { COMMONS, P443 }
+
+/** The status tag shown on a "needs attention" row (2e). [NAME_TAKEN] is the only one that
+ * needs a human decision (rename or discard); [WAITING] and [RETRYING] just wait for
+ * "Retry all now" or the next launch. */
+enum class UploadFailureStatus { RETRYING, NAME_TAKEN, WAITING }
+
+/** Per-entry contribution progress, indexed in step with [RecordingFlowUiState.approved]. The
+ * two real network calls are [commonsDone] (upload, which also lands both categories in the
+ * same edit — see [categoriesDone]) and [p443Done]. [renameSuffix] backs the "Rename and
+ * upload" action: a positive value is appended to the entry's label before the next retry so a
+ * name conflict doesn't repeat. */
+data class UploadEntryState(
+    val commonsDone: Boolean = false,
+    val categoriesDone: Boolean = false,
+    val p443Done: Boolean = false,
+    val failedStep: UploadStepFailure? = null,
+    val failureStatus: UploadFailureStatus? = null,
+    val errorMessage: String? = null,
+    val renameSuffix: Int = 0,
+) {
+    val needsAttention: Boolean get() = failedStep != null
+    val isComplete: Boolean get() = commonsDone && p443Done
+}
+
+/** Classifies an upload/statement failure into the status tags from `2e`: a connectivity-level
+ * exception (no HTTP response at all) means the device is offline ([UploadFailureStatus.WAITING]);
+ * a Commons "name taken" API error needs a human decision ([UploadFailureStatus.NAME_TAKEN]);
+ * anything else is a transient failure that a plain retry might clear ([UploadFailureStatus.RETRYING]). */
+fun classifyUploadFailure(error: Throwable): Pair<UploadFailureStatus, String> =
+    when {
+        error is MediaWikiApiException && error.errorKey?.contains("fileexists") == true ->
+            UploadFailureStatus.NAME_TAKEN to (error.errorMessage ?: error.errorKey.orEmpty())
+        error is MediaWikiApiException ->
+            UploadFailureStatus.RETRYING to (error.errorMessage ?: error.errorKey.orEmpty())
+        else -> UploadFailureStatus.WAITING to (error.message ?: "connection lost")
+    }

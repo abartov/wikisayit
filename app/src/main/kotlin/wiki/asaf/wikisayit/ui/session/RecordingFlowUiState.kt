@@ -43,9 +43,10 @@ data class RecordingFlowUiState(
     val redoQueue: List<QueueEntry> = emptyList(),
     val approved: List<QueueEntry> = emptyList(),
     val showAbandonDialog: Boolean = false,
-    // --- upload ---
-    val uploadIndex: Int = 0,
-    val uploadStepsDone: Int = 0,
+    // --- upload (2e: per-entry state so contribution failures can be surfaced and retried) ---
+    val uploadStates: List<UploadEntryState> = emptyList(),
+    val activeUploadIndex: Int? = null,
+    val connectivityLost: Boolean = false,
     // --- navigation ---
     val autoNavigateTo: FlowScreen? = null,
 ) {
@@ -60,4 +61,16 @@ data class RecordingFlowUiState(
 
     val username: String
         get() = activeProfile?.profile?.wikimediaUsername.orEmpty()
+
+    val uploadDoneCount: Int
+        get() = uploadStates.count { it.isComplete }
+
+    val uploadNeedsAttention: List<Int>
+        get() = uploadStates.indices.filter { uploadStates[it].needsAttention }
+
+    val activeUploadEntry: QueueEntry?
+        get() = activeUploadIndex?.let { approved.getOrNull(it) }
+
+    val activeUploadState: UploadEntryState?
+        get() = activeUploadIndex?.let { uploadStates.getOrNull(it) }
 }

@@ -13,11 +13,13 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import wiki.asaf.wikisayit.audio.RecordingEngine
 import wiki.asaf.wikisayit.audio.RecordingFileStore
+import wiki.asaf.wikisayit.data.commons.CommonsUploader
 import wiki.asaf.wikisayit.data.local.db.RecordingEntryType
 import wiki.asaf.wikisayit.data.local.db.SpeakerProfileWithLanguages
 import wiki.asaf.wikisayit.data.local.settings.SettingsRepository
 import wiki.asaf.wikisayit.data.profile.ProfileRepository
 import wiki.asaf.wikisayit.data.stats.StatsRepository
+import wiki.asaf.wikisayit.data.wikidata.P443StatementWriter
 import wiki.asaf.wikisayit.data.wikidata.WbEntityType
 import wiki.asaf.wikisayit.data.wikidata.WbSearchResult
 import wiki.asaf.wikisayit.data.wikidata.WikidataExistenceChecker
@@ -31,7 +33,6 @@ import kotlin.math.max
 private const val TICK_MILLIS = 100L
 private const val REVIEW_PLAYING_MILLIS = 1200L
 private const val REVIEW_DECISION_SECONDS = 1.5f
-private const val UPLOAD_STEP_MILLIS = 500L
 
 /**
  * Drives the whole recording flow (Profile through Done) from one activity-scoped ViewModel.
@@ -59,6 +60,8 @@ class RecordingFlowViewModel
         private val categorySource: WikipediaCategorySource,
         private val recordingEngine: RecordingEngine,
         private val recordingFileStore: RecordingFileStore,
+        private val commonsUploader: CommonsUploader,
+        private val p443StatementWriter: P443StatementWriter,
     ) : ViewModel() {
         private val _uiState = MutableStateFlow(RecordingFlowUiState())
         val uiState: StateFlow<RecordingFlowUiState> = _uiState.asStateFlow()
@@ -557,31 +560,154 @@ class RecordingFlowViewModel
             _uiState.value = RecordingFlowUiState(profiles = state.profiles, settings = state.settings)
         }
 
-        // --- contribution ---
+        // --- contribution (2e: real Commons upload + P443 write, with per-entry failure states) ---
 
         fun contribute() {
             tickerJob?.cancel()
-            _uiState.update { it.copy(uploadIndex = 0, uploadStepsDone = 0) }
+            val approved = _uiState.value.approved
+            _uiState.update {
+                it.copy(
+                    uploadStates = approved.map { UploadEntryState() },
+                    activeUploadIndex = null,
+                    connectivityLost = false,
+                )
+            }
+            tickerJob = viewModelScope.launch { runContributionLoop(approved.indices.toList()) }
+        }
+
+        /** Retries every row currently in the "needs attention" list, including name-conflict
+         * rows the user hasn't renamed — those will simply fail again with the same tag. */
+        fun retryFailedUploads() {
+            tickerJob?.cancel()
+            val failedIndices = _uiState.value.uploadNeedsAttention
+            _uiState.update { state -> state.copy(uploadStates = state.uploadStates.map { it.clearFailure() }) }
+            tickerJob = viewModelScope.launch { runContributionLoop(failedIndices) }
+        }
+
+        /** Stops retrying for now; whatever already succeeded stays contributed and the rest is
+         * left on-device, per the design's "recordings stay on device until both steps succeed". */
+        fun leaveFailuresForLater() {
+            tickerJob?.cancel()
+            _uiState.update { it.copy(activeUploadIndex = null, autoNavigateTo = FlowScreen.DONE) }
+        }
+
+        /** Appends a fresh numeric suffix to the entry's label so the next upload attempt gets a
+         * new Commons filename, then retries just that one entry. */
+        fun renameAndRetryFailedEntry(index: Int) {
+            tickerJob?.cancel()
+            _uiState.update { state ->
+                val states = state.uploadStates.toMutableList()
+                val current = states.getOrNull(index) ?: return@update state
+                states[index] = current.clearFailure().copy(renameSuffix = current.renameSuffix + 1)
+                state.copy(uploadStates = states)
+            }
+            tickerJob = viewModelScope.launch { runContributionLoop(listOf(index)) }
+        }
+
+        /** Drops a name-conflicted entry from the contribution altogether; its recording stays
+         * on-device but is no longer part of this session's approved list. */
+        fun discardFailedEntry(index: Int) {
+            _uiState.update { state ->
+                if (index !in state.approved.indices) return@update state
+                state.copy(
+                    approved = state.approved.toMutableList().apply { removeAt(index) },
+                    uploadStates = state.uploadStates.toMutableList().apply { removeAt(index) },
+                )
+            }
+            finishContributionIfComplete()
+        }
+
+        private fun UploadEntryState.clearFailure() = copy(failedStep = null, failureStatus = null, errorMessage = null)
+
+        private suspend fun runContributionLoop(indices: List<Int>) {
             val profileId = _uiState.value.activeProfile?.profile?.id ?: return
-            tickerJob =
-                viewModelScope.launch {
-                    val approved = _uiState.value.approved
-                    for (index in approved.indices) {
-                        _uiState.update { it.copy(uploadIndex = index, uploadStepsDone = 0) }
-                        repeat(3) { step ->
-                            delay(UPLOAD_STEP_MILLIS)
-                            _uiState.update { it.copy(uploadStepsDone = step + 1) }
-                        }
-                        val entryType =
-                            if (approved[index].kind == EntryKind.FORM) {
-                                RecordingEntryType.LEXEME_FORM
-                            } else {
-                                RecordingEntryType.WIKIDATA_ITEM
-                            }
-                        statsRepository.recordContribution(profileId, entryType)
-                    }
-                    _uiState.update { it.copy(uploadIndex = approved.size, autoNavigateTo = FlowScreen.DONE) }
+            val isoCode = _uiState.value.language?.isoCode.orEmpty()
+            val username = _uiState.value.username
+            for (index in indices) {
+                val entry = _uiState.value.approved.getOrNull(index) ?: continue
+                _uiState.update { it.copy(activeUploadIndex = index) }
+                uploadEntry(index, entry, isoCode, username, profileId)
+            }
+            _uiState.update { it.copy(activeUploadIndex = null) }
+            finishContributionIfComplete()
+        }
+
+        private fun finishContributionIfComplete() {
+            val state = _uiState.value
+            if (state.approved.isNotEmpty() && state.uploadStates.all { it.isComplete }) {
+                _uiState.update { it.copy(autoNavigateTo = FlowScreen.DONE) }
+            }
+        }
+
+        private suspend fun uploadEntry(
+            index: Int,
+            entry: QueueEntry,
+            isoCode: String,
+            username: String,
+            profileId: Long,
+        ) {
+            val entryState = _uiState.value.uploadStates.getOrNull(index) ?: return
+            val renamedEntry =
+                if (entryState.renameSuffix > 0) {
+                    entry.copy(
+                        label = "${entry.label} (${entryState.renameSuffix + 1})",
+                    )
+                } else {
+                    entry
                 }
+            val filename: String
+            if (!entryState.commonsDone) {
+                filename =
+                    try {
+                        commonsUploader.upload(renamedEntry, isoCode, username)
+                    } catch (cancellation: CancellationException) {
+                        throw cancellation
+                    } catch (error: Exception) {
+                        recordUploadFailure(index, UploadStepFailure.COMMONS, error)
+                        return
+                    }
+                updateUploadState(index) { it.copy(commonsDone = true, categoriesDone = true) }
+                _uiState.update { it.copy(connectivityLost = false) }
+            } else {
+                filename = renamedEntry.commonsFilename(isoCode, username)
+            }
+            try {
+                p443StatementWriter.addPronunciation(entry, filename)
+            } catch (cancellation: CancellationException) {
+                throw cancellation
+            } catch (error: Exception) {
+                recordUploadFailure(index, UploadStepFailure.P443, error)
+                return
+            }
+            updateUploadState(index) { it.copy(p443Done = true) }
+            _uiState.update { it.copy(connectivityLost = false) }
+            val entryType =
+                if (entry.kind == EntryKind.FORM) RecordingEntryType.LEXEME_FORM else RecordingEntryType.WIKIDATA_ITEM
+            statsRepository.recordContribution(profileId, entryType)
+        }
+
+        private fun recordUploadFailure(
+            index: Int,
+            step: UploadStepFailure,
+            error: Throwable,
+        ) {
+            val (status, message) = classifyUploadFailure(error)
+            updateUploadState(index) { it.copy(failedStep = step, failureStatus = status, errorMessage = message) }
+            if (status == UploadFailureStatus.WAITING) {
+                _uiState.update { it.copy(connectivityLost = true) }
+            }
+        }
+
+        private fun updateUploadState(
+            index: Int,
+            transform: (UploadEntryState) -> UploadEntryState,
+        ) {
+            _uiState.update { state ->
+                val states = state.uploadStates.toMutableList()
+                val current = states.getOrNull(index) ?: return@update state
+                states[index] = transform(current)
+                state.copy(uploadStates = states)
+            }
         }
     }
 
