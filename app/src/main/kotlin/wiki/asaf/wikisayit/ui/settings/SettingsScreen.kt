@@ -13,9 +13,18 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.MenuAnchorType
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -26,6 +35,7 @@ import androidx.core.os.LocaleListCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import wiki.asaf.wikisayit.R
+import wiki.asaf.wikisayit.data.language.InterfaceLanguages
 import wiki.asaf.wikisayit.data.local.settings.AppSettings
 import wiki.asaf.wikisayit.ui.components.WsSecondaryButton
 import wiki.asaf.wikisayit.ui.components.WsSegmentedControl
@@ -33,7 +43,6 @@ import wiki.asaf.wikisayit.ui.theme.LocalWikiSayItColors
 import wiki.asaf.wikisayit.ui.theme.LocalWikiSayItTypography
 
 private val SILENCE_THRESHOLD_OPTIONS = listOf(1.0f, 1.5f, 2.5f)
-private val INTERFACE_LANGUAGE_TAGS = listOf("en", "he", "yi")
 
 /** Settings (`1a`): auto-use-last-profile, auto-trim, interface language and silence threshold. */
 @Composable
@@ -48,8 +57,7 @@ fun SettingsScreen(
         settings = settings,
         onToggleAutoUseLastProfile = { viewModel.setAutoUseLastProfile(!settings.autoUseLastProfile) },
         onToggleTrimSilence = { viewModel.setTrimSilenceAutomatically(!settings.trimSilenceAutomatically) },
-        onInterfaceLanguageSelected = {
-            val tag = INTERFACE_LANGUAGE_TAGS[it]
+        onInterfaceLanguageSelected = { tag ->
             viewModel.setInterfaceLanguageTag(tag)
             if (android.os.Build.VERSION.SDK_INT >= 33) {
                 val localeManager = activity?.getSystemService(android.app.LocaleManager::class.java)
@@ -70,7 +78,7 @@ private fun SettingsContent(
     settings: AppSettings,
     onToggleAutoUseLastProfile: () -> Unit,
     onToggleTrimSilence: () -> Unit,
-    onInterfaceLanguageSelected: (Int) -> Unit,
+    onInterfaceLanguageSelected: (String) -> Unit,
     onSilenceThresholdSelected: (Int) -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
@@ -95,14 +103,8 @@ private fun SettingsContent(
             }
             Column(modifier = Modifier.padding(top = 18.dp)) {
                 Text(text = stringResource(R.string.settings_interface_language_label), style = typography.caption)
-                WsSegmentedControl(
-                    options =
-                        listOf(
-                            stringResource(R.string.settings_language_english),
-                            stringResource(R.string.settings_language_hebrew),
-                            stringResource(R.string.settings_language_yiddish),
-                        ),
-                    selectedIndex = INTERFACE_LANGUAGE_TAGS.indexOf(settings.interfaceLanguageTag).coerceAtLeast(0),
+                InterfaceLanguageDropdown(
+                    selectedTag = settings.interfaceLanguageTag,
                     onSelect = onInterfaceLanguageSelected,
                     modifier = Modifier.padding(top = 4.dp),
                 )
@@ -132,6 +134,47 @@ private fun SettingsContent(
                 onClick = onBack,
                 modifier = Modifier.fillMaxWidth(),
             )
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun InterfaceLanguageDropdown(
+    selectedTag: String?,
+    onSelect: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    var expanded by remember { mutableStateOf(false) }
+    val options = InterfaceLanguages.options
+    val selected = options.firstOrNull { it.tag == selectedTag } ?: options.firstOrNull()
+
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { expanded = it },
+        modifier = modifier,
+    ) {
+        OutlinedTextField(
+            value = selected?.displayName.orEmpty(),
+            onValueChange = {},
+            readOnly = true,
+            singleLine = true,
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+            modifier = Modifier.fillMaxWidth().menuAnchor(MenuAnchorType.PrimaryNotEditable, true),
+        )
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+        ) {
+            options.forEach { option ->
+                DropdownMenuItem(
+                    text = { Text(option.displayName) },
+                    onClick = {
+                        onSelect(option.tag)
+                        expanded = false
+                    },
+                )
+            }
         }
     }
 }

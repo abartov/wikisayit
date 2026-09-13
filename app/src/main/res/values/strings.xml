@@ -220,9 +220,6 @@
     <string name="settings_trim_silence_explainer">Crops noise, then pads 0.2 s at each end before encoding to Ogg Vorbis.</string>
     <string name="settings_interface_language_label">Interface language</string>
     <string name="settings_interface_language_note">Translations come from translatewiki.net. Right-to-left languages mirror the whole interface.</string>
-    <string name="settings_language_english">English</string>
-    <string name="settings_language_hebrew">עברית</string>
-    <string name="settings_language_yiddish">Yiddish</string>
     <string name="settings_silence_threshold_label">Stop recording after silence of</string>
     <string name="settings_seconds_format">%.1f s</string>
     <string name="settings_back_to_session">Back to the session</string>

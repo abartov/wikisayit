@@ -198,9 +198,6 @@
     <string name="settings_trim_silence_explainer">חותך רעש, ואז מרפד 0.2 שניות בכל קצה לפני קידוד ל-Ogg Vorbis.</string>
     <string name="settings_interface_language_label">שפת הממשק</string>
     <string name="settings_interface_language_note">התרגומים מגיעים מ-translatewiki.net. שפות מימין לשמאל הופכות את כל הממשק.</string>
-    <string name="settings_language_english">English</string>
-    <string name="settings_language_hebrew">עברית</string>
-    <string name="settings_language_yiddish">יידיש</string>
     <string name="settings_silence_threshold_label">עצירת ההקלטה לאחר שקט של</string>
     <string name="settings_seconds_format">%.1f שניות</string>
     <string name="settings_back_to_session">חזרה למפגש</string>

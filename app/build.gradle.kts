@@ -21,6 +21,28 @@ val keystoreProperties = Properties().apply {
 }
 val hasReleaseSigning = keystorePropertiesFile.exists()
 
+// Interface languages offered in Settings, computed from which `values-<lang>` resource
+// directories actually exist — so translations landing from Translatewiki.net become
+// selectable with nothing but a rebuild, per s-614. Locale aliases Android normalizes away
+// (e.g. "iw" for Hebrew) are excluded so they don't duplicate their modern-code entry.
+val legacyLocaleAliases = setOf("iw", "in", "ji")
+val languageDirPattern = Regex("^values-([a-z]{2,3})(-r([A-Z]{2}))?$")
+val bcp47DirPattern = Regex("^values-b\\+(.+)$")
+val supportedInterfaceLanguages: List<String> =
+    run {
+        val tags = mutableSetOf("en")
+        file("src/main/res").listFiles { f -> f.isDirectory }?.forEach { dir ->
+            languageDirPattern.matchEntire(dir.name)?.let { match ->
+                val (lang, _, region) = match.destructured
+                if (lang !in legacyLocaleAliases) tags += if (region.isEmpty()) lang else "$lang-$region"
+            }
+            bcp47DirPattern.matchEntire(dir.name)?.let { match ->
+                tags += match.groupValues[1].replace("+", "-")
+            }
+        }
+        tags.sorted()
+    }
+
 android {
     namespace = "wiki.asaf.wikisayit"
     compileSdk = 34
@@ -33,6 +55,12 @@ android {
         versionName = "0.1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        buildConfigField(
+            "String",
+            "SUPPORTED_INTERFACE_LANGUAGES",
+            "\"${supportedInterfaceLanguages.joinToString(",")}\"",
+        )
     }
 
     signingConfigs {
