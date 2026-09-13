@@ -3,6 +3,7 @@ package wiki.asaf.wikisayit.network
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.forms.formData
+import io.ktor.client.request.forms.submitForm
 import io.ktor.client.request.forms.submitFormWithBinaryData
 import io.ktor.client.request.get
 import io.ktor.client.request.header
@@ -13,6 +14,7 @@ import io.ktor.client.statement.HttpResponse
 import io.ktor.http.ContentType
 import io.ktor.http.Headers
 import io.ktor.http.HttpHeaders
+import io.ktor.http.Parameters
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 import kotlinx.serialization.json.Json
@@ -69,6 +71,28 @@ class MediaWikiClient(
             httpClient.post(resolve(path)) {
                 contentType(ContentType.Application.Json)
                 setBody(body)
+                token?.let { header(HttpHeaders.Authorization, "Bearer $it") }
+            }
+        return response.decodeOrThrow()
+    }
+
+    /**
+     * POSTs [parameters] as `application/x-www-form-urlencoded` to the site's `action=` API
+     * (`w/api.php`) — how write modules like `wbcreateclaim` expect their arguments, as opposed
+     * to [post]'s JSON body (for the REST API) or [postActionMultipart]'s file part.
+     * `format=json` is added automatically.
+     */
+    suspend inline fun <reified T> postAction(parameters: Map<String, String>): T {
+        val token = authTokenProvider.currentAccessToken()
+        val response =
+            httpClient.submitForm(
+                url = site.actionApiBaseUrl,
+                formParameters =
+                    Parameters.build {
+                        parameters.forEach { (key, value) -> append(key, value) }
+                    },
+            ) {
+                parameter("format", "json")
                 token?.let { header(HttpHeaders.Authorization, "Bearer $it") }
             }
         return response.decodeOrThrow()
