@@ -417,9 +417,16 @@ class RecordingFlowViewModel
             queue.removeAt(state.recordingIndex)
             tickerJob?.cancel()
             if (queue.isEmpty()) {
+                // finalQueue is already the checked/expanded list from before recording started —
+                // land on CHECKED (accurate counts, "Start" to try again), not FRESH: FRESH's
+                // "Check" button would otherwise re-run the existence check against these
+                // already-resolved form entries, which used to multiply them out again (s-fsk).
                 _uiState.update {
                     it.copy(
-                        listBuildStage = ListBuildStage.FRESH,
+                        listBuildStage = ListBuildStage.CHECKED,
+                        rawCount = it.finalQueue.size,
+                        excludedCount = 0,
+                        formsAddedCount = 0,
                         recordingQueue = emptyList(),
                         autoNavigateTo = FlowScreen.LIST_SOURCE,
                     )

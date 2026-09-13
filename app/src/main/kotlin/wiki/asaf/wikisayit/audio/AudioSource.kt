@@ -23,6 +23,11 @@ interface AudioSource {
 
 class MicrophoneUnavailableException(message: String) : Exception(message)
 
+/** Frame size for reading from [AudioRecord], independent of the device's minimum buffer size
+ * (see [AndroidAudioSource] for why). 20ms is fine-grained enough for [SpeechEndpointDetector]
+ * to track speech onset/trailing silence responsively without excessive per-frame overhead. */
+private const val FRAME_DURATION_SECONDS = 0.02f
+
 /**
  * Captures raw mono PCM-16 audio from the device microphone via [AudioRecord].
  *
@@ -41,6 +46,14 @@ class AndroidAudioSource(
             if (minBufferSize == AudioRecord.ERROR || minBufferSize == AudioRecord.ERROR_BAD_VALUE) {
                 throw MicrophoneUnavailableException("Unsupported sample rate: $sampleRate")
             }
+            // The internal ring buffer can be generous for headroom, but reads below are always
+            // in fixed, small frames — AudioRecord.getMinBufferSize() varies a lot by device
+            // (some report buffers several times larger than others for the same format), and
+            // this class used to read exactly one buffer's worth per frame. That tied speech
+            // onset/silence-countdown granularity to that device-specific size — on a device
+            // with a large minimum buffer, a single frame could span longer than a whole short
+            // word, so the detector saw it as one coarse blob and either mis-timed auto-stop or
+            // made the crop step trim a genuine take down to nothing (reported as TooShort).
             val bufferSize = minBufferSize * 2
             val record =
                 AudioRecord(
@@ -56,7 +69,8 @@ class AndroidAudioSource(
             }
             try {
                 record.startRecording()
-                val chunk = ShortArray(bufferSize / 2)
+                val frameSamples = (sampleRate * FRAME_DURATION_SECONDS).toInt().coerceAtLeast(1)
+                val chunk = ShortArray(frameSamples)
                 while (true) {
                     val read = record.read(chunk, 0, chunk.size)
                     if (read > 0) {

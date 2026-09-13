@@ -28,6 +28,9 @@ private fun itemEntry(
     qid = qid,
 )
 
+/** An unresolved lexeme reference, as list building produces before the existence check expands
+ * it into specific forms — real candidates have no [wiki.asaf.wikisayit.ui.session.QueueEntry.formId]
+ * until then. */
 private fun formEntry(
     label: String,
     lexemeId: String,
@@ -36,7 +39,6 @@ private fun formEntry(
     kind = EntryKind.FORM,
     detail = "lexeme form",
     lexemeId = lexemeId,
-    formId = "$lexemeId-F1",
 )
 
 class WikidataExistenceCheckerTest {
@@ -185,6 +187,50 @@ class WikidataExistenceCheckerTest {
             val result = checker.check(listOf(formEntry("water", "L1")), preferredLanguage = "en")
 
             assertEquals("eau", result.finalQueue[0].label)
+        }
+
+    @Test
+    fun `re-checking an already-resolved form verifies just that form, not the whole lexeme again`() =
+        runTest {
+            // Regression for s-fsk: feeding an already-expanded form entry (formId already set)
+            // back through check() used to re-expand it into every missing form of the parent
+            // lexeme, multiplying the queue instead of leaving it alone.
+            val checker =
+                checkerFor(
+                    """
+                    {"entities":{"L1":{"claims":{},"forms":[
+                        {"id":"L1-F1","representations":{},"claims":{}},
+                        {"id":"L1-F2","representations":{},"claims":{}},
+                        {"id":"L1-F3","representations":{},"claims":{}}
+                    ]}}}
+                    """.trimIndent(),
+                )
+            val alreadyResolved = formEntry("water", "L1").copy(formId = "L1-F1")
+
+            val result = checker.check(listOf(alreadyResolved), preferredLanguage = "en")
+
+            assertEquals(1, result.finalQueue.size)
+            assertEquals("L1-F1", result.finalQueue[0].formId)
+            assertEquals(0, result.formsAddedCount)
+        }
+
+    @Test
+    fun `re-checking an already-resolved form that now has P443 excludes it`() =
+        runTest {
+            val checker =
+                checkerFor(
+                    """
+                    {"entities":{"L1":{"claims":{},"forms":[
+                        {"id":"L1-F1","representations":{},"claims":{"P443":[{}]}}
+                    ]}}}
+                    """.trimIndent(),
+                )
+            val alreadyResolved = formEntry("water", "L1").copy(formId = "L1-F1")
+
+            val result = checker.check(listOf(alreadyResolved), preferredLanguage = "en")
+
+            assertEquals(0, result.finalQueue.size)
+            assertEquals(1, result.excludedCount)
         }
 
     @Test

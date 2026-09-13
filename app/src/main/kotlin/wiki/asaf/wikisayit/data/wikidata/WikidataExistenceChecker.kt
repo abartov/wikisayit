@@ -65,6 +65,18 @@ class WikidataExistenceChecker
                         if (entity == null) {
                             // Couldn't resolve (network failure or unknown id) — keep as-is.
                             finalQueue += candidate
+                        } else if (candidate.formId != null) {
+                            // Already resolved to one specific form in an earlier pass (e.g. a
+                            // re-check of a list that was already expanded) — verify just that
+                            // form's own P443 status. Re-running the full lexeme expansion below
+                            // would instead multiply it back out into every currently-missing
+                            // form of the parent lexeme, once per already-resolved candidate.
+                            val form = entity.forms.firstOrNull { it.id == candidate.formId }
+                            if (form != null && P443 in form.claims) {
+                                excludedCount++
+                            } else {
+                                finalQueue += candidate
+                            }
                         } else {
                             val missingForms = entity.forms.filterNot { P443 in it.claims }
                             if (missingForms.isEmpty()) {
