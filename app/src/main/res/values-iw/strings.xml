@@ -129,6 +129,64 @@
     <string name="interrupted_noise_body">החדר גם היה רועש במילים האחרונות — רעש רקע כזה חזק לא ניתן לחתוך בצורה נקייה.</string>
     <string name="interrupted_carry_on">להמשיך מ־\"%1$s\"</string>
 
+    <string name="review_counter">סוקרים %1$d מתוך %2$d</string>
+    <string name="review_listen_back">האזנה חוזרת</string>
+    <string name="review_playing_back">מנגנים</string>
+    <string name="review_decision_prompt">הקלטה מחדש או מחיקה? %1$.1f שניות</string>
+    <string name="action_drop">מחיקה</string>
+
+    <string name="summary_kicker">המפגש הסתיים</string>
+    <string name="summary_blurb_ready">נחתך, רופד ב-0.2 שניות של שקט בכל קצה, קודד כ-Ogg Vorbis. שום דבר עדיין לא יצא מהטלפון שלכם.</string>
+    <string name="summary_blurb_empty">המפגש הזה הסתיים בלי שום דבר מאושר — כל ההקלטות נמחקו או שהמפגש נעצר לפני שהמילה הראשונה הושלמה. אין עדיין מה לתרום.</string>
+    <string name="summary_nothing_to_send_kicker">אין מה לשלוח</string>
+    <string name="summary_nothing_to_send_body">התחילו מפגש חדש כדי להקליט את הרשימה שוב — המילים עצמן עדיין נמצאות בוויקינתונים וממתינות להקלטה.</string>
+    <string name="summary_contribute_button">תרומה ל-Commons ול-Wikidata</string>
+    <string name="summary_cc0_note">ההקלטות שלכם יפורסמו תחת רישיון Creative Commons Zero (CC0): כל אחד יכול להשתמש בהן לכל מטרה, כולל מסחרית, בלי לבקש רשות.</string>
+    <string name="summary_abandon_button">נטישת המפגש</string>
+    <string name="summary_back_to_start_button">חזרה להתחלה</string>
+    <string name="summary_abandon_dialog_title">לנטוש את המפגש הזה?</string>
+    <string name="summary_abandon_confirm">מחיקה ויציאה</string>
+    <string name="summary_abandon_cancel">להמשיך להקליט</string>
+    <string name="tag_item">פריט</string>
+    <string name="tag_form">צורה</string>
+
+    <plurals name="summary_headline_ready">
+        <item quantity="one">הקלטה מוכנה</item>
+        <item quantity="two">שתי הקלטות מוכנות</item>
+        <item quantity="other">הקלטות מוכנות</item>
+    </plurals>
+
+    <plurals name="summary_headline_kept">
+        <item quantity="one">הקלטה נשמרה</item>
+        <item quantity="two">שתי הקלטות נשמרו</item>
+        <item quantity="other">הקלטות נשמרו</item>
+    </plurals>
+
+    <plurals name="summary_abandon_dialog_body">
+        <item quantity="one">הקלטה גמורה אחת תימחק מהטלפון הזה ולא יישלח שום דבר. אי אפשר לבטל את זה.</item>
+        <item quantity="two">שתי הקלטות גמורות יימחקו מהטלפון הזה ולא יישלח שום דבר. אי אפשר לבטל את זה.</item>
+        <item quantity="other">%1$d הקלטות גמורות יימחקו מהטלפון הזה ולא יישלח שום דבר. אי אפשר לבטל את זה.</item>
+    </plurals>
+
+    <string name="contribution_kicker">תורמים</string>
+    <string name="contribution_of_total">מתוך %1$d</string>
+    <string name="contribution_now_uploading">מעלים כעת</string>
+    <string name="contribution_step_commons">הקובץ ב-Commons</string>
+    <string name="contribution_step_categories">הקטגוריות נוספו</string>
+    <string name="contribution_step_p443">P443 נוסף ל-%1$s</string>
+    <string name="contribution_leaving_note">אפשר לצאת מהאפליקציה בבטחה — ההעלאות ממשיכות וכשלונות ינוסו שוב בהפעלה הבאה.</string>
+
+    <string name="done_explainer">כל קובץ נמצא ב-Commons ומקושר מוויקינתונים באמצעות P443. מעכשיו קוראים ישמעו את קולכם.</string>
+    <string name="done_commons_uploads">ההעלאות שלכם ב-Commons</string>
+    <string name="done_wikidata_edits">העריכות שלכם בוויקינתונים</string>
+    <string name="done_record_another_list">הקלטת רשימה נוספת</string>
+
+    <plurals name="done_headline">
+        <item quantity="one">הקלטה אחת פעילה</item>
+        <item quantity="two">שתי הקלטות פעילות</item>
+        <item quantity="other">%1$d הקלטות פעילות</item>
+    </plurals>
+
     <plurals name="interrupted_stop_review">
         <item quantity="one">עצירה וסקירה של ההקלטה שיש לי</item>
         <item quantity="two">עצירה וסקירה של שתי ההקלטות שיש לי</item>

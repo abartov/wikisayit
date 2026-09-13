@@ -8,13 +8,17 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import wiki.asaf.wikisayit.R
 import wiki.asaf.wikisayit.ui.common.PlaceholderScreen
+import wiki.asaf.wikisayit.ui.contribution.ContributionScreen
+import wiki.asaf.wikisayit.ui.done.DoneScreen
 import wiki.asaf.wikisayit.ui.language.LanguageScreen
 import wiki.asaf.wikisayit.ui.listsource.ListSourceScreen
 import wiki.asaf.wikisayit.ui.profile.NewProfileScreen
 import wiki.asaf.wikisayit.ui.profile.ProfileScreen
 import wiki.asaf.wikisayit.ui.recording.RecordingScreen
+import wiki.asaf.wikisayit.ui.review.ReviewScreen
 import wiki.asaf.wikisayit.ui.session.RecordingFlowViewModel
 import wiki.asaf.wikisayit.ui.signin.SignInScreen
+import wiki.asaf.wikisayit.ui.summary.SessionSummaryScreen
 
 /**
  * [sessionViewModel] is created once in [wiki.asaf.wikisayit.MainActivity] (Activity-scoped,
@@ -79,16 +83,46 @@ fun WikiSayItNavHost(
             )
         }
         composable<WikiSayItRoute.Review> {
-            PlaceholderScreen(title = stringResource(R.string.nav_destination_review))
+            ReviewScreen(
+                viewModel = sessionViewModel,
+                onNavigateRecording = {
+                    navController.navigate(WikiSayItRoute.Recording) {
+                        popUpTo(WikiSayItRoute.Recording) { inclusive = true }
+                    }
+                },
+                onNavigateSummary = { navController.navigate(WikiSayItRoute.SessionSummary) },
+            )
         }
         composable<WikiSayItRoute.SessionSummary> {
-            PlaceholderScreen(title = "Session summary")
+            SessionSummaryScreen(
+                viewModel = sessionViewModel,
+                onContribute = { navController.navigate(WikiSayItRoute.Contribution) },
+                onBackToStart = {
+                    navController.navigate(WikiSayItRoute.Profile) {
+                        popUpTo(WikiSayItRoute.Profile) { inclusive = true }
+                    }
+                },
+            )
         }
         composable<WikiSayItRoute.Contribution> {
-            PlaceholderScreen(title = stringResource(R.string.nav_destination_contribution))
+            ContributionScreen(
+                viewModel = sessionViewModel,
+                onNavigateDone = {
+                    navController.navigate(WikiSayItRoute.Done) {
+                        popUpTo(WikiSayItRoute.Contribution) { inclusive = true }
+                    }
+                },
+            )
         }
         composable<WikiSayItRoute.Done> {
-            PlaceholderScreen(title = "Done")
+            DoneScreen(
+                viewModel = sessionViewModel,
+                onRecordAnotherList = {
+                    navController.navigate(WikiSayItRoute.Profile) {
+                        popUpTo(WikiSayItRoute.Profile) { inclusive = true }
+                    }
+                },
+            )
         }
         composable<WikiSayItRoute.Settings> {
             PlaceholderScreen(title = stringResource(R.string.nav_destination_settings))

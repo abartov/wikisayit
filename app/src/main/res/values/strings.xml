@@ -129,6 +129,60 @@
     <string name="interrupted_noise_body">The room has also been noisy for the last few words — background noise this loud cannot be trimmed away cleanly.</string>
     <string name="interrupted_carry_on">Carry on from \"%1$s\"</string>
 
+    <string name="review_counter">reviewing %1$d of %2$d</string>
+    <string name="review_listen_back">listen back</string>
+    <string name="review_playing_back">playing back</string>
+    <string name="review_decision_prompt">redo or drop? %1$.1f s</string>
+    <string name="action_drop">Drop</string>
+
+    <string name="summary_kicker">Session complete</string>
+    <string name="summary_blurb_ready">Cropped, padded with 0.2 s of silence at each end, encoded as Ogg Vorbis. Nothing has left your phone yet.</string>
+    <string name="summary_blurb_empty">This session ended with nothing approved — every take was dropped or the session stopped before the first word was finished. There is nothing to contribute yet.</string>
+    <string name="summary_nothing_to_send_kicker">nothing to send</string>
+    <string name="summary_nothing_to_send_body">Start a new session to record the list again — the words themselves are still on Wikidata waiting for audio.</string>
+    <string name="summary_contribute_button">Contribute to Commons and Wikidata</string>
+    <string name="summary_cc0_note">Your recordings will be published under the Creative Commons Zero (CC0) licence: anyone may use them for any purpose, including commercially, without asking.</string>
+    <string name="summary_abandon_button">Abandon session</string>
+    <string name="summary_back_to_start_button">Back to the start</string>
+    <string name="summary_abandon_dialog_title">Abandon this session?</string>
+    <string name="summary_abandon_confirm">Delete and exit</string>
+    <string name="summary_abandon_cancel">Keep recording</string>
+    <string name="tag_item">item</string>
+    <string name="tag_form">form</string>
+
+    <plurals name="summary_headline_ready">
+        <item quantity="one">recording ready</item>
+        <item quantity="other">recordings ready</item>
+    </plurals>
+
+    <plurals name="summary_headline_kept">
+        <item quantity="one">recording kept</item>
+        <item quantity="other">recordings kept</item>
+    </plurals>
+
+    <plurals name="summary_abandon_dialog_body">
+        <item quantity="one">%1$d finished recording will be deleted from this phone and nothing will be contributed. This cannot be undone.</item>
+        <item quantity="other">%1$d finished recordings will be deleted from this phone and nothing will be contributed. This cannot be undone.</item>
+    </plurals>
+
+    <string name="contribution_kicker">Contributing</string>
+    <string name="contribution_of_total">of %1$d</string>
+    <string name="contribution_now_uploading">now uploading</string>
+    <string name="contribution_step_commons">file on Commons</string>
+    <string name="contribution_step_categories">categories added</string>
+    <string name="contribution_step_p443">P443 added to %1$s</string>
+    <string name="contribution_leaving_note">Leaving the app is safe — uploads continue and failures are retried on the next launch.</string>
+
+    <string name="done_explainer">Every file is on Commons and linked from Wikidata with P443. Readers hear your voice from now on.</string>
+    <string name="done_commons_uploads">Your Commons uploads</string>
+    <string name="done_wikidata_edits">Your Wikidata edits</string>
+    <string name="done_record_another_list">Record another list</string>
+
+    <plurals name="done_headline">
+        <item quantity="one">%1$d pronunciation is live</item>
+        <item quantity="other">%1$d pronunciations are live</item>
+    </plurals>
+
     <plurals name="interrupted_stop_review">
         <item quantity="one">Stop and review the %1$d take I have</item>
         <item quantity="other">Stop and review the %1$d takes I have</item>
