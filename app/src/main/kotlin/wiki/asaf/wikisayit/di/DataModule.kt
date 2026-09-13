@@ -11,6 +11,7 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import wiki.asaf.wikisayit.data.local.db.PendingUploadDao
 import wiki.asaf.wikisayit.data.local.db.ProfileDao
 import wiki.asaf.wikisayit.data.local.db.RecordingStatDao
 import wiki.asaf.wikisayit.data.local.db.WikiSayItDatabase
@@ -20,6 +21,8 @@ import wiki.asaf.wikisayit.data.profile.ProfileRepository
 import wiki.asaf.wikisayit.data.profile.RoomProfileRepository
 import wiki.asaf.wikisayit.data.stats.RoomStatsRepository
 import wiki.asaf.wikisayit.data.stats.StatsRepository
+import wiki.asaf.wikisayit.data.uploads.PendingUploadRepository
+import wiki.asaf.wikisayit.data.uploads.RoomPendingUploadRepository
 import java.time.Clock
 import javax.inject.Singleton
 
@@ -34,7 +37,7 @@ object DataModule {
         @ApplicationContext context: Context,
     ): WikiSayItDatabase =
         Room.databaseBuilder(context, WikiSayItDatabase::class.java, WikiSayItDatabase.DATABASE_NAME)
-            .addMigrations(WikiSayItDatabase.MIGRATION_1_2)
+            .addMigrations(WikiSayItDatabase.MIGRATION_1_2, WikiSayItDatabase.MIGRATION_2_3)
             .build()
 
     @Provides
@@ -42,6 +45,9 @@ object DataModule {
 
     @Provides
     fun provideRecordingStatDao(database: WikiSayItDatabase): RecordingStatDao = database.recordingStatDao()
+
+    @Provides
+    fun providePendingUploadDao(database: WikiSayItDatabase): PendingUploadDao = database.pendingUploadDao()
 
     @Provides
     @Singleton
@@ -64,4 +70,7 @@ interface DataBindingsModule {
 
     @Binds
     fun bindSettingsRepository(impl: DataStoreSettingsRepository): SettingsRepository
+
+    @Binds
+    fun bindPendingUploadRepository(impl: RoomPendingUploadRepository): PendingUploadRepository
 }

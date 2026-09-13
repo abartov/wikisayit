@@ -20,6 +20,10 @@ import wiki.asaf.wikisayit.data.local.settings.DataStoreSettingsRepository
 import wiki.asaf.wikisayit.data.profile.ProfileLanguageInput
 import wiki.asaf.wikisayit.data.profile.RoomProfileRepository
 import wiki.asaf.wikisayit.data.stats.RoomStatsRepository
+import wiki.asaf.wikisayit.data.uploads.PendingUploadItem
+import wiki.asaf.wikisayit.data.uploads.RoomPendingUploadRepository
+import wiki.asaf.wikisayit.ui.session.EntryKind
+import wiki.asaf.wikisayit.ui.session.QueueEntry
 import java.io.File
 import java.time.Clock
 import java.time.Instant
@@ -121,6 +125,78 @@ class PersistenceInstrumentedTest {
             assertEquals(1, monthly.size)
             assertEquals("2026-09", monthly.first().yearMonth)
             assertEquals(RecordingEntryType.WIKIDATA_ITEM, monthly.first().entryType)
+        }
+
+    @Test
+    fun pendingUploadRepository_roundTripsAndDeletesAnItem() =
+        runTest {
+            val context = InstrumentationRegistry.getInstrumentation().targetContext
+            val profileId = insertProfile()
+            val repository = RoomPendingUploadRepository(database.pendingUploadDao(), context)
+            val audioFile = File.createTempFile("take", ".ogg").apply { deleteOnExit() }
+
+            repository.saveForLater(
+                listOf(
+                    PendingUploadItem(
+                        entry =
+                            QueueEntry(
+                                label = "мова",
+                                kind = EntryKind.ITEM,
+                                detail = "item",
+                                qid = "Q42",
+                                audioFile = audioFile,
+                            ),
+                        profileId = profileId,
+                        isoCode = "uk",
+                        username = "Ijon",
+                        speakerName = "",
+                    ),
+                ),
+            )
+
+            val loaded = repository.loadAll()
+            assertEquals(1, loaded.size)
+            val item = loaded.first()
+            assertEquals("мова", item.entry.label)
+            assertTrue(item.entry.audioFile!!.exists())
+            // The source file was moved, not copied, into durable storage.
+            assertTrue(!audioFile.exists())
+
+            repository.markCommonsDone(item.id)
+            repository.markP443Done(item.id)
+            val updated = repository.loadAll().first()
+            assertTrue(updated.commonsDone)
+            assertTrue(updated.p443Done)
+
+            val durableFile = updated.entry.audioFile!!
+            repository.delete(item.id)
+            assertTrue(repository.loadAll().isEmpty())
+            assertTrue(!durableFile.exists())
+        }
+
+    @Test
+    fun pendingUploadRepository_dropsAnItemWhoseAudioFileIsGone() =
+        runTest {
+            val context = InstrumentationRegistry.getInstrumentation().targetContext
+            val profileId = insertProfile()
+            val repository = RoomPendingUploadRepository(database.pendingUploadDao(), context)
+            val audioFile = File.createTempFile("take", ".ogg").apply { deleteOnExit() }
+
+            repository.saveForLater(
+                listOf(
+                    PendingUploadItem(
+                        entry = QueueEntry(label = "мова", kind = EntryKind.ITEM, detail = "item", qid = "Q42", audioFile = audioFile),
+                        profileId = profileId,
+                        isoCode = "uk",
+                        username = "Ijon",
+                        speakerName = "",
+                    ),
+                ),
+            )
+            val durableFile = repository.loadAll().first().entry.audioFile!!
+            durableFile.delete()
+
+            assertTrue(repository.loadAll().isEmpty())
         }
 
     @Test

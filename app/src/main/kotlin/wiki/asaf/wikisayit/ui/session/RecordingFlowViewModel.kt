@@ -20,6 +20,9 @@ import wiki.asaf.wikisayit.data.local.db.SpeakerProfileWithLanguages
 import wiki.asaf.wikisayit.data.local.settings.SettingsRepository
 import wiki.asaf.wikisayit.data.profile.ProfileRepository
 import wiki.asaf.wikisayit.data.stats.StatsRepository
+import wiki.asaf.wikisayit.data.uploads.PendingUploadItem
+import wiki.asaf.wikisayit.data.uploads.PendingUploadRepository
+import wiki.asaf.wikisayit.data.uploads.PendingUploadResumer
 import wiki.asaf.wikisayit.data.wikidata.P443StatementWriter
 import wiki.asaf.wikisayit.data.wikidata.WbEntityType
 import wiki.asaf.wikisayit.data.wikidata.WbSearchResult
@@ -63,6 +66,8 @@ class RecordingFlowViewModel
         private val audioPlayer: AudioPlayer,
         private val commonsUploader: CommonsUploader,
         private val p443StatementWriter: P443StatementWriter,
+        private val pendingUploadRepository: PendingUploadRepository,
+        private val pendingUploadResumer: PendingUploadResumer,
     ) : ViewModel() {
         private val _uiState = MutableStateFlow(RecordingFlowUiState())
         val uiState: StateFlow<RecordingFlowUiState> = _uiState.asStateFlow()
@@ -81,6 +86,7 @@ class RecordingFlowViewModel
                     _uiState.update { it.copy(settings = settings) }
                 }
             }
+            viewModelScope.launch { pendingUploadResumer.resumeAll() }
         }
 
         // --- profile / language ---
@@ -645,9 +651,32 @@ class RecordingFlowViewModel
         }
 
         /** Stops retrying for now; whatever already succeeded stays contributed and the rest is
-         * left on-device, per the design's "recordings stay on device until both steps succeed". */
+         * left on-device, per the design's "recordings stay on device until both steps succeed".
+         * Persists the not-yet-complete entries (s-o8f) so [PendingUploadResumer] can pick them
+         * up on the next launch instead of losing them once [resetFlow] wipes this session. */
         fun leaveFailuresForLater() {
             tickerJob?.cancel()
+            val state = _uiState.value
+            val profileId = state.activeProfile?.profile?.id
+            val isoCode = state.language?.isoCode
+            if (profileId != null && isoCode != null) {
+                val items =
+                    state.uploadNeedsAttention.mapNotNull { index ->
+                        val entry = state.approved.getOrNull(index) ?: return@mapNotNull null
+                        val entryState = state.uploadStates.getOrNull(index) ?: return@mapNotNull null
+                        PendingUploadItem(
+                            entry = entry,
+                            profileId = profileId,
+                            isoCode = isoCode,
+                            username = state.username,
+                            speakerName = state.speakerName,
+                            commonsDone = entryState.commonsDone,
+                            p443Done = entryState.p443Done,
+                            renameSuffix = entryState.renameSuffix,
+                        )
+                    }
+                viewModelScope.launch { pendingUploadRepository.saveForLater(items) }
+            }
             _uiState.update { it.copy(activeUploadIndex = null, autoNavigateTo = FlowScreen.DONE) }
         }
 
