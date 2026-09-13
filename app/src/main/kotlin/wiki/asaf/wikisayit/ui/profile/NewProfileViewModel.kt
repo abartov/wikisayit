@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import wiki.asaf.wikisayit.data.auth.TokenStore
+import wiki.asaf.wikisayit.data.language.LanguageCatalog
 import wiki.asaf.wikisayit.data.local.db.LanguageProficiency
 import wiki.asaf.wikisayit.data.profile.ProfileLanguageInput
 import wiki.asaf.wikisayit.data.profile.ProfileRepository
@@ -63,9 +64,11 @@ class NewProfileViewModel
 
         fun closeAddLanguageSheet() = _uiState.update { it.copy(isAddSheetOpen = false) }
 
-        fun updateDraftLanguageName(value: String) = _uiState.update { it.copy(draftLanguageName = value) }
+        fun updateDraftLanguageName(value: String) =
+            _uiState.update { it.copy(draftLanguageName = value, draftIsoCode = "") }
 
-        fun updateDraftIsoCode(value: String) = _uiState.update { it.copy(draftIsoCode = value) }
+        fun selectDraftLanguage(option: LanguageCatalog.LanguageOption) =
+            _uiState.update { it.copy(draftLanguageName = option.displayName, draftIsoCode = option.isoCode) }
 
         fun updateDraftProficiency(value: LanguageProficiency) = _uiState.update { it.copy(draftProficiency = value) }
 

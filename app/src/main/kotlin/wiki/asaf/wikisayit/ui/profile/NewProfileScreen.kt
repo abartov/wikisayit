@@ -29,12 +29,14 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import wiki.asaf.wikisayit.R
+import wiki.asaf.wikisayit.data.language.LanguageCatalog
 import wiki.asaf.wikisayit.data.local.db.LanguageProficiency
 import wiki.asaf.wikisayit.data.profile.ProfileLanguageInput
 import wiki.asaf.wikisayit.ui.components.BlueprintBox
 import wiki.asaf.wikisayit.ui.components.WsHairlineDivider
 import wiki.asaf.wikisayit.ui.components.WsIconButton
 import wiki.asaf.wikisayit.ui.components.WsKicker
+import wiki.asaf.wikisayit.ui.components.WsLanguageAutocompleteField
 import wiki.asaf.wikisayit.ui.components.WsPrimaryButton
 import wiki.asaf.wikisayit.ui.components.WsSecondaryButton
 import wiki.asaf.wikisayit.ui.components.WsSegmentedControl
@@ -66,7 +68,7 @@ fun NewProfileScreen(
         onSave = viewModel::save,
         onDismissSheet = viewModel::closeAddLanguageSheet,
         onDraftNameChange = viewModel::updateDraftLanguageName,
-        onDraftIsoChange = viewModel::updateDraftIsoCode,
+        onLanguageSelected = viewModel::selectDraftLanguage,
         onDraftProficiencyChange = viewModel::updateDraftProficiency,
         onDraftDialectChange = viewModel::updateDraftDialect,
         onConfirmAddLanguage = viewModel::confirmAddLanguage,
@@ -84,7 +86,7 @@ private fun NewProfileScreenContent(
     onSave: () -> Unit,
     onDismissSheet: () -> Unit,
     onDraftNameChange: (String) -> Unit,
-    onDraftIsoChange: (String) -> Unit,
+    onLanguageSelected: (LanguageCatalog.LanguageOption) -> Unit,
     onDraftProficiencyChange: (LanguageProficiency) -> Unit,
     onDraftDialectChange: (String) -> Unit,
     onConfirmAddLanguage: () -> Unit,
@@ -179,7 +181,7 @@ private fun NewProfileScreenContent(
             AddLanguageSheetContent(
                 uiState = uiState,
                 onDraftNameChange = onDraftNameChange,
-                onDraftIsoChange = onDraftIsoChange,
+                onLanguageSelected = onLanguageSelected,
                 onDraftProficiencyChange = onDraftProficiencyChange,
                 onDraftDialectChange = onDraftDialectChange,
                 onCancel = onDismissSheet,
@@ -239,7 +241,7 @@ private fun LanguageRow(
 private fun AddLanguageSheetContent(
     uiState: NewProfileUiState,
     onDraftNameChange: (String) -> Unit,
-    onDraftIsoChange: (String) -> Unit,
+    onLanguageSelected: (LanguageCatalog.LanguageOption) -> Unit,
     onDraftProficiencyChange: (LanguageProficiency) -> Unit,
     onDraftDialectChange: (String) -> Unit,
     onCancel: () -> Unit,
@@ -251,19 +253,14 @@ private fun AddLanguageSheetContent(
         verticalArrangement = Arrangement.spacedBy(WikiSayItSpacing.space3),
     ) {
         Text(text = stringResource(R.string.add_language_title), style = typography.h3)
-        OutlinedTextField(
-            value = uiState.draftLanguageName,
-            onValueChange = onDraftNameChange,
+        WsLanguageAutocompleteField(
+            query = uiState.draftLanguageName,
+            isoCode = uiState.draftIsoCode,
+            onQueryChange = onDraftNameChange,
+            onLanguageSelected = onLanguageSelected,
             label = { Text(stringResource(R.string.add_language_name_label)) },
+            isoLabel = stringResource(R.string.add_language_iso_label),
             modifier = Modifier.fillMaxWidth(),
-            singleLine = true,
-        )
-        OutlinedTextField(
-            value = uiState.draftIsoCode,
-            onValueChange = onDraftIsoChange,
-            label = { Text(stringResource(R.string.add_language_iso_label)) },
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true,
         )
         Column {
             Text(text = stringResource(R.string.add_language_proficiency_label), style = typography.caption)
