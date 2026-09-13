@@ -1,79 +1,151 @@
 package wiki.asaf.wikisayit.ui.scaffold
 
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
+import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.Scaffold
+import androidx.compose.material3.ModalDrawerSheet
+import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.launch
 import wiki.asaf.wikisayit.R
+import wiki.asaf.wikisayit.ui.components.WsHairlineDivider
+import wiki.asaf.wikisayit.ui.components.WsIconButton
+import wiki.asaf.wikisayit.ui.theme.LocalWikiSayItColors
+import wiki.asaf.wikisayit.ui.theme.LocalWikiSayItTypography
 
 /**
- * Shared chrome for every screen: an app-name top bar with the hamburger menu that opens
- * Settings/Stats/About, wrapping whatever destination content is currently navigated to.
+ * Shared chrome for the main flow: a hamburger + wordmark + monospace context chip top bar,
+ * and the Settings/Stats/About drawer, both drawn straight from the design handoff (the top
+ * bar is unconditional across every screen in `1a`, from Profile through Done). [showTopBar]
+ * is false for Sign-in (no chrome at all) and New profile (its own back-chevron bar instead).
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WikiSayItAppScaffold(
+    showTopBar: Boolean,
+    chipText: String,
+    menuFooterText: String,
     onSettingsClick: () -> Unit,
     onStatsClick: () -> Unit,
     onAboutClick: () -> Unit,
     modifier: Modifier = Modifier,
     content: @Composable (Modifier) -> Unit,
 ) {
-    var isMenuExpanded by remember { mutableStateOf(false) }
+    val colors = LocalWikiSayItColors.current
+    val typography = LocalWikiSayItTypography.current
+    val drawerState = rememberDrawerState(DrawerValue.Closed)
+    val scope = rememberCoroutineScope()
 
-    Scaffold(
+    ModalNavigationDrawer(
         modifier = modifier,
-        topBar = {
-            TopAppBar(
-                title = { Text(text = stringResource(R.string.app_name)) },
-                navigationIcon = {
-                    IconButton(onClick = { isMenuExpanded = true }) {
-                        Icon(
-                            imageVector = Icons.Filled.Menu,
-                            contentDescription = stringResource(R.string.nav_menu_open),
-                        )
+        drawerState = drawerState,
+        gesturesEnabled = showTopBar,
+        drawerContent = {
+            ModalDrawerSheet(
+                drawerShape = RectangleShape,
+                drawerContainerColor = colors.ground,
+                modifier = Modifier.width(262.dp),
+            ) {
+                Column(modifier = Modifier.fillMaxHeight().statusBarsPadding().navigationBarsPadding()) {
+                    Text(
+                        text = stringResource(R.string.app_name),
+                        style = typography.cardTitle,
+                        modifier = Modifier.padding(start = 16.dp, top = 16.dp, bottom = 14.dp),
+                    )
+                    WsHairlineDivider()
+                    DrawerRow(stringResource(R.string.nav_destination_settings)) {
+                        scope.launch { drawerState.close() }
+                        onSettingsClick()
                     }
-                    DropdownMenu(expanded = isMenuExpanded, onDismissRequest = { isMenuExpanded = false }) {
-                        DropdownMenuItem(
-                            text = { Text(stringResource(R.string.nav_destination_settings)) },
-                            onClick = {
-                                isMenuExpanded = false
-                                onSettingsClick()
-                            },
-                        )
-                        DropdownMenuItem(
-                            text = { Text(stringResource(R.string.nav_destination_stats)) },
-                            onClick = {
-                                isMenuExpanded = false
-                                onStatsClick()
-                            },
-                        )
-                        DropdownMenuItem(
-                            text = { Text(stringResource(R.string.nav_destination_about)) },
-                            onClick = {
-                                isMenuExpanded = false
-                                onAboutClick()
-                            },
-                        )
+                    WsHairlineDivider()
+                    DrawerRow(stringResource(R.string.nav_destination_stats)) {
+                        scope.launch { drawerState.close() }
+                        onStatsClick()
                     }
-                },
-            )
+                    WsHairlineDivider()
+                    DrawerRow(stringResource(R.string.nav_destination_about)) {
+                        scope.launch { drawerState.close() }
+                        onAboutClick()
+                    }
+                    WsHairlineDivider()
+                    Spacer(modifier = Modifier.weight(1f))
+                    Text(
+                        text = menuFooterText,
+                        style = typography.caption,
+                        color = colors.neutral700,
+                        modifier = Modifier.padding(16.dp),
+                    )
+                }
+            }
         },
-    ) { innerPadding ->
-        content(Modifier.padding(innerPadding))
+        content = {
+            Column(
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .statusBarsPadding()
+                        .navigationBarsPadding(),
+            ) {
+                if (showTopBar) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        WsIconButton(onClick = { scope.launch { drawerState.open() } }) {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_menu),
+                                contentDescription = stringResource(R.string.nav_menu_open),
+                            )
+                        }
+                        Text(text = stringResource(R.string.app_name), style = typography.cardTitle)
+                        Spacer(modifier = Modifier.weight(1f))
+                        Text(text = chipText, style = typography.evidence, color = colors.neutral700)
+                        Spacer(modifier = Modifier.width(12.dp))
+                    }
+                    WsHairlineDivider()
+                }
+                content(Modifier.fillMaxSize())
+            }
+        },
+    )
+}
+
+@Composable
+private fun DrawerRow(
+    text: String,
+    onClick: () -> Unit,
+) {
+    val typography = LocalWikiSayItTypography.current
+    Row(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .heightIn(min = 52.dp)
+                .clickable(onClick = onClick)
+                .padding(start = 16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Start,
+    ) {
+        Text(text = text, style = typography.buttonLabel)
     }
 }

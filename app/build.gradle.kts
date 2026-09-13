@@ -76,6 +76,7 @@ dependencies {
     implementation(libs.room.ktx)
     ksp(libs.room.compiler)
     implementation(libs.datastore.preferences)
+    implementation(libs.appcompat)
 
     implementation(libs.ktor.client.core)
     implementation(libs.ktor.client.okhttp)

@@ -18,6 +18,8 @@ interface StatsRepository {
     fun observeTotalsByType(): Flow<List<EntryTypeCount>>
 
     fun observeMonthlyTotalsByType(): Flow<List<MonthlyEntryTypeCount>>
+
+    fun observeRecordingCountForProfile(profileId: Long): Flow<Int>
 }
 
 class RoomStatsRepository
@@ -39,4 +41,7 @@ class RoomStatsRepository
 
         override fun observeMonthlyTotalsByType(): Flow<List<MonthlyEntryTypeCount>> =
             recordingStatDao.observeMonthlyTotalsByType()
+
+        override fun observeRecordingCountForProfile(profileId: Long): Flow<Int> =
+            recordingStatDao.observeCountForProfile(profileId)
     }

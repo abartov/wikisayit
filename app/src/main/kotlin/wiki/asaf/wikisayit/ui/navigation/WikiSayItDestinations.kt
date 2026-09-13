@@ -9,6 +9,12 @@ import kotlinx.serialization.Serializable
  */
 sealed interface WikiSayItRoute {
     @Serializable
+    data object SignIn : WikiSayItRoute
+
+    @Serializable
+    data object NewProfile : WikiSayItRoute
+
+    @Serializable
     data object Profile : WikiSayItRoute
 
     @Serializable
@@ -18,13 +24,22 @@ sealed interface WikiSayItRoute {
     data object ListSource : WikiSayItRoute
 
     @Serializable
+    data object Disambiguation : WikiSayItRoute
+
+    @Serializable
     data object Recording : WikiSayItRoute
 
     @Serializable
     data object Review : WikiSayItRoute
 
     @Serializable
+    data object SessionSummary : WikiSayItRoute
+
+    @Serializable
     data object Contribution : WikiSayItRoute
+
+    @Serializable
+    data object Done : WikiSayItRoute
 
     @Serializable
     data object Settings : WikiSayItRoute

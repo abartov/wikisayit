@@ -16,6 +16,9 @@ interface RecordingStatDao {
     @Query("SELECT entry_type AS entryType, COUNT(*) AS count FROM recording_stats GROUP BY entry_type")
     fun observeTotalsByType(): Flow<List<EntryTypeCount>>
 
+    @Query("SELECT COUNT(*) FROM recording_stats WHERE profile_id = :profileId")
+    fun observeCountForProfile(profileId: Long): Flow<Int>
+
     @Query(
         """
         SELECT strftime('%Y-%m', timestamp_millis / 1000, 'unixepoch') AS yearMonth,

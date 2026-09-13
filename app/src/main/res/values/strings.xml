@@ -1,8 +1,16 @@
 <resources>
     <string name="app_name">WikiSayIt</string>
-    <string name="get_started">Get started</string>
 
     <string name="nav_menu_open">Open menu</string>
+    <string name="nav_menu_signed_in_as">Signed in as %1$s</string>
+
+    <string name="sign_in_kicker">record · review · contribute</string>
+    <string name="sign_in_promise">Say a word out loud, and readers of Wikidata and Wikipedia hear you saying it. Thousands of words in every language still have no recording at all.</string>
+    <string name="sign_in_you_will_need_kicker">you will need</string>
+    <string name="sign_in_you_will_need_body">A Wikimedia account · a quiet room · a few minutes</string>
+    <string name="sign_in_primary_cta">Sign in with your Wikimedia account</string>
+    <string name="sign_in_note">Sign-in happens on wikimedia.org — WikiSayIt never sees your password.</string>
+    <string name="sign_in_no_account">I don\'t have an account yet</string>
     <string name="nav_destination_language">Language</string>
     <string name="nav_destination_list_source">List source</string>
     <string name="nav_destination_recording">Recording</string>
@@ -12,8 +20,17 @@
     <string name="nav_destination_stats">Stats</string>
     <string name="nav_destination_about">About</string>
 
-    <plurals name="get_started_tap_count">
-        <item quantity="one">Tapped %1$d time</item>
-        <item quantity="other">Tapped %1$d times</item>
+    <string name="profile_step_kicker">Step 1 of 4 — speaker</string>
+    <string name="profile_title">Who is speaking?</string>
+    <string name="profile_explainer">A profile is your Wikimedia account plus the languages you can record in.</string>
+    <string name="profile_home_wikis">commons · wikidata</string>
+    <string name="profile_new_button">+ New speaker profile</string>
+    <string name="profile_footer_note">Choosing a profile signs you in to Commons and Wikidata with that account (OAuth). Recording without an account is not possible.</string>
+    <string name="proficiency_native">native</string>
+    <string name="proficiency_proficient">proficient</string>
+
+    <plurals name="profile_recordings_count">
+        <item quantity="one">%1$d recording</item>
+        <item quantity="other">%1$d recordings</item>
     </plurals>
 </resources>

@@ -1,8 +1,16 @@
 <resources>
     <string name="app_name">ויקי־תגיד</string>
-    <string name="get_started">בואו נתחיל</string>
 
     <string name="nav_menu_open">פתיחת התפריט</string>
+    <string name="nav_menu_signed_in_as">מחוברים בתור %1$s</string>
+
+    <string name="sign_in_kicker">הקלטה · סקירה · תרומה</string>
+    <string name="sign_in_promise">אמרו מילה בקול, וקוראי ויקינתונים וויקיפדיה ישמעו אתכם אומרים אותה. לאלפי מילים בכל שפה עדיין אין שום הקלטה.</string>
+    <string name="sign_in_you_will_need_kicker">מה תצטרכו</string>
+    <string name="sign_in_you_will_need_body">חשבון ויקימדיה · חדר שקט · כמה דקות</string>
+    <string name="sign_in_primary_cta">התחברות עם חשבון ויקימדיה</string>
+    <string name="sign_in_note">ההתחברות מתבצעת באתר wikimedia.org — ויקי־תגיד לעולם לא רואה את הסיסמה שלכם.</string>
+    <string name="sign_in_no_account">אין לי עדיין חשבון</string>
     <string name="nav_destination_language">שפה</string>
     <string name="nav_destination_list_source">מקור הרשימה</string>
     <string name="nav_destination_recording">הקלטה</string>
@@ -12,9 +20,18 @@
     <string name="nav_destination_stats">סטטיסטיקה</string>
     <string name="nav_destination_about">אודות</string>
 
-    <plurals name="get_started_tap_count">
-        <item quantity="one">נלחץ פעם אחת</item>
-        <item quantity="two">נלחץ פעמיים</item>
-        <item quantity="other">נלחץ %1$d פעמים</item>
+    <string name="profile_step_kicker">שלב 1 מתוך 4 — דובר/ת</string>
+    <string name="profile_title">מי מדבר/ת?</string>
+    <string name="profile_explainer">פרופיל הוא חשבון הוויקימדיה שלכם יחד עם השפות שבהן אתם יכולים להקליט.</string>
+    <string name="profile_home_wikis">commons · wikidata</string>
+    <string name="profile_new_button">+ פרופיל דובר/ת חדש</string>
+    <string name="profile_footer_note">בחירת פרופיל מחברת אתכם ל-Commons ול-Wikidata עם החשבון הזה (OAuth). לא ניתן להקליט בלי חשבון.</string>
+    <string name="proficiency_native">שפת אם</string>
+    <string name="proficiency_proficient">שולט/ת</string>
+
+    <plurals name="profile_recordings_count">
+        <item quantity="one">הקלטה אחת</item>
+        <item quantity="two">שתי הקלטות</item>
+        <item quantity="other">%1$d הקלטות</item>
     </plurals>
 </resources>
