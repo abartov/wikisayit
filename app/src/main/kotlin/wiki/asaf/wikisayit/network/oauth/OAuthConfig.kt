@@ -10,7 +10,7 @@ package wiki.asaf.wikisayit.network.oauth
  * client secret.
  */
 object OAuthConfig {
-    const val CLIENT_ID = "30a3b5f7861c84440733d16fa941d8b4"
+    const val CLIENT_ID = "afa4b9e6dcf2ba79b6d1c0f97973f833"
 
     const val REDIRECT_SCHEME = "wiki.asaf.wikisayit"
     const val REDIRECT_URI = "$REDIRECT_SCHEME:/callback"
