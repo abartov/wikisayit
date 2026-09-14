@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">WikiSayIt</string>
+    <string name="app_name">Wiki-Say-It</string>
 
     <string name="nav_menu_open">Open menu</string>
     <string name="nav_menu_signed_in_as">Signed in as %1$s</string>
@@ -10,7 +10,7 @@
     <string name="sign_in_you_will_need_body">A Wikimedia account · a quiet room · a few minutes</string>
     <string name="sign_in_primary_cta">Sign in with your Wikimedia account</string>
     <string name="sign_in_primary_cta_in_progress">Signing in…</string>
-    <string name="sign_in_note">Sign-in happens on wikimedia.org — WikiSayIt never sees your password.</string>
+    <string name="sign_in_note">Sign-in happens on wikimedia.org — Wiki-Say-It never sees your password.</string>
     <string name="sign_in_no_account">I don\'t have an account yet</string>
     <string name="nav_destination_language">Language</string>
     <string name="language_step_kicker">Step 2 of 4 — language</string>
@@ -113,7 +113,7 @@
     <string name="list_blurb_query">Returned by your query.</string>
     <string name="list_blurb_category">From your chosen category.</string>
     <string name="worth_checking_kicker">Worth checking first</string>
-    <string name="worth_checking_body">WikiSayIt exists to fill gaps, so it can drop every entry that already has a recording on Wikidata before you open your mouth.</string>
+    <string name="worth_checking_body">Wiki-Say-It exists to fill gaps, so it can drop every entry that already has a recording on Wikidata before you open your mouth.</string>
     <string name="checking_label">checking for existing audio…</string>
     <string name="check_button">Check for existing recordings</string>
     <string name="skip_check_button">Skip the check, use the list as-is</string>
@@ -153,9 +153,9 @@
     <string name="recording_manual_stop">Stop</string>
     <string name="recording_manual_next">Next</string>
     <string name="mic_blocked_title">The microphone is switched off</string>
-    <string name="mic_blocked_body">WikiSayIt records your voice and nothing else — no recording happens unless a word is on screen, and nothing is sent anywhere until you tap Contribute.</string>
+    <string name="mic_blocked_body">Wiki-Say-It records your voice and nothing else — no recording happens unless a word is on screen, and nothing is sent anywhere until you tap Contribute.</string>
     <string name="mic_blocked_kicker">to switch it on</string>
-    <string name="mic_blocked_instructions">Settings → Apps → WikiSayIt → Permissions → Microphone</string>
+    <string name="mic_blocked_instructions">Settings → Apps → Wiki-Say-It → Permissions → Microphone</string>
     <string name="mic_blocked_open_settings">Open Android settings</string>
     <string name="mic_blocked_back">Back to the word list</string>
     <string name="interrupted_nothing_kept">nothing was kept</string>
