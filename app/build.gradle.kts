@@ -1,4 +1,6 @@
 import java.util.Properties
+import java.text.SimpleDateFormat
+import java.util.Date
 
 plugins {
     alias(libs.plugins.android.application)
@@ -47,6 +49,15 @@ val supportedInterfaceLanguages: List<String> =
         tags.sorted()
     }
 
+
+// Minutes since a fixed epoch, not yyMMddHHmm-as-int: the latter overflows Int
+// (Play Store's versionCode ceiling) once the year prefix pushes the string past
+// 10 digits, e.g. "2609150141" > Int.MAX_VALUE.
+fun generateVersionCode(): Int {
+    val epochMillis = SimpleDateFormat("yyyyMMdd").parse("20240101").time
+    return ((Date().time - epochMillis) / 60_000L).toInt()
+}
+
 android {
     namespace = "wiki.asaf.wikisayit"
     compileSdk = 36
@@ -55,7 +66,7 @@ android {
         applicationId = "wiki.asaf.wikisayit"
         minSdk = 26
         targetSdk = 36
-        versionCode = 1
+        versionCode = generateVersionCode()
         versionName = appVersionName
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
