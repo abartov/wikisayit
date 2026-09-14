@@ -143,18 +143,35 @@ fun WsGhostButton(
     minHeight: Dp = 44.dp,
     enabled: Boolean = true,
     contentColor: Color = LocalWikiSayItColors.current.accent700,
+    framed: Boolean = false,
 ) {
     val typography = LocalWikiSayItTypography.current
-    Box(
-        modifier =
-            modifier
-                .heightIn(min = minHeight)
-                .alpha(if (enabled) 1f else 0.45f)
-                .clickable(enabled = enabled, onClick = onClick, role = Role.Button)
-                .padding(horizontal = 4.dp),
-        contentAlignment = Alignment.CenterStart,
-    ) {
-        Text(text = text, style = typography.secondary, color = contentColor)
+    val colors = LocalWikiSayItColors.current
+    val baseModifier =
+        modifier
+            .heightIn(min = minHeight)
+            .alpha(if (enabled) 1f else 0.45f)
+            .clickable(enabled = enabled, onClick = onClick, role = Role.Button)
+    if (framed) {
+        BlueprintBox(
+            modifier = baseModifier,
+            borderColor = colors.divider,
+            showCornerMarks = false,
+        ) {
+            Text(
+                text = text,
+                style = typography.secondary,
+                color = contentColor,
+                modifier = Modifier.align(Alignment.Center).padding(horizontal = 14.dp),
+            )
+        }
+    } else {
+        Box(
+            modifier = baseModifier.padding(horizontal = 4.dp),
+            contentAlignment = Alignment.CenterStart,
+        ) {
+            Text(text = text, style = typography.secondary, color = contentColor)
+        }
     }
 }
 

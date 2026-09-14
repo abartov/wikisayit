@@ -28,7 +28,7 @@ class RecordingEnumConverters {
         RecordingStatEntity::class,
         PendingUploadEntity::class,
     ],
-    version = 3,
+    version = 4,
     exportSchema = false,
 )
 @TypeConverters(RecordingEnumConverters::class)
@@ -73,6 +73,13 @@ abstract class WikiSayItDatabase : RoomDatabase() {
                         `created_at_millis` INTEGER NOT NULL)
                         """.trimIndent(),
                     )
+                }
+            }
+
+        val MIGRATION_3_4 =
+            object : Migration(3, 4) {
+                override fun migrate(db: SupportSQLiteDatabase) {
+                    db.execSQL("ALTER TABLE pending_uploads ADD COLUMN dialect TEXT NOT NULL DEFAULT ''")
                 }
             }
     }

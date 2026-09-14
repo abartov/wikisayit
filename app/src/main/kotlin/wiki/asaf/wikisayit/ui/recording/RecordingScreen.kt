@@ -139,6 +139,7 @@ fun RecordingScreen(
                     onRedo = viewModel::redoCurrentWord,
                     onSkip = viewModel::skipCurrentWord,
                     onStop = viewModel::stopSession,
+                    onBack = viewModel::backToListSource,
                     modifier = modifier,
                 )
             }
@@ -164,6 +165,7 @@ private fun RecordingRingContent(
     onRedo: () -> Unit,
     onSkip: () -> Unit,
     onStop: () -> Unit,
+    onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val colors = LocalWikiSayItColors.current
@@ -261,6 +263,7 @@ private fun RecordingRingContent(
                     },
                 onClick = onToggleManualMode,
                 modifier = Modifier.fillMaxWidth(),
+                framed = true,
             )
             if (manualMode) {
                 Row(
@@ -316,6 +319,11 @@ private fun RecordingRingContent(
             WsGhostButton(
                 text = stringResource(R.string.action_stop_session),
                 onClick = onStop,
+                modifier = Modifier.fillMaxWidth(),
+            )
+            WsGhostButton(
+                text = stringResource(R.string.action_back),
+                onClick = onBack,
                 modifier = Modifier.fillMaxWidth(),
             )
         }

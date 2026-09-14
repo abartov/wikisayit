@@ -39,7 +39,13 @@ class PendingUploadResumer
             if (!item.commonsDone) {
                 filename =
                     try {
-                        commonsUploader.upload(renamedEntry, item.isoCode, item.username, item.speakerName)
+                        commonsUploader.upload(
+                            renamedEntry,
+                            item.isoCode,
+                            item.username,
+                            item.speakerName,
+                            item.dialect,
+                        )
                     } catch (cancellation: CancellationException) {
                         throw cancellation
                     } catch (_: Exception) {
@@ -50,7 +56,13 @@ class PendingUploadResumer
                 filename = renamedEntry.commonsFilename(item.isoCode, item.username, item.speakerName)
             }
             try {
-                p443StatementWriter.addPronunciation(item.entry, filename)
+                p443StatementWriter.addPronunciation(
+                    item.entry,
+                    filename,
+                    item.speakerName,
+                    item.username,
+                    item.dialect,
+                )
             } catch (cancellation: CancellationException) {
                 throw cancellation
             } catch (_: Exception) {

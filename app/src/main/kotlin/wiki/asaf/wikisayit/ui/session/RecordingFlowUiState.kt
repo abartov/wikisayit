@@ -83,6 +83,9 @@ data class RecordingFlowUiState(
     val speakerName: String
         get() = activeProfile?.profile?.speakerName.orEmpty()
 
+    val dialect: String
+        get() = language?.dialect.orEmpty()
+
     val uploadDoneCount: Int
         get() = uploadStates.count { it.isComplete }
 

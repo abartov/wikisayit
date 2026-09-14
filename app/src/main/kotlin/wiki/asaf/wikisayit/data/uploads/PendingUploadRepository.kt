@@ -15,8 +15,8 @@ private const val SCRIPT_VARIANTS_DELIMITER = ""
 
 /** One approved recording left for later (s-o8f): the [entry] it belongs to (with [QueueEntry.audioFile]
  * pointing at durable storage, not the cache directory it was recorded into) plus the contribution
- * context ([profileId]/[isoCode]/[username]/[speakerName]) and per-entry upload progress needed to
- * resume without redoing already-finished steps. */
+ * context ([profileId]/[isoCode]/[username]/[speakerName]/[dialect]) and per-entry upload progress
+ * needed to resume without redoing already-finished steps. */
 data class PendingUploadItem(
     val id: Long = 0,
     val entry: QueueEntry,
@@ -24,6 +24,7 @@ data class PendingUploadItem(
     val isoCode: String,
     val username: String,
     val speakerName: String,
+    val dialect: String = "",
     val commonsDone: Boolean = false,
     val p443Done: Boolean = false,
     val renameSuffix: Int = 0,
@@ -109,6 +110,7 @@ private fun PendingUploadItem.toEntity(
     isoCode = isoCode,
     username = username,
     speakerName = speakerName,
+    dialect = dialect,
     commonsDone = commonsDone,
     p443Done = p443Done,
     renameSuffix = renameSuffix,
@@ -133,6 +135,7 @@ private fun PendingUploadEntity.toItem(audioFile: File) =
         isoCode = isoCode,
         username = username,
         speakerName = speakerName,
+        dialect = dialect,
         commonsDone = commonsDone,
         p443Done = p443Done,
         renameSuffix = renameSuffix,

@@ -85,6 +85,42 @@ class P443StatementWriterTest {
         }
 
     @Test
+    fun `a credited speaker name adds a P2093 qualifier on the returned claim`() =
+        runTest {
+            val bodies = mutableListOf<String>()
+            val writer = writerFor("""{"success":1,"claim":{"id":"Q42${'$'}abc"}}""") { bodies.add(it) }
+            val entry = QueueEntry(label = "мова", kind = EntryKind.ITEM, detail = "item", qid = "Q42")
+
+            writer.addPronunciation(entry, "uk-Q42-мова-Ijon.ogg", speakerName = "Yonatan", username = "Ijon")
+
+            assertTrue(bodies.any { it.contains("wbsetqualifier") && it.contains("P2093") && it.contains("Yonatan") })
+        }
+
+    @Test
+    fun `a speaker name identical to the username does not add a P2093 qualifier`() =
+        runTest {
+            val bodies = mutableListOf<String>()
+            val writer = writerFor("""{"success":1,"claim":{"id":"Q42${'$'}abc"}}""") { bodies.add(it) }
+            val entry = QueueEntry(label = "мова", kind = EntryKind.ITEM, detail = "item", qid = "Q42")
+
+            writer.addPronunciation(entry, "uk-Q42-мова-Ijon.ogg", speakerName = "Ijon", username = "Ijon")
+
+            assertTrue(bodies.none { it.contains("wbsetqualifier") })
+        }
+
+    @Test
+    fun `a dialect adds a P518 qualifier on the returned claim`() =
+        runTest {
+            val bodies = mutableListOf<String>()
+            val writer = writerFor("""{"success":1,"claim":{"id":"Q42${'$'}abc"}}""") { bodies.add(it) }
+            val entry = QueueEntry(label = "мова", kind = EntryKind.ITEM, detail = "item", qid = "Q42")
+
+            writer.addPronunciation(entry, "uk-Q42-мова-Ijon.ogg", dialect = "Litvish")
+
+            assertTrue(bodies.any { it.contains("wbsetqualifier") && it.contains("P518") && it.contains("Litvish") })
+        }
+
+    @Test
     fun `a missing success flag surfaces the API error`() {
         val writer = writerFor("""{"error":{"code":"permissiondenied","info":"not allowed"}}""")
         val entry = QueueEntry(label = "мова", kind = EntryKind.ITEM, detail = "item", qid = "Q42")

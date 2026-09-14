@@ -63,6 +63,7 @@ fun WikiSayItNavHost(
             LanguageScreen(
                 viewModel = sessionViewModel,
                 onLanguagePicked = { navController.navigate(WikiSayItRoute.ListSource) },
+                onBack = { navController.popBackStack() },
             )
         }
         composable<WikiSayItRoute.ListSource> {

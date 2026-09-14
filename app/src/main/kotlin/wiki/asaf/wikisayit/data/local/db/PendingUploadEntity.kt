@@ -23,6 +23,7 @@ data class PendingUploadEntity(
     @ColumnInfo(name = "iso_code") val isoCode: String,
     val username: String,
     @ColumnInfo(name = "speaker_name") val speakerName: String,
+    @ColumnInfo(name = "dialect", defaultValue = "") val dialect: String = "",
     @ColumnInfo(name = "commons_done") val commonsDone: Boolean,
     @ColumnInfo(name = "p443_done") val p443Done: Boolean,
     @ColumnInfo(name = "rename_suffix") val renameSuffix: Int,

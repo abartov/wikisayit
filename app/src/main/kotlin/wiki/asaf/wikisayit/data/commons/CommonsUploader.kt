@@ -27,6 +27,7 @@ class CommonsUploader
             isoCode: String,
             username: String,
             speakerName: String = "",
+            dialect: String = "",
         ): String {
             val audioFile = requireNotNull(entry.audioFile) { "Cannot upload '${entry.label}': no recorded audio" }
             val filename = entry.commonsFilename(isoCode, username, speakerName)
@@ -37,7 +38,7 @@ class CommonsUploader
                         mapOf(
                             "action" to "upload",
                             "filename" to filename,
-                            "text" to buildUploadWikitext(entry, isoCode, username, clock),
+                            "text" to buildUploadWikitext(entry, isoCode, username, speakerName, dialect, clock),
                             "comment" to "Uploaded via WikiSayIt",
                             "token" to csrfToken,
                         ),
@@ -53,28 +54,42 @@ class CommonsUploader
  * `date=`/`source=`/`author=`, per Commons convention — without it, tools and other editors have
  * no structured way to see who recorded this or when), the `{{cc-zero}}` license tag, and both
  * WikiSayIt categories. Internal (rather than private) so [CommonsUploaderTest] can check its
- * content directly instead of parsing the multipart request wire format. */
+ * content directly instead of parsing the multipart request wire format.
+ *
+ * When [speakerName] is set and differs from [username] — someone else is speaking on this
+ * account — the credited author is the speaker, not the uploader: `author=` names the speaker
+ * plainly (they're not necessarily a Wikimedia account to link to) and the uploader is only
+ * named in the description, as "facilitated by" (s-tu2). [dialect], if given, is folded into the
+ * description too.
+ */
 internal fun buildUploadWikitext(
     entry: QueueEntry,
     isoCode: String,
     username: String,
+    speakerName: String = "",
+    dialect: String = "",
     clock: Clock = Clock.systemUTC(),
-): String =
-    """
-    =={{int:filedesc}}==
-    {{Information
-    |description={{en|1=Pronunciation of "${entry.label}" (${entry.evidenceId}) in $isoCode, recorded via WikiSayIt.}}
-    |date=${LocalDate.now(clock)}
-    |source={{own}}
-    |author=[[User:$username|$username]]
-    }}
+): String {
+    val isSpeakerCredited = speakerName.isNotBlank() && speakerName != username
+    val authorLine = if (isSpeakerCredited) speakerName else "[[User:$username|$username]]"
+    val languageClause = if (dialect.isNotBlank()) "$isoCode ($dialect)" else isoCode
+    val facilitatedClause = if (isSpeakerCredited) ", facilitated by [[User:$username|$username]]" else ""
+    return """
+        =={{int:filedesc}}==
+        {{Information
+        |description={{en|1=Pronunciation of "${entry.label}" (${entry.evidenceId}) in $languageClause, recorded via WikiSayIt$facilitatedClause.}}
+        |date=${LocalDate.now(clock)}
+        |source={{own}}
+        |author=$authorLine
+        }}
 
-    =={{int:license-header}}==
-    {{cc-zero}}
+        =={{int:license-header}}==
+        {{cc-zero}}
 
-    [[Category:WikiSayIt pronunciations: $isoCode]]
-    [[Category:WikiSayIt pronunciations by $username]]
-    """.trimIndent()
+        [[Category:WikiSayIt pronunciations: $isoCode]]
+        [[Category:WikiSayIt pronunciations by $username]]
+        """.trimIndent()
+}
 
 private fun UploadActionResponse.requireSuccess(filename: String): UploadResult {
     val result =

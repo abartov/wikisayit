@@ -106,4 +106,31 @@ class CommonsUploaderTest {
         assertTrue(wikitext.contains("[[Category:WikiSayIt pronunciations: he]]"))
         assertTrue(wikitext.contains("[[Category:WikiSayIt pronunciations by Ijon]]"))
     }
+
+    @Test
+    fun `a speaker name that differs from the username is credited as author, uploader is only facilitator`() {
+        val entry = entryWithAudio(EntryKind.FORM)
+        val wikitext = buildUploadWikitext(entry, isoCode = "he", username = "Ijon", speakerName = "Yonatan")
+
+        assertTrue(wikitext.contains("|author=Yonatan"))
+        assertTrue(wikitext.contains("facilitated by [[User:Ijon|Ijon]]"))
+        assertTrue(!wikitext.contains("|author=[[User:Ijon|Ijon]]"))
+    }
+
+    @Test
+    fun `a speaker name identical to the username is not treated as a separate credit`() {
+        val entry = entryWithAudio()
+        val wikitext = buildUploadWikitext(entry, isoCode = "he", username = "Ijon", speakerName = "Ijon")
+
+        assertTrue(wikitext.contains("|author=[[User:Ijon|Ijon]]"))
+        assertTrue(!wikitext.contains("facilitated by"))
+    }
+
+    @Test
+    fun `a dialect is folded into the description`() {
+        val entry = entryWithAudio()
+        val wikitext = buildUploadWikitext(entry, isoCode = "yi", username = "Ijon", dialect = "Litvish")
+
+        assertTrue(wikitext.contains("in yi (Litvish), recorded via WikiSayIt"))
+    }
 }

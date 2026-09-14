@@ -92,6 +92,7 @@ fun ListSourceScreen(
                 uiState = uiState,
                 onStartCheck = viewModel::startCheck,
                 onSkipCheck = viewModel::skipCheck,
+                onBack = viewModel::backToSourceForm,
                 onStart = {
                     viewModel.startSession()
                     onStartRecording()
@@ -500,6 +501,7 @@ private fun ListCheckContent(
     uiState: RecordingFlowUiState,
     onStartCheck: () -> Unit,
     onSkipCheck: () -> Unit,
+    onBack: () -> Unit,
     onStart: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -605,6 +607,13 @@ private fun ListCheckContent(
             modifier = Modifier.fillMaxWidth().padding(WikiSayItSpacing.screenHorizontal),
             verticalArrangement = Arrangement.spacedBy(WikiSayItSpacing.space2),
         ) {
+            if (uiState.listBuildStage != ListBuildStage.CHECKING) {
+                WsSecondaryButton(
+                    text = stringResource(R.string.action_back),
+                    onClick = onBack,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
             if (uiState.listBuildStage == ListBuildStage.FRESH) {
                 WsPrimaryButton(
                     text = stringResource(R.string.check_button),

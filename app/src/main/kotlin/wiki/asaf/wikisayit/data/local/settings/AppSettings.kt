@@ -1,7 +1,7 @@
 package wiki.asaf.wikisayit.data.local.settings
 
 /** Default cap on how many entries a SPARQL query or Wikipedia category list-source can produce. */
-const val DEFAULT_MAX_LIST_SIZE = 50
+const val DEFAULT_MAX_LIST_SIZE = 20
 
 data class AppSettings(
     val autoUseLastProfile: Boolean = false,

@@ -117,6 +117,12 @@ class RecordingFlowViewModel
             _uiState.update { it.copy(listBuildStage = ListBuildStage.PICK_SOURCE) }
         }
 
+        /** From the built list (step 4) back to the source form (step 3) — keeps the chosen
+         * source type and its entered text/settings so the user doesn't have to redo them. */
+        fun backToSourceForm() {
+            _uiState.update { it.copy(listBuildStage = ListBuildStage.SOURCE_FORM) }
+        }
+
         fun updateSourceText(text: String) {
             _uiState.update { it.copy(sourceText = text) }
         }
@@ -147,7 +153,12 @@ class RecordingFlowViewModel
                 ListSourceType.CATEGORY -> {
                     val language = state.language?.isoCode.orEmpty()
                     resolveAsyncList {
-                        categorySource.build(state.sourceText, language, state.categoryDepth, state.settings.maxListSize)
+                        categorySource.build(
+                            state.sourceText,
+                            language,
+                            state.categoryDepth,
+                            state.settings.maxListSize,
+                        )
                     }
                 }
                 null -> Unit
@@ -682,6 +693,34 @@ class RecordingFlowViewModel
             }
         }
 
+        /** Back button on the recording ring: abandons the take in progress and returns to
+         * wherever this session was launched from — the built list (fresh session) or the
+         * summary (rerecording a single approved word), mirroring [skipCurrentWord]'s branching. */
+        fun backToListSource() {
+            tickerJob?.cancel()
+            val state = _uiState.value
+            if (state.rerecordIndex != null) {
+                _uiState.update {
+                    it.copy(
+                        recordingQueue = emptyList(),
+                        rerecordIndex = null,
+                        autoNavigateTo = FlowScreen.SUMMARY_RETURN,
+                    )
+                }
+                return
+            }
+            _uiState.update {
+                it.copy(
+                    listBuildStage = ListBuildStage.CHECKED,
+                    rawCount = it.finalQueue.size,
+                    excludedCount = 0,
+                    formsAddedCount = 0,
+                    recordingQueue = emptyList(),
+                    autoNavigateTo = FlowScreen.LIST_SOURCE,
+                )
+            }
+        }
+
         fun clearRecordingBlocker() {
             _uiState.update { it.copy(recordingBlocker = null) }
         }
@@ -839,6 +878,7 @@ class RecordingFlowViewModel
                             isoCode = isoCode,
                             username = state.username,
                             speakerName = state.speakerName,
+                            dialect = state.dialect,
                             commonsDone = entryState.commonsDone,
                             p443Done = entryState.p443Done,
                             renameSuffix = entryState.renameSuffix,
@@ -882,10 +922,11 @@ class RecordingFlowViewModel
             val isoCode = _uiState.value.language?.isoCode.orEmpty()
             val username = _uiState.value.username
             val speakerName = _uiState.value.speakerName
+            val dialect = _uiState.value.dialect
             for (index in indices) {
                 val entry = _uiState.value.approved.getOrNull(index) ?: continue
                 _uiState.update { it.copy(activeUploadIndex = index) }
-                uploadEntry(index, entry, isoCode, username, speakerName, profileId)
+                uploadEntry(index, entry, isoCode, username, speakerName, dialect, profileId)
             }
             _uiState.update { it.copy(activeUploadIndex = null) }
             finishContributionIfComplete()
@@ -904,6 +945,7 @@ class RecordingFlowViewModel
             isoCode: String,
             username: String,
             speakerName: String,
+            dialect: String,
             profileId: Long,
         ) {
             val entryState = _uiState.value.uploadStates.getOrNull(index) ?: return
@@ -919,7 +961,7 @@ class RecordingFlowViewModel
             if (!entryState.commonsDone) {
                 filename =
                     try {
-                        commonsUploader.upload(renamedEntry, isoCode, username, speakerName)
+                        commonsUploader.upload(renamedEntry, isoCode, username, speakerName, dialect)
                     } catch (cancellation: CancellationException) {
                         throw cancellation
                     } catch (error: Exception) {
@@ -932,7 +974,7 @@ class RecordingFlowViewModel
                 filename = renamedEntry.commonsFilename(isoCode, username, speakerName)
             }
             try {
-                p443StatementWriter.addPronunciation(entry, filename)
+                p443StatementWriter.addPronunciation(entry, filename, speakerName, username, dialect)
             } catch (cancellation: CancellationException) {
                 throw cancellation
             } catch (error: Exception) {

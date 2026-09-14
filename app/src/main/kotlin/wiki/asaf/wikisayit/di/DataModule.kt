@@ -37,7 +37,11 @@ object DataModule {
         @ApplicationContext context: Context,
     ): WikiSayItDatabase =
         Room.databaseBuilder(context, WikiSayItDatabase::class.java, WikiSayItDatabase.DATABASE_NAME)
-            .addMigrations(WikiSayItDatabase.MIGRATION_1_2, WikiSayItDatabase.MIGRATION_2_3)
+            .addMigrations(
+                WikiSayItDatabase.MIGRATION_1_2,
+                WikiSayItDatabase.MIGRATION_2_3,
+                WikiSayItDatabase.MIGRATION_3_4,
+            )
             .build()
 
     @Provides

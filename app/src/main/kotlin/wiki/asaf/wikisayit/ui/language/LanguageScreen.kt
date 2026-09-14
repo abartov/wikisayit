@@ -23,7 +23,9 @@ import wiki.asaf.wikisayit.R
 import wiki.asaf.wikisayit.data.local.db.LanguageProficiency
 import wiki.asaf.wikisayit.data.local.db.ProfileLanguageEntity
 import wiki.asaf.wikisayit.ui.components.BlueprintBox
+import wiki.asaf.wikisayit.ui.components.WsHairlineDivider
 import wiki.asaf.wikisayit.ui.components.WsKicker
+import wiki.asaf.wikisayit.ui.components.WsSecondaryButton
 import wiki.asaf.wikisayit.ui.session.RecordingFlowViewModel
 import wiki.asaf.wikisayit.ui.session.SelectedLanguage
 import wiki.asaf.wikisayit.ui.theme.LocalWikiSayItColors
@@ -39,6 +41,7 @@ import wiki.asaf.wikisayit.ui.theme.WikiSayItTheme
 fun LanguageScreen(
     viewModel: RecordingFlowViewModel,
     onLanguagePicked: () -> Unit,
+    onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -71,6 +74,7 @@ fun LanguageScreen(
             )
             onLanguagePicked()
         },
+        onBack = onBack,
         modifier = modifier,
     )
 }
@@ -80,6 +84,7 @@ private fun LanguageScreenContent(
     username: String,
     languages: List<ProfileLanguageEntity>,
     onPick: (ProfileLanguageEntity) -> Unit,
+    onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val typography = LocalWikiSayItTypography.current
@@ -102,7 +107,7 @@ private fun LanguageScreenContent(
             )
         }
         LazyColumn(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().weight(1f),
             contentPadding = PaddingValues(horizontal = WikiSayItSpacing.screenHorizontal),
             verticalArrangement = Arrangement.spacedBy(WikiSayItSpacing.space3),
         ) {
@@ -110,6 +115,15 @@ private fun LanguageScreenContent(
                 LanguageRow(language = language, onClick = { onPick(language) })
             }
         }
+        WsHairlineDivider()
+        WsSecondaryButton(
+            text = stringResource(R.string.action_back),
+            onClick = onBack,
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = WikiSayItSpacing.screenHorizontal, vertical = WikiSayItSpacing.space3),
+        )
     }
 }
 
@@ -172,6 +186,7 @@ private fun LanguageScreenPreview() {
                     ),
                 ),
             onPick = {},
+            onBack = {},
         )
     }
 }
