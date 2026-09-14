@@ -383,7 +383,7 @@ class RecordingFlowViewModel
         private suspend fun recordCurrentWord(): RecordOutcome {
             val outputFile = recordingFileStore.newRecordingFile()
             val silenceThresholdSeconds = _uiState.value.settings.silenceThresholdSeconds
-            var finishedFile: File? = null
+            var finished: RecordingEngine.Event.Finished? = null
             try {
                 recordingEngine.recordWord(outputFile, silenceThresholdSeconds).collect { event ->
                     when (event) {
@@ -398,7 +398,7 @@ class RecordingFlowViewModel
                                     silenceRemainingSeconds = event.remainingSeconds,
                                 )
                             }
-                        is RecordingEngine.Event.Finished -> finishedFile = event.file
+                        is RecordingEngine.Event.Finished -> finished = event
                         RecordingEngine.Event.TooShort -> Unit
                     }
                 }
@@ -408,24 +408,50 @@ class RecordingFlowViewModel
                 _uiState.update { it.copy(recordingBlocker = RecordingBlocker.Interrupted) }
                 return RecordOutcome.INTERRUPTED
             }
-            val file = finishedFile ?: return RecordOutcome.TOO_SHORT
-            attachRecordedFile(file)
+            val event = finished ?: return RecordOutcome.TOO_SHORT
+            attachRecordedFile(event.file, event.durationSeconds)
             return RecordOutcome.FINISHED
         }
 
-        private fun attachRecordedFile(file: File) {
+        private fun attachRecordedFile(
+            file: File,
+            durationSeconds: Float,
+        ) {
             _uiState.update { state ->
                 val index = state.recordingIndex
                 val entry = state.recordingQueue.getOrNull(index) ?: return@update state
-                val queue = state.recordingQueue.toMutableList().apply { this[index] = entry.copy(audioFile = file) }
+                val queue =
+                    state.recordingQueue.toMutableList().apply {
+                        this[index] = entry.copy(audioFile = file, durationSeconds = durationSeconds)
+                    }
                 state.copy(recordingQueue = queue)
             }
         }
 
-        /** @return true if this was the last word (the session moved on to review). */
+        /** @return true if this was the last word (the session moved on to review, or — for a
+         * single-word rerecord — replaced the approved entry and returned to the summary). */
         private fun commitWord(): Boolean {
             val state = _uiState.value
             val nextIndex = state.recordingIndex + 1
+            if (nextIndex >= state.recordingQueue.size && state.rerecordIndex != null) {
+                tickerJob?.cancel()
+                val newTake = state.recordingQueue.getOrNull(state.recordingIndex)
+                _uiState.update {
+                    val approved =
+                        if (newTake != null && state.rerecordIndex in it.approved.indices) {
+                            it.approved.toMutableList().apply { this[state.rerecordIndex] = newTake }
+                        } else {
+                            it.approved
+                        }
+                    it.copy(
+                        approved = approved,
+                        recordingQueue = emptyList(),
+                        rerecordIndex = null,
+                        autoNavigateTo = FlowScreen.SUMMARY_RETURN,
+                    )
+                }
+                return true
+            }
             return if (nextIndex >= state.recordingQueue.size) {
                 tickerJob?.cancel()
                 _uiState.update {
@@ -444,6 +470,25 @@ class RecordingFlowViewModel
             }
         }
 
+        /** Re-records one already-approved entry from the summary screen (s-1a7's "undo" action
+         * next to the play button): starts a fresh single-word recording, and — once it finishes
+         * — replaces this entry's slot in [RecordingFlowUiState.approved] via [commitWord]'s
+         * [RecordingFlowUiState.rerecordIndex] handling, without disturbing the rest of the list. */
+        fun rerecordApprovedEntry(entry: QueueEntry) {
+            val index = _uiState.value.approved.indexOfFirst { it.evidenceId == entry.evidenceId }
+            if (index == -1) return
+            tickerJob?.cancel()
+            _uiState.update {
+                it.copy(
+                    recordingQueue = listOf(entry),
+                    recordingIndex = 0,
+                    rerecordIndex = index,
+                    autoNavigateTo = FlowScreen.RECORDING,
+                )
+            }
+            runRecordingLoop()
+        }
+
         fun redoCurrentWord() {
             runRecordingLoop()
         }
@@ -454,6 +499,19 @@ class RecordingFlowViewModel
             if (state.recordingIndex !in queue.indices) return
             queue.removeAt(state.recordingIndex)
             tickerJob?.cancel()
+            if (state.rerecordIndex != null) {
+                // Skipping a rerecord-in-progress cancels it: the previously approved take is
+                // left untouched, so just return to the summary rather than the empty-queue
+                // LIST_SOURCE path below (which is only correct for a from-scratch session).
+                _uiState.update {
+                    it.copy(
+                        recordingQueue = emptyList(),
+                        rerecordIndex = null,
+                        autoNavigateTo = FlowScreen.SUMMARY_RETURN,
+                    )
+                }
+                return
+            }
             if (queue.isEmpty()) {
                 // finalQueue is already the checked/expanded list from before recording started —
                 // land on CHECKED (accurate counts, "Start" to try again), not FRESH: FRESH's
@@ -491,6 +549,18 @@ class RecordingFlowViewModel
         fun stopSession() {
             tickerJob?.cancel()
             val state = _uiState.value
+            if (state.rerecordIndex != null) {
+                // Stopping mid-rerecord cancels it, same as skipCurrentWord: nothing was
+                // finished, so the previously approved take is left in place.
+                _uiState.update {
+                    it.copy(
+                        recordingQueue = emptyList(),
+                        rerecordIndex = null,
+                        autoNavigateTo = FlowScreen.SUMMARY_RETURN,
+                    )
+                }
+                return
+            }
             val done = state.recordingQueue.take(state.recordingIndex)
             if (done.isEmpty()) {
                 _uiState.update {

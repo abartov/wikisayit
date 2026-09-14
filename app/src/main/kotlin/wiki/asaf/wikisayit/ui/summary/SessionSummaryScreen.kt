@@ -17,6 +17,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -37,6 +38,7 @@ import wiki.asaf.wikisayit.ui.components.WsPrimaryButton
 import wiki.asaf.wikisayit.ui.components.WsTag
 import wiki.asaf.wikisayit.ui.components.WsTagVariant
 import wiki.asaf.wikisayit.ui.session.EntryKind
+import wiki.asaf.wikisayit.ui.session.FlowScreen
 import wiki.asaf.wikisayit.ui.session.QueueEntry
 import wiki.asaf.wikisayit.ui.session.RecordingFlowViewModel
 import wiki.asaf.wikisayit.ui.theme.LocalWikiSayItColors
@@ -46,17 +48,23 @@ import wiki.asaf.wikisayit.ui.theme.LocalWikiSayItTypography
 @Composable
 fun SessionSummaryScreen(
     viewModel: RecordingFlowViewModel,
+    onNavigateRecording: () -> Unit,
     onContribute: () -> Unit,
     onBackToStart: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
+    LaunchedEffect(uiState.autoNavigateTo) {
+        if (uiState.autoNavigateTo == FlowScreen.RECORDING) onNavigateRecording()
+    }
+
     SessionSummaryContent(
         approved = uiState.approved,
         showAbandonDialog = uiState.showAbandonDialog,
         replayingEntryId = uiState.replayingEntryId,
         onReplay = viewModel::replayEntry,
+        onRerecord = viewModel::rerecordApprovedEntry,
         onContribute = {
             viewModel.contribute()
             onContribute()
@@ -78,6 +86,7 @@ private fun SessionSummaryContent(
     showAbandonDialog: Boolean,
     replayingEntryId: String?,
     onReplay: (QueueEntry) -> Unit,
+    onRerecord: (QueueEntry) -> Unit,
     onContribute: () -> Unit,
     onAskAbandon: () -> Unit,
     onCancelAbandon: () -> Unit,
@@ -137,6 +146,7 @@ private fun SessionSummaryContent(
                     entry = entry,
                     isReplaying = entry.evidenceId == replayingEntryId,
                     onReplay = { onReplay(entry) },
+                    onRerecord = { onRerecord(entry) },
                 )
             }
         }
@@ -190,6 +200,7 @@ private fun ApprovedRow(
     entry: QueueEntry,
     isReplaying: Boolean,
     onReplay: () -> Unit,
+    onRerecord: () -> Unit,
 ) {
     val colors = LocalWikiSayItColors.current
     val typography = LocalWikiSayItTypography.current
@@ -202,6 +213,14 @@ private fun ApprovedRow(
             Icon(
                 painter = painterResource(R.drawable.ic_play),
                 contentDescription = stringResource(R.string.summary_replay_action),
+                tint = if (isReplaying) colors.neutral400 else colors.accent700,
+                modifier = Modifier.size(18.dp),
+            )
+        }
+        IconButton(onClick = onRerecord, enabled = !isReplaying) {
+            Icon(
+                painter = painterResource(R.drawable.ic_undo),
+                contentDescription = stringResource(R.string.summary_rerecord_action),
                 tint = if (isReplaying) colors.neutral400 else colors.accent700,
                 modifier = Modifier.size(18.dp),
             )

@@ -41,8 +41,6 @@ import wiki.asaf.wikisayit.ui.session.commonsFilename
 import wiki.asaf.wikisayit.ui.theme.LocalWikiSayItColors
 import wiki.asaf.wikisayit.ui.theme.LocalWikiSayItTypography
 
-private const val ASSUMED_TAKE_DURATION_SECONDS = 1.04f
-
 /** Review carousel (`1a`): plays each take back in order, then a 1.5s window to Redo/Drop
  * before auto-approving and advancing. */
 @Composable
@@ -95,14 +93,16 @@ private fun ReviewContent(
     val colors = LocalWikiSayItColors.current
     val typography = LocalWikiSayItTypography.current
 
+    val takeDurationSeconds = entry.durationSeconds ?: 0f
     val scrubber = remember(index) { Animatable(0f) }
     LaunchedEffect(index, isPlaying) {
         if (isPlaying) {
             scrubber.snapTo(0f)
-            scrubber.animateTo(1f, animationSpec = tween(1200, easing = LinearEasing))
+            val durationMillis = (takeDurationSeconds * 1000).toInt().coerceAtLeast(1)
+            scrubber.animateTo(1f, animationSpec = tween(durationMillis, easing = LinearEasing))
         }
     }
-    val elapsedSeconds = scrubber.value * ASSUMED_TAKE_DURATION_SECONDS
+    val elapsedSeconds = scrubber.value * takeDurationSeconds
 
     Column(modifier = modifier.fillMaxSize().padding(horizontal = 14.dp)) {
         Row(
@@ -166,7 +166,7 @@ private fun ReviewContent(
                                         color = colors.neutral600,
                                     )
                                     Text(
-                                        text = "%.2f s".format(ASSUMED_TAKE_DURATION_SECONDS),
+                                        text = "%.2f s".format(takeDurationSeconds),
                                         style = typography.evidence,
                                         color = colors.neutral600,
                                     )

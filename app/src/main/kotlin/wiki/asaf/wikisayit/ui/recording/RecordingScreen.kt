@@ -71,6 +71,7 @@ fun RecordingScreen(
     viewModel: RecordingFlowViewModel,
     onNavigateReview: () -> Unit,
     onNavigateSummary: () -> Unit,
+    onReturnToSummary: () -> Unit,
     onNavigateListSource: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -92,6 +93,7 @@ fun RecordingScreen(
         when (uiState.autoNavigateTo) {
             FlowScreen.REVIEW -> onNavigateReview()
             FlowScreen.SUMMARY -> onNavigateSummary()
+            FlowScreen.SUMMARY_RETURN -> onReturnToSummary()
             FlowScreen.LIST_SOURCE -> onNavigateListSource()
             else -> Unit
         }

@@ -164,6 +164,7 @@
     <string name="summary_abandon_button">Abandon session</string>
     <string name="summary_back_to_start_button">Back to the start</string>
     <string name="summary_replay_action">Replay this recording</string>
+    <string name="summary_rerecord_action">Re-record this word</string>
     <string name="summary_abandon_dialog_title">Abandon this session?</string>
     <string name="summary_abandon_confirm">Delete and exit</string>
     <string name="summary_abandon_cancel">Keep recording</string>

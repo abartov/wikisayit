@@ -20,6 +20,9 @@ data class QueueEntry(
     /** The cropped, padded, Ogg Vorbis-encoded take from [wiki.asaf.wikisayit.audio.RecordingEngine],
      * set once recording finishes; null until then. */
     val audioFile: File? = null,
+    /** The take's actual length, from [wiki.asaf.wikisayit.audio.RecordingEngine.Event.Finished];
+     * null until [audioFile] is set. */
+    val durationSeconds: Float? = null,
     /** Every representation Wikidata has for this form (e.g. a Hebrew form's plain and
      * niqqud/diacritics spellings) — see s-51l. Empty for items, and for forms with only one. */
     val scriptVariants: List<String> = emptyList(),
@@ -103,8 +106,12 @@ sealed interface RecordingBlocker {
  * that can be left this way observe it via `LaunchedEffect(uiState.autoNavigateTo)` and act
  * only on the values that mean "time for me to leave" — arriving at a screen because this
  * field already holds that screen's own value is a no-op.
+ *
+ * [SUMMARY_RETURN] is distinct from [SUMMARY]: it's set when a single-word rerecord launched
+ * *from* the summary screen (s-1a7) finishes or is cancelled, so the recording screen should pop
+ * back to that still-open instance instead of pushing a second one on top of it.
  */
-enum class FlowScreen { RECORDING, REVIEW, SUMMARY, DONE, LIST_SOURCE }
+enum class FlowScreen { RECORDING, REVIEW, SUMMARY, DONE, LIST_SOURCE, SUMMARY_RETURN }
 
 /** Which of the two per-entry contribution steps failed (2e). */
 enum class UploadStepFailure { COMMONS, P443 }

@@ -46,6 +46,11 @@ data class RecordingFlowUiState(
     val reviewDecisionRemainingSeconds: Float = 1.5f,
     val redoQueue: List<QueueEntry> = emptyList(),
     val approved: List<QueueEntry> = emptyList(),
+    /** Set while [wiki.asaf.wikisayit.ui.session.RecordingFlowViewModel.rerecordApprovedEntry] is
+     * re-recording a single already-approved entry from the summary screen: the index into
+     * [approved] that the finished take will replace. Recording a full new [approved] entry from
+     * scratch never sets this. */
+    val rerecordIndex: Int? = null,
     val showAbandonDialog: Boolean = false,
     /** Set while an on-demand replay ([wiki.asaf.wikisayit.ui.session.RecordingFlowViewModel.replayEntry])
      * is playing, so the triggering row can show it's active. */

@@ -76,6 +76,10 @@ fun WikiSayItNavHost(
                 viewModel = sessionViewModel,
                 onNavigateReview = { navController.navigate(WikiSayItRoute.Review) },
                 onNavigateSummary = { navController.navigate(WikiSayItRoute.SessionSummary) },
+                // A rerecord (s-1a7) is launched by navigating here *from* the summary screen, so
+                // finishing or cancelling it pops back to that still-open instance instead of
+                // pushing a second one on top of it.
+                onReturnToSummary = { navController.popBackStack() },
                 onNavigateListSource = { navController.popBackStack(WikiSayItRoute.ListSource, inclusive = false) },
             )
         }
@@ -93,6 +97,7 @@ fun WikiSayItNavHost(
         composable<WikiSayItRoute.SessionSummary> {
             SessionSummaryScreen(
                 viewModel = sessionViewModel,
+                onNavigateRecording = { navController.navigate(WikiSayItRoute.Recording) },
                 onContribute = { navController.navigate(WikiSayItRoute.Contribution) },
                 onBackToStart = {
                     navController.navigate(WikiSayItRoute.Profile) {
