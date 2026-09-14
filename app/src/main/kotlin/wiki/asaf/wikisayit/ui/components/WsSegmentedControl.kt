@@ -57,7 +57,7 @@ fun WsSegmentedControl(
                 Text(
                     text = label,
                     style = typography.secondary,
-                    color = if (selected) colors.ground else colors.ink,
+                    color = if (selected) colors.onAccent else colors.ink,
                 )
             }
         }

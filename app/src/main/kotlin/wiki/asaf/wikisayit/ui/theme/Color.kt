@@ -68,6 +68,47 @@ data class WikiSayItColors(
     val neutral900: Color = Neutral900,
     /** Corner registration marks: ink at 55% alpha. */
     val cornerMark: Color = ColorInk.copy(alpha = 0.55f),
+    /** Content drawn on a solid [accent] fill (button labels, the record button's mic icon, a
+     * checked checkbox's tick). [accent] itself doesn't change between themes, so this stays the
+     * fixed light tone in both — unlike [ground], it is never "the page background". */
+    val onAccent: Color = ColorGround,
 )
+
+/**
+ * Builds the Industry palette for [darkTheme]. Dark mode mirrors the light ramp rather than
+ * introducing new tones: ground/ink swap, and the neutral/accent ramps reverse end-to-end (e.g.
+ * `neutral700` stays "the" secondary-text tone, `accent100` stays "the" tinted-banner-background
+ * tone) so every existing `colors.neutralNNN` / `colors.accentNNN` call site keeps working without
+ * needing to know which theme is active.
+ */
+fun wikiSayItColors(darkTheme: Boolean): WikiSayItColors {
+    if (!darkTheme) return WikiSayItColors()
+    val ink = ColorGround
+    return WikiSayItColors(
+        ground = Neutral900,
+        surface = Neutral800,
+        ink = ink,
+        divider = ink.copy(alpha = 0.16f),
+        accent100 = Accent900,
+        accent200 = Accent800,
+        accent300 = Accent700,
+        accent400 = Accent600,
+        accent500 = Accent500,
+        accent600 = Accent400,
+        accent700 = Accent300,
+        accent800 = Accent200,
+        accent900 = Accent100,
+        neutral100 = Neutral900,
+        neutral200 = Neutral800,
+        neutral300 = Neutral700,
+        neutral400 = Neutral600,
+        neutral500 = Neutral500,
+        neutral600 = Neutral400,
+        neutral700 = Neutral300,
+        neutral800 = Neutral200,
+        neutral900 = Neutral100,
+        cornerMark = ink.copy(alpha = 0.55f),
+    )
+}
 
 val LocalWikiSayItColors = staticCompositionLocalOf { WikiSayItColors() }

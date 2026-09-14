@@ -58,7 +58,7 @@ fun WikiSayItTheme(
     content: @Composable () -> Unit,
 ) {
     val colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme
-    val wikiSayItColors = WikiSayItColors()
+    val wikiSayItColors = wikiSayItColors(darkTheme)
     val wikiSayItTypography = WikiSayItTypography()
 
     CompositionLocalProvider(

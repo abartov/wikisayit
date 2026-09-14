@@ -294,7 +294,7 @@ private fun MicRing(
             Icon(
                 painter = painterResource(R.drawable.ic_mic),
                 contentDescription = null,
-                tint = colors.ground,
+                tint = colors.onAccent,
                 modifier = Modifier.size(34.dp),
             )
         }

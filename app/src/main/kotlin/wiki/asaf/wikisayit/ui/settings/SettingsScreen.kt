@@ -201,7 +201,7 @@ private fun SettingsCheckboxRow(
             contentAlignment = Alignment.Center,
         ) {
             if (checked) {
-                Text(text = "✓", color = colors.ground, style = typography.caption)
+                Text(text = "✓", color = colors.onAccent, style = typography.caption)
             }
         }
         Column {

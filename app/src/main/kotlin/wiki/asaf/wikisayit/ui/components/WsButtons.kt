@@ -85,7 +85,7 @@ fun WsPrimaryButton(
             } else {
                 typography.buttonLabel.copy(fontSize = fontSize)
             }
-        Text(text = text, style = style, color = colors.ground)
+        Text(text = text, style = style, color = colors.onAccent)
     }
 }
 
