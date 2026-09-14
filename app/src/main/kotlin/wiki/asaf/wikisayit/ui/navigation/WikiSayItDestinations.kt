@@ -8,8 +8,9 @@ import kotlinx.serialization.Serializable
  * screen content behind each route; this module only owns the graph shape.
  */
 sealed interface WikiSayItRoute {
+    /** [justLoggedOut] drives the post-logout confirmation note (s-nrb). */
     @Serializable
-    data object SignIn : WikiSayItRoute
+    data class SignIn(val justLoggedOut: Boolean = false) : WikiSayItRoute
 
     @Serializable
     data object NewProfile : WikiSayItRoute

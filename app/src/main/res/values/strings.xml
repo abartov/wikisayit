@@ -11,6 +11,7 @@
     <string name="sign_in_primary_cta">Sign in with your Wikimedia account</string>
     <string name="sign_in_primary_cta_in_progress">Signing in…</string>
     <string name="sign_in_note">Sign-in happens on wikimedia.org — Wiki-Say-It never sees your password.</string>
+    <string name="sign_in_logged_out_note">You\'ve been logged out of your Wikimedia account.</string>
     <string name="sign_in_no_account">I don\'t have an account yet</string>
     <string name="nav_destination_language">Language</string>
     <string name="language_step_kicker">Step 2 of 4 — language</string>
@@ -251,6 +252,8 @@
     <string name="settings_seconds_format">%.1f s</string>
     <string name="settings_max_list_size_label">Maximum list size</string>
     <string name="settings_max_list_size_note">Caps how many entries a SPARQL query or Wikipedia category can add to a list. Query LIMIT clauses larger than this are lowered to match; smaller ones are left alone.</string>
+    <string name="settings_account_label">Account</string>
+    <string name="settings_log_out_button">Log out of Wikimedia account %1$s</string>
     <string name="settings_back_to_session">Back to the session</string>
 
     <string name="stats_title">Stats</string>

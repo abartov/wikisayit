@@ -127,7 +127,13 @@ private fun SignInScreenContent(
                 fontSize = 16.sp,
             )
             Text(
-                text = uiState.errorMessage ?: stringResource(R.string.sign_in_note),
+                text =
+                    uiState.errorMessage
+                        ?: if (uiState.justLoggedOut) {
+                            stringResource(R.string.sign_in_logged_out_note)
+                        } else {
+                            stringResource(R.string.sign_in_note)
+                        },
                 style = typography.caption,
                 color = if (uiState.errorMessage != null) MaterialTheme.colorScheme.error else colors.neutral700,
             )

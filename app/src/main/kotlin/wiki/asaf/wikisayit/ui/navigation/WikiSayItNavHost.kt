@@ -34,14 +34,14 @@ fun WikiSayItNavHost(
 ) {
     NavHost(
         navController = navController,
-        startDestination = WikiSayItRoute.SignIn,
+        startDestination = WikiSayItRoute.SignIn(),
         modifier = modifier,
     ) {
         composable<WikiSayItRoute.SignIn> {
             SignInScreen(
                 onSignIn = {
                     navController.navigate(WikiSayItRoute.Profile) {
-                        popUpTo(WikiSayItRoute.SignIn) { inclusive = true }
+                        popUpTo<WikiSayItRoute.SignIn> { inclusive = true }
                     }
                 },
             )
@@ -128,7 +128,14 @@ fun WikiSayItNavHost(
             )
         }
         composable<WikiSayItRoute.Settings> {
-            SettingsScreen(onBack = { navController.popBackStack() })
+            SettingsScreen(
+                onBack = { navController.popBackStack() },
+                onLoggedOut = {
+                    navController.navigate(WikiSayItRoute.SignIn(justLoggedOut = true)) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                },
+            )
         }
         composable<WikiSayItRoute.Stats> {
             StatsScreen(onBack = { navController.popBackStack() })

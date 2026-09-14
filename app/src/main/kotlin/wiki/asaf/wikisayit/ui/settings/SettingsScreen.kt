@@ -25,6 +25,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -36,6 +37,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.os.LocaleListCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import kotlinx.coroutines.launch
 import wiki.asaf.wikisayit.R
 import wiki.asaf.wikisayit.data.language.InterfaceLanguages
 import wiki.asaf.wikisayit.data.local.settings.AppSettings
@@ -46,17 +48,21 @@ import wiki.asaf.wikisayit.ui.theme.LocalWikiSayItTypography
 
 private val SILENCE_THRESHOLD_OPTIONS = listOf(1.0f, 1.5f, 2.5f)
 
-/** Settings (`1a`): auto-use-last-profile, auto-trim, interface language and silence threshold. */
+/** Settings (`1a`): auto-use-last-profile, auto-trim, interface language, silence threshold and account. */
 @Composable
 fun SettingsScreen(
     onBack: () -> Unit,
+    onLoggedOut: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: SettingsViewModel = hiltViewModel(),
 ) {
     val settings by viewModel.settings.collectAsStateWithLifecycle()
+    val signedInUsername by viewModel.signedInUsername.collectAsStateWithLifecycle()
     val activity = LocalContext.current as? Activity
+    val scope = rememberCoroutineScope()
     SettingsContent(
         settings = settings,
+        signedInUsername = signedInUsername,
         onToggleAutoUseLastProfile = { viewModel.setAutoUseLastProfile(!settings.autoUseLastProfile) },
         onToggleTrimSilence = { viewModel.setTrimSilenceAutomatically(!settings.trimSilenceAutomatically) },
         onInterfaceLanguageSelected = { tag ->
@@ -72,6 +78,12 @@ fun SettingsScreen(
         onSilenceThresholdSelected = { viewModel.setSilenceThresholdSeconds(SILENCE_THRESHOLD_OPTIONS[it]) },
         onMaxListSizeChanged = viewModel::setMaxListSize,
         onBack = onBack,
+        onLogOut = {
+            scope.launch {
+                viewModel.logOut()
+                onLoggedOut()
+            }
+        },
         modifier = modifier,
     )
 }
@@ -79,12 +91,14 @@ fun SettingsScreen(
 @Composable
 private fun SettingsContent(
     settings: AppSettings,
+    signedInUsername: String?,
     onToggleAutoUseLastProfile: () -> Unit,
     onToggleTrimSilence: () -> Unit,
     onInterfaceLanguageSelected: (String) -> Unit,
     onSilenceThresholdSelected: (Int) -> Unit,
     onMaxListSizeChanged: (Int) -> Unit,
     onBack: () -> Unit,
+    onLogOut: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val typography = LocalWikiSayItTypography.current
@@ -144,6 +158,16 @@ private fun SettingsContent(
                     color = LocalWikiSayItColors.current.neutral700,
                     modifier = Modifier.padding(top = 6.dp),
                 )
+            }
+            if (signedInUsername != null) {
+                Column(modifier = Modifier.padding(top = 18.dp)) {
+                    Text(text = stringResource(R.string.settings_account_label), style = typography.caption)
+                    WsSecondaryButton(
+                        text = stringResource(R.string.settings_log_out_button, signedInUsername),
+                        onClick = onLogOut,
+                        modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+                    )
+                }
             }
         }
         Column(modifier = Modifier.fillMaxWidth().padding(14.dp)) {
