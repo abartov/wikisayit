@@ -114,6 +114,45 @@ class WikipediaCategorySourceTest {
         }
 
     @Test
+    fun `result is truncated to maxListSize, keeping the first pages returned`() =
+        runTest {
+            val engine =
+                MockEngine { request ->
+                    val params = request.url.parameters
+                    val body =
+                        when {
+                            params["list"] == "categorymembers" ->
+                                """{"query":{"categorymembers":[
+                                    {"title":"P1","ns":0},
+                                    {"title":"P2","ns":0},
+                                    {"title":"P3","ns":0},
+                                    {"title":"P4","ns":0}
+                                ]}}"""
+                            params["prop"] == "pageprops" -> {
+                                val titles = params["titles"]?.split("|").orEmpty()
+                                val pages =
+                                    titles.mapIndexed { index, title ->
+                                        """"$index":{"title":"$title","pageprops":{"wikibase_item":"Q$index"}}"""
+                                    }.joinToString(",")
+                                """{"query":{"pages":{$pages}}}"""
+                            }
+                            else -> """{"query":{}}"""
+                        }
+                    respond(
+                        content = body,
+                        status = HttpStatusCode.OK,
+                        headers = headersOf(HttpHeaders.ContentType, "application/json"),
+                    )
+                }
+            val source = sourceFor(engine)
+
+            val result = source.build("Big", "en", CategoryDepth.NONE, maxListSize = 2)
+
+            assertEquals(2, result.entries.size)
+            assertEquals(listOf("P1", "P2"), result.entries.map { it.label })
+        }
+
+    @Test
     fun `a genuinely empty category is not flagged as an error`() =
         runTest {
             val source = sourceFor(categoryGraphEngine())

@@ -130,6 +130,12 @@ fun RecordingScreen(
                     phase = uiState.recordingPhase,
                     silenceRemainingSeconds = uiState.silenceRemainingSeconds,
                     silenceThresholdSeconds = uiState.settings.silenceThresholdSeconds,
+                    manualMode = uiState.manualMode,
+                    manualRecordingActive = uiState.manualRecordingActive,
+                    onToggleManualMode = { viewModel.setManualMode(!uiState.manualMode) },
+                    onManualRecord = viewModel::startManualRecording,
+                    onManualStop = viewModel::stopManualRecording,
+                    onManualNext = viewModel::manualNext,
                     onRedo = viewModel::redoCurrentWord,
                     onSkip = viewModel::skipCurrentWord,
                     onStop = viewModel::stopSession,
@@ -149,6 +155,12 @@ private fun RecordingRingContent(
     phase: RecordingPhase,
     silenceRemainingSeconds: Float,
     silenceThresholdSeconds: Float,
+    manualMode: Boolean,
+    manualRecordingActive: Boolean,
+    onToggleManualMode: () -> Unit,
+    onManualRecord: () -> Unit,
+    onManualStop: () -> Unit,
+    onManualNext: () -> Unit,
     onRedo: () -> Unit,
     onSkip: () -> Unit,
     onStop: () -> Unit,
@@ -159,15 +171,19 @@ private fun RecordingRingContent(
 
     val hint =
         when {
+            manualMode && manualRecordingActive -> stringResource(R.string.recording_hint_manual_recording)
+            manualMode && entry.audioFile != null -> stringResource(R.string.recording_hint_manual_recorded)
+            manualMode -> stringResource(R.string.recording_hint_manual_idle)
             pass > 1 -> stringResource(R.string.recording_hint_redo_pass)
             phase == RecordingPhase.SILENCE -> stringResource(R.string.recording_hint_silence, silenceRemainingSeconds)
             else -> stringResource(R.string.recording_hint_speak_when_ready)
         }
     val stateText =
-        when (phase) {
-            RecordingPhase.READY -> stringResource(R.string.recording_state_listening)
-            RecordingPhase.SPEAKING -> stringResource(R.string.recording_state_recording)
-            RecordingPhase.SILENCE -> stringResource(R.string.recording_state_stopping, silenceRemainingSeconds)
+        when {
+            manualMode && !manualRecordingActive -> stringResource(R.string.recording_state_manual_idle)
+            phase == RecordingPhase.READY -> stringResource(R.string.recording_state_listening)
+            phase == RecordingPhase.SPEAKING -> stringResource(R.string.recording_state_recording)
+            else -> stringResource(R.string.recording_state_stopping, silenceRemainingSeconds)
         }
     val withinWordFraction =
         when (phase) {
@@ -236,22 +252,66 @@ private fun RecordingRingContent(
             modifier = Modifier.fillMaxWidth().padding(bottom = WikiSayItSpacing.space4),
             verticalArrangement = Arrangement.spacedBy(WikiSayItSpacing.space2),
         ) {
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(WikiSayItSpacing.space2),
+            WsGhostButton(
+                text =
+                    if (manualMode) {
+                        stringResource(R.string.recording_manual_mode_off)
+                    } else {
+                        stringResource(R.string.recording_manual_mode_on)
+                    },
+                onClick = onToggleManualMode,
                 modifier = Modifier.fillMaxWidth(),
-            ) {
-                WsSecondaryButton(
-                    text = stringResource(R.string.action_redo),
-                    onClick = onRedo,
-                    modifier = Modifier.weight(1f),
+            )
+            if (manualMode) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(WikiSayItSpacing.space2),
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    WsSecondaryButton(
+                        text = stringResource(R.string.recording_manual_record),
+                        onClick = onManualRecord,
+                        enabled = !manualRecordingActive,
+                        modifier = Modifier.weight(1f),
+                        minHeight = 52.dp,
+                    )
+                    WsSecondaryButton(
+                        text = stringResource(R.string.recording_manual_stop),
+                        onClick = onManualStop,
+                        enabled = manualRecordingActive,
+                        modifier = Modifier.weight(1f),
+                        minHeight = 52.dp,
+                    )
+                }
+                WsPrimaryButton(
+                    text = stringResource(R.string.recording_manual_next),
+                    onClick = onManualNext,
+                    enabled = !manualRecordingActive && entry.audioFile != null,
+                    modifier = Modifier.fillMaxWidth(),
                     minHeight = 52.dp,
                 )
-                WsSecondaryButton(
+                WsGhostButton(
                     text = stringResource(R.string.action_skip),
                     onClick = onSkip,
-                    modifier = Modifier.weight(1f),
-                    minHeight = 52.dp,
+                    modifier = Modifier.fillMaxWidth(),
                 )
+            } else {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(WikiSayItSpacing.space2),
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    WsSecondaryButton(
+                        text = stringResource(R.string.action_redo),
+                        onClick = onRedo,
+                        modifier = Modifier.weight(1f),
+                        minHeight = 52.dp,
+                    )
+                    WsSecondaryButton(
+                        text = stringResource(R.string.action_skip),
+                        onClick = onSkip,
+                        modifier = Modifier.weight(1f),
+                        minHeight = 52.dp,
+                    )
+                }
             }
             WsGhostButton(
                 text = stringResource(R.string.action_stop_session),

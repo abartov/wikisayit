@@ -5,6 +5,7 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.floatPreferencesKey
+import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import kotlinx.coroutines.flow.Flow
@@ -23,6 +24,8 @@ interface SettingsRepository {
     suspend fun setSilenceThresholdSeconds(seconds: Float)
 
     suspend fun setInterfaceLanguageTag(tag: String?)
+
+    suspend fun setMaxListSize(size: Int)
 }
 
 class DataStoreSettingsRepository
@@ -36,6 +39,7 @@ class DataStoreSettingsRepository
             val TRIM_SILENCE_AUTOMATICALLY = booleanPreferencesKey("trim_silence_automatically")
             val SILENCE_THRESHOLD_SECONDS = floatPreferencesKey("silence_threshold_seconds")
             val INTERFACE_LANGUAGE_TAG = stringPreferencesKey("interface_language_tag")
+            val MAX_LIST_SIZE = intPreferencesKey("max_list_size")
         }
 
         override val settings: Flow<AppSettings> =
@@ -46,6 +50,7 @@ class DataStoreSettingsRepository
                     trimSilenceAutomatically = preferences[Keys.TRIM_SILENCE_AUTOMATICALLY] ?: true,
                     silenceThresholdSeconds = preferences[Keys.SILENCE_THRESHOLD_SECONDS] ?: 1.5f,
                     interfaceLanguageTag = preferences[Keys.INTERFACE_LANGUAGE_TAG],
+                    maxListSize = preferences[Keys.MAX_LIST_SIZE] ?: DEFAULT_MAX_LIST_SIZE,
                 )
             }
 
@@ -79,5 +84,9 @@ class DataStoreSettingsRepository
                     it[Keys.INTERFACE_LANGUAGE_TAG] = tag
                 }
             }
+        }
+
+        override suspend fun setMaxListSize(size: Int) {
+            dataStore.edit { it[Keys.MAX_LIST_SIZE] = size.coerceAtLeast(1) }
         }
     }

@@ -1,6 +1,8 @@
 package wiki.asaf.wikisayit.audio
 
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.FlowCollector
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.transformWhile
@@ -61,16 +63,48 @@ class RecordingEngine(
                     true
                 }.collect { emit(it) }
 
-            val cropped = cropSilence(flattenBlocks(blocks), cropThreshold)
-            if (cropped.size < (minDurationSeconds * audioSource.sampleRate).toInt()) {
-                emit(Event.TooShort)
-                return@flow
-            }
-
-            val padded = addPadding(cropped, audioSource.sampleRate, paddingSeconds)
-            encoder.encode(padded, audioSource.sampleRate, outputFile)
-            emit(Event.Finished(outputFile, cropped.size.toFloat() / audioSource.sampleRate))
+            finish(blocks, outputFile)
         }
+
+    /**
+     * Captures audio with no speech-onset/silence-based auto-stop: recording continues until
+     * [stopRequested] reads true (polled once per captured frame) or the audio source completes
+     * on its own. Used by manual recording mode (s-3fe), where the user drives start/stop instead
+     * of [SpeechEndpointDetector].
+     */
+    fun recordWordManual(
+        outputFile: File,
+        stopRequested: StateFlow<Boolean>,
+    ): Flow<Event> =
+        flow {
+            val blocks = mutableListOf<ShortArray>()
+            emit(Event.Listening)
+
+            audioSource.frames()
+                .transformWhile { frame ->
+                    val isFirstFrame = blocks.isEmpty()
+                    blocks.add(frame)
+                    if (isFirstFrame) emit(Event.Speaking)
+                    !stopRequested.value
+                }.collect { emit(it) }
+
+            finish(blocks, outputFile)
+        }
+
+    private suspend fun FlowCollector<Event>.finish(
+        blocks: List<ShortArray>,
+        outputFile: File,
+    ) {
+        val cropped = cropSilence(flattenBlocks(blocks), cropThreshold)
+        if (cropped.size < (minDurationSeconds * audioSource.sampleRate).toInt()) {
+            emit(Event.TooShort)
+            return
+        }
+
+        val padded = addPadding(cropped, audioSource.sampleRate, paddingSeconds)
+        encoder.encode(padded, audioSource.sampleRate, outputFile)
+        emit(Event.Finished(outputFile, cropped.size.toFloat() / audioSource.sampleRate))
+    }
 
     private fun flattenBlocks(blocks: List<ShortArray>): ShortArray {
         val total = blocks.sumOf { it.size }

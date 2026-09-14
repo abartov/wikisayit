@@ -39,6 +39,12 @@ data class RecordingFlowUiState(
     val recordingPhase: RecordingPhase = RecordingPhase.READY,
     val silenceRemainingSeconds: Float = 0f,
     val recordingBlocker: RecordingBlocker? = null,
+    /** Manual record/stop/next control (s-3fe), useful in noisy environments where automatic
+     * speech-onset/silence detection isn't reliable. */
+    val manualMode: Boolean = false,
+    /** True while a manual-mode take is being captured, between [RecordingFlowViewModel.startManualRecording]
+     * and [RecordingFlowViewModel.stopManualRecording]. */
+    val manualRecordingActive: Boolean = false,
     // --- review ---
     val reviewSession: List<QueueEntry> = emptyList(),
     val reviewIndex: Int = 0,

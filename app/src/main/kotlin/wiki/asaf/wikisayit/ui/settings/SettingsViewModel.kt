@@ -35,4 +35,8 @@ class SettingsViewModel
         fun setInterfaceLanguageTag(tag: String) {
             viewModelScope.launch { settingsRepository.setInterfaceLanguageTag(tag) }
         }
+
+        fun setMaxListSize(size: Int) {
+            viewModelScope.launch { settingsRepository.setMaxListSize(size) }
+        }
     }

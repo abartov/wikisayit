@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
@@ -30,6 +31,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.core.os.LocaleListCompat
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -68,6 +70,7 @@ fun SettingsScreen(
             }
         },
         onSilenceThresholdSelected = { viewModel.setSilenceThresholdSeconds(SILENCE_THRESHOLD_OPTIONS[it]) },
+        onMaxListSizeChanged = viewModel::setMaxListSize,
         onBack = onBack,
         modifier = modifier,
     )
@@ -80,6 +83,7 @@ private fun SettingsContent(
     onToggleTrimSilence: () -> Unit,
     onInterfaceLanguageSelected: (String) -> Unit,
     onSilenceThresholdSelected: (Int) -> Unit,
+    onMaxListSizeChanged: (Int) -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -125,6 +129,20 @@ private fun SettingsContent(
                         ).coerceAtLeast(0),
                     onSelect = onSilenceThresholdSelected,
                     modifier = Modifier.padding(top = 4.dp),
+                )
+            }
+            Column(modifier = Modifier.padding(top = 18.dp)) {
+                Text(text = stringResource(R.string.settings_max_list_size_label), style = typography.caption)
+                MaxListSizeField(
+                    maxListSize = settings.maxListSize,
+                    onMaxListSizeChanged = onMaxListSizeChanged,
+                    modifier = Modifier.padding(top = 4.dp),
+                )
+                Text(
+                    text = stringResource(R.string.settings_max_list_size_note),
+                    style = typography.caption,
+                    color = LocalWikiSayItColors.current.neutral700,
+                    modifier = Modifier.padding(top = 6.dp),
                 )
             }
         }
@@ -177,6 +195,26 @@ private fun InterfaceLanguageDropdown(
             }
         }
     }
+}
+
+@Composable
+private fun MaxListSizeField(
+    maxListSize: Int,
+    onMaxListSizeChanged: (Int) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    var text by remember(maxListSize) { mutableStateOf(maxListSize.toString()) }
+    OutlinedTextField(
+        value = text,
+        onValueChange = { input ->
+            val digitsOnly = input.filter { it.isDigit() }
+            text = digitsOnly
+            digitsOnly.toIntOrNull()?.takeIf { it > 0 }?.let(onMaxListSizeChanged)
+        },
+        singleLine = true,
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+        modifier = modifier.fillMaxWidth(),
+    )
 }
 
 @Composable

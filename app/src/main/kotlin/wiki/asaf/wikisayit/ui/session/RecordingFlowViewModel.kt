@@ -74,6 +74,7 @@ class RecordingFlowViewModel
 
         private var tickerJob: Job? = null
         private var replayJob: Job? = null
+        private var manualStopSignal: MutableStateFlow<Boolean>? = null
 
         init {
             viewModelScope.launch {
@@ -132,11 +133,13 @@ class RecordingFlowViewModel
                 ListSourceType.PASTE -> resolvePastedList(state)
                 ListSourceType.QUERY -> {
                     val language = state.language?.isoCode.orEmpty()
-                    resolveAsyncList { queryListBuilder.build(state.sourceText, language) }
+                    resolveAsyncList { queryListBuilder.build(state.sourceText, language, state.settings.maxListSize) }
                 }
                 ListSourceType.CATEGORY -> {
                     val language = state.language?.isoCode.orEmpty()
-                    resolveAsyncList { categorySource.build(state.sourceText, language, state.categoryDepth) }
+                    resolveAsyncList {
+                        categorySource.build(state.sourceText, language, state.categoryDepth, state.settings.maxListSize)
+                    }
                 }
                 null -> Unit
             }
@@ -356,7 +359,93 @@ class RecordingFlowViewModel
                     approved = emptyList(),
                 )
             }
-            runRecordingLoop()
+            beginRecordingForCurrentEntry()
+        }
+
+        /** Starts recording the current queue entry the way [RecordingFlowUiState.manualMode]
+         * calls for: the automatic loop in manual mode, or just resetting to an idle/READY state
+         * so the user can press "Record" themselves. Used wherever the automatic path used to
+         * unconditionally call [runRecordingLoop] (s-3fe). */
+        private fun beginRecordingForCurrentEntry() {
+            if (_uiState.value.manualMode) {
+                tickerJob?.cancel()
+                manualStopSignal = null
+                _uiState.update {
+                    it.copy(
+                        recordingPhase = RecordingPhase.READY,
+                        manualRecordingActive = false,
+                        silenceRemainingSeconds = 0f,
+                    )
+                }
+            } else {
+                runRecordingLoop()
+            }
+        }
+
+        /** Toggles between the automatic recording loop and manual record/stop/next control
+         * (s-3fe), useful in noisy environments where speech-onset/silence auto-detection isn't
+         * reliable. Switching modes abandons any take in progress, same as Skip/Redo. */
+        fun setManualMode(enabled: Boolean) {
+            if (_uiState.value.manualMode == enabled) return
+            _uiState.update { it.copy(manualMode = enabled) }
+            if (_uiState.value.currentRecordingEntry != null) beginRecordingForCurrentEntry()
+        }
+
+        /** Starts a manual-mode take for the current queue entry; recording continues until
+         * [stopManualRecording] is called, with no speech-silence auto-stop. */
+        fun startManualRecording() {
+            val state = _uiState.value
+            if (!state.manualMode || state.currentRecordingEntry == null || state.manualRecordingActive) return
+            tickerJob?.cancel()
+            val stopSignal = MutableStateFlow(false)
+            manualStopSignal = stopSignal
+            _uiState.update { it.copy(manualRecordingActive = true) }
+            tickerJob =
+                viewModelScope.launch {
+                    recordCurrentWordManual(stopSignal)
+                    manualStopSignal = null
+                    _uiState.update { it.copy(manualRecordingActive = false) }
+                }
+        }
+
+        /** Ends the in-progress manual take (crops/pads/encodes what was captured so far); does
+         * not advance the queue — that's [manualNext]'s job. */
+        fun stopManualRecording() {
+            manualStopSignal?.value = true
+        }
+
+        /** Advances to the next queue entry (or on to review, for the last one) once the current
+         * entry has a take attached — the manual-mode analogue of what the automatic loop does on
+         * every [RecordOutcome.FINISHED]. */
+        fun manualNext() {
+            if (_uiState.value.manualRecordingActive) return
+            if (commitWord()) return
+            _uiState.update { it.copy(recordingPhase = RecordingPhase.READY) }
+        }
+
+        private suspend fun recordCurrentWordManual(stopSignal: StateFlow<Boolean>) {
+            val outputFile = recordingFileStore.newRecordingFile()
+            var finished: RecordingEngine.Event.Finished? = null
+            try {
+                recordingEngine.recordWordManual(outputFile, stopSignal).collect { event ->
+                    when (event) {
+                        RecordingEngine.Event.Listening ->
+                            _uiState.update { it.copy(recordingPhase = RecordingPhase.READY) }
+                        RecordingEngine.Event.Speaking ->
+                            _uiState.update { it.copy(recordingPhase = RecordingPhase.SPEAKING) }
+                        is RecordingEngine.Event.Silence -> Unit
+                        is RecordingEngine.Event.Finished -> finished = event
+                        RecordingEngine.Event.TooShort -> Unit
+                    }
+                }
+            } catch (cancellation: CancellationException) {
+                throw cancellation
+            } catch (_: Exception) {
+                _uiState.update { it.copy(recordingBlocker = RecordingBlocker.Interrupted) }
+                return
+            }
+            val event = finished ?: return
+            attachRecordedFile(event.file, event.durationSeconds)
         }
 
         private enum class RecordOutcome { FINISHED, TOO_SHORT, INTERRUPTED }
@@ -486,7 +575,7 @@ class RecordingFlowViewModel
                     autoNavigateTo = FlowScreen.RECORDING,
                 )
             }
-            runRecordingLoop()
+            beginRecordingForCurrentEntry()
         }
 
         fun redoCurrentWord() {
@@ -542,7 +631,7 @@ class RecordingFlowViewModel
                 runReviewLoop()
             } else {
                 _uiState.update { it.copy(recordingQueue = queue) }
-                runRecordingLoop()
+                beginRecordingForCurrentEntry()
             }
         }
 
@@ -692,6 +781,7 @@ class RecordingFlowViewModel
         private fun resetFlow() {
             tickerJob?.cancel()
             replayJob?.cancel()
+            manualStopSignal = null
             val state = _uiState.value
             _uiState.value = RecordingFlowUiState(profiles = state.profiles, settings = state.settings)
         }

@@ -7,11 +7,13 @@ import io.ktor.client.request.parameter
 import io.ktor.http.isSuccess
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import wiki.asaf.wikisayit.data.local.settings.DEFAULT_MAX_LIST_SIZE
 import wiki.asaf.wikisayit.ui.session.CategoryDepth
 import wiki.asaf.wikisayit.ui.session.EntryKind
 import wiki.asaf.wikisayit.ui.session.ListBuildResult
 import wiki.asaf.wikisayit.ui.session.QueueEntry
 import javax.inject.Inject
+import kotlin.math.min
 
 private const val MAIN_NAMESPACE = 0
 private const val CATEGORY_NAMESPACE = 14
@@ -50,26 +52,31 @@ class WikipediaCategorySource
             categoryName: String,
             languageCode: String,
             depth: CategoryDepth,
+            maxListSize: Int = DEFAULT_MAX_LIST_SIZE,
         ): ListBuildResult {
             val apiBaseUrl = "https://${languageCode.ifBlank { "en" }}.wikipedia.org/w/api.php"
             val (titles, traverseHadError) =
-                traverse(normalizeCategoryTitle(categoryName), depth.maxSubcategoryLevels, apiBaseUrl)
-            val (entries, resolveHadError) = resolveToQueueEntries(titles, apiBaseUrl)
+                traverse(normalizeCategoryTitle(categoryName), depth.maxSubcategoryLevels, apiBaseUrl, maxListSize)
+            val (entries, resolveHadError) = resolveToQueueEntries(titles.take(maxListSize), apiBaseUrl)
             return ListBuildResult(entries, hadFetchError = traverseHadError || resolveHadError)
         }
 
-        /** @return (collected page titles, whether any `categorymembers` request failed). */
+        /** @return (collected page titles, whether any `categorymembers` request failed). Stops
+         * once [maxListSize] pages are collected (s-53x), still bounded by [MAX_PAGES] as an
+         * absolute ceiling regardless of how large [maxListSize] is configured. */
         private suspend fun traverse(
             rootTitle: String,
             maxLevels: Int,
             apiBaseUrl: String,
+            maxListSize: Int,
         ): Pair<List<String>, Boolean> {
+            val effectiveCap = min(maxListSize, MAX_PAGES)
             val visitedCategories = mutableSetOf<String>()
             val pageTitles = LinkedHashSet<String>()
             val queue = ArrayDeque<Pair<String, Int>>()
             queue.add(rootTitle to 0)
             var hadError = false
-            while (queue.isNotEmpty() && pageTitles.size < MAX_PAGES) {
+            while (queue.isNotEmpty() && pageTitles.size < effectiveCap) {
                 val (title, level) = queue.removeFirst()
                 if (!visitedCategories.add(title)) continue
                 val (pages, subcats, fetchHadError) = fetchMembers(title, apiBaseUrl)

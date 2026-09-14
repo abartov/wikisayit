@@ -133,9 +133,18 @@
     <string name="recording_state_listening">listening</string>
     <string name="recording_state_recording">recording your voice</string>
     <string name="recording_state_stopping">stopping in %1$.1f s</string>
+    <string name="recording_state_manual_idle">ready to record</string>
+    <string name="recording_hint_manual_idle">tap Record to start this word</string>
+    <string name="recording_hint_manual_recording">tap Stop when you\'re done</string>
+    <string name="recording_hint_manual_recorded">tap Next when ready, or Record to redo</string>
     <string name="action_redo">Redo</string>
     <string name="action_skip">Skip</string>
     <string name="action_stop_session">Stop the session</string>
+    <string name="recording_manual_mode_on">Manual mode</string>
+    <string name="recording_manual_mode_off">Automatic mode</string>
+    <string name="recording_manual_record">Record</string>
+    <string name="recording_manual_stop">Stop</string>
+    <string name="recording_manual_next">Next</string>
     <string name="mic_blocked_title">The microphone is switched off</string>
     <string name="mic_blocked_body">WikiSayIt records your voice and nothing else — no recording happens unless a word is on screen, and nothing is sent anywhere until you tap Contribute.</string>
     <string name="mic_blocked_kicker">to switch it on</string>
@@ -233,6 +242,8 @@
     <string name="settings_interface_language_note">Translations come from translatewiki.net. Right-to-left languages mirror the whole interface.</string>
     <string name="settings_silence_threshold_label">Stop recording after silence of</string>
     <string name="settings_seconds_format">%.1f s</string>
+    <string name="settings_max_list_size_label">Maximum list size</string>
+    <string name="settings_max_list_size_note">Caps how many entries a SPARQL query or Wikipedia category can add to a list. Query LIMIT clauses larger than this are lowered to match; smaller ones are left alone.</string>
     <string name="settings_back_to_session">Back to the session</string>
 
     <string name="stats_title">Stats</string>

@@ -1,6 +1,7 @@
 package wiki.asaf.wikisayit.audio
 
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.test.runTest
@@ -95,6 +96,55 @@ class RecordingEngineTest {
             output.deleteOnExit()
 
             val events = engine.recordWord(output, silenceThresholdSeconds = 0.3f).toList()
+
+            assertEquals(RecordingEngine.Event.TooShort, events.last())
+            assertEquals(null, encoder.lastSamples)
+        }
+
+    @Test
+    fun `manual recording ignores speech-silence auto-stop and captures until the source completes`() =
+        runTest {
+            val encoder = RecordingAudioEncoder()
+            val engine =
+                RecordingEngine(
+                    audioSource = ScriptedAudioSource(sampleRate = 100, script = script),
+                    encoder = encoder,
+                    minDurationSeconds = 0.15f,
+                )
+            val output = File.createTempFile("recording-engine-manual-test", ".ogg")
+            output.deleteOnExit()
+
+            // Never set true: the flow should finish only once ScriptedAudioSource's finite script
+            // is exhausted, including the trailing loud frame that auto-stop mode never reaches.
+            val stopRequested = MutableStateFlow(false)
+            val events = engine.recordWordManual(output, stopRequested).toList()
+
+            assertEquals(RecordingEngine.Event.Listening, events.first())
+            assertTrue(events.contains(RecordingEngine.Event.Speaking))
+            assertTrue(events.none { it is RecordingEngine.Event.Silence })
+            val finished = events.last()
+            assertTrue(finished is RecordingEngine.Event.Finished)
+            finished as RecordingEngine.Event.Finished
+            // Cropped span covers the first through last loud frame (indices 1..6), including the
+            // silent gap between them: 6 frames @ 100Hz = 0.6s.
+            assertEquals(0.6f, finished.durationSeconds, 0.001f)
+        }
+
+    @Test
+    fun `manual recording stopped immediately reports too short rather than encoding near-empty audio`() =
+        runTest {
+            val encoder = RecordingAudioEncoder()
+            val engine =
+                RecordingEngine(
+                    audioSource = ScriptedAudioSource(sampleRate = 100, script = script),
+                    encoder = encoder,
+                    minDurationSeconds = 0.15f,
+                )
+            val output = File.createTempFile("recording-engine-manual-stop-test", ".ogg")
+            output.deleteOnExit()
+
+            val stopRequested = MutableStateFlow(true)
+            val events = engine.recordWordManual(output, stopRequested).toList()
 
             assertEquals(RecordingEngine.Event.TooShort, events.last())
             assertEquals(null, encoder.lastSamples)

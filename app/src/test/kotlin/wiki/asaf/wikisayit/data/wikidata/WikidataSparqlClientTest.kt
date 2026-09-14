@@ -117,4 +117,28 @@ class WikidataSparqlClientTest {
             assertTrue(result.refs.isEmpty())
             assertTrue(result.hadError)
         }
+
+    @Test
+    fun `query with no LIMIT clause gets one appended at maxListSize`() {
+        val query = "SELECT ?item WHERE { ?item wdt:P31 wd:Q5 }"
+        assertEquals("$query\nLIMIT 50", applyMaxListSize(query, maxListSize = 50))
+    }
+
+    @Test
+    fun `query LIMIT larger than maxListSize is lowered to match`() {
+        val query = "SELECT ?item WHERE { ?item wdt:P31 wd:Q5 } LIMIT 5000"
+        assertEquals("SELECT ?item WHERE { ?item wdt:P31 wd:Q5 } LIMIT 50", applyMaxListSize(query, maxListSize = 50))
+    }
+
+    @Test
+    fun `query LIMIT smaller than maxListSize is left alone`() {
+        val query = "SELECT ?item WHERE { ?item wdt:P31 wd:Q5 } LIMIT 10"
+        assertEquals(query, applyMaxListSize(query, maxListSize = 50))
+    }
+
+    @Test
+    fun `query LIMIT equal to maxListSize is left alone`() {
+        val query = "SELECT ?item WHERE { ?item wdt:P31 wd:Q5 } limit 50"
+        assertEquals(query, applyMaxListSize(query, maxListSize = 50))
+    }
 }

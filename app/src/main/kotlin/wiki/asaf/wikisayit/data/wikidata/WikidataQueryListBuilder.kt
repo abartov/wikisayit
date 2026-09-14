@@ -1,5 +1,6 @@
 package wiki.asaf.wikisayit.data.wikidata
 
+import wiki.asaf.wikisayit.data.local.settings.DEFAULT_MAX_LIST_SIZE
 import wiki.asaf.wikisayit.network.WikimediaClients
 import wiki.asaf.wikisayit.ui.session.EntryKind
 import wiki.asaf.wikisayit.ui.session.ListBuildResult
@@ -24,8 +25,9 @@ class WikidataQueryListBuilder
         suspend fun build(
             query: String,
             preferredLanguage: String,
+            maxListSize: Int = DEFAULT_MAX_LIST_SIZE,
         ): ListBuildResult {
-            val sparqlResult = sparqlClient.execute(query)
+            val sparqlResult = sparqlClient.execute(query, maxListSize)
             val refs = sparqlResult.refs
             if (refs.isEmpty()) return ListBuildResult(emptyList(), hadFetchError = sparqlResult.hadError)
 

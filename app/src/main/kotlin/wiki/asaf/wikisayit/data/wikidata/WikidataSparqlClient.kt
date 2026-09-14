@@ -7,11 +7,32 @@ import io.ktor.client.statement.bodyAsText
 import io.ktor.http.isSuccess
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import wiki.asaf.wikisayit.data.local.settings.DEFAULT_MAX_LIST_SIZE
 import wiki.asaf.wikisayit.ui.session.EntryKind
 import javax.inject.Inject
 
 private const val SPARQL_ENDPOINT = "https://query.wikidata.org/sparql"
 private const val ENTITY_URI_PREFIX = "http://www.wikidata.org/entity/"
+
+/** Matches a top-level `LIMIT nnnn` clause, case-insensitively. */
+private val LIMIT_CLAUSE_REGEX = Regex("""(?i)\bLIMIT\s+(\d+)\b""")
+
+/**
+ * Enforces [maxListSize] on a user-supplied SPARQL query, per the s-53x spec: an existing `LIMIT`
+ * larger than [maxListSize] is lowered to match, a smaller one is left alone (it already trumps
+ * the config), and a query with no `LIMIT` at all gets one appended — both to save response size
+ * and to keep list-sourcing bounded.
+ */
+internal fun applyMaxListSize(
+    query: String,
+    maxListSize: Int,
+): String {
+    val lastMatch = LIMIT_CLAUSE_REGEX.findAll(query).lastOrNull()
+    if (lastMatch == null) return "${query.trimEnd()}\nLIMIT $maxListSize"
+    val existingLimit = lastMatch.groupValues[1].toIntOrNull() ?: return query
+    if (existingLimit <= maxListSize) return query
+    return query.replaceRange(lastMatch.range, "LIMIT $maxListSize")
+}
 
 private val sparqlJson = Json { ignoreUnknownKeys = true }
 
@@ -42,12 +63,15 @@ class WikidataSparqlClient
     constructor(
         private val httpClient: HttpClient,
     ) {
-        suspend fun execute(query: String): SparqlQueryResult {
+        suspend fun execute(
+            query: String,
+            maxListSize: Int = DEFAULT_MAX_LIST_SIZE,
+        ): SparqlQueryResult {
             val result =
                 runCatching {
                     val response =
                         httpClient.get(SPARQL_ENDPOINT) {
-                            parameter("query", query)
+                            parameter("query", applyMaxListSize(query, maxListSize))
                             parameter("format", "json")
                         }
                     if (!response.status.isSuccess()) return@runCatching null
