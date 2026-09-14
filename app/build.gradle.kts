@@ -49,12 +49,12 @@ val supportedInterfaceLanguages: List<String> =
 
 android {
     namespace = "wiki.asaf.wikisayit"
-    compileSdk = 34
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "wiki.asaf.wikisayit"
         minSdk = 26
-        targetSdk = 34
+        targetSdk = 36
         versionCode = 1
         versionName = appVersionName
 
