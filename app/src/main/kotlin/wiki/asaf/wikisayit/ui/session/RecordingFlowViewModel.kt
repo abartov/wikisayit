@@ -23,12 +23,14 @@ import wiki.asaf.wikisayit.data.stats.StatsRepository
 import wiki.asaf.wikisayit.data.uploads.PendingUploadItem
 import wiki.asaf.wikisayit.data.uploads.PendingUploadRepository
 import wiki.asaf.wikisayit.data.uploads.PendingUploadResumer
+import wiki.asaf.wikisayit.data.wikidata.CannedSparqlQuery
 import wiki.asaf.wikisayit.data.wikidata.P443StatementWriter
 import wiki.asaf.wikisayit.data.wikidata.WbEntityType
 import wiki.asaf.wikisayit.data.wikidata.WbSearchResult
 import wiki.asaf.wikisayit.data.wikidata.WikidataExistenceChecker
 import wiki.asaf.wikisayit.data.wikidata.WikidataLabelMatcher
 import wiki.asaf.wikisayit.data.wikidata.WikidataQueryListBuilder
+import wiki.asaf.wikisayit.data.wikidata.buildQuery
 import wiki.asaf.wikisayit.data.wikipedia.WikipediaCategorySource
 import java.io.File
 import javax.inject.Inject
@@ -121,6 +123,13 @@ class RecordingFlowViewModel
 
         fun updateMatchAs(matchAs: MatchAs) {
             _uiState.update { it.copy(matchAs = matchAs) }
+        }
+
+        /** Fills the query text field with one of the prepackaged queries (s-xxb), scoped to the
+         * language already picked for this session — still editable before "Build the list". */
+        fun applyCannedQuery(query: CannedSparqlQuery) {
+            val isoCode = _uiState.value.language?.isoCode.orEmpty()
+            _uiState.update { it.copy(sourceText = query.buildQuery(isoCode)) }
         }
 
         fun updateCategoryDepth(depth: CategoryDepth) {

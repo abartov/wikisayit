@@ -1,8 +1,11 @@
 package wiki.asaf.wikisayit.ui.listsource
 
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -26,6 +29,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import wiki.asaf.wikisayit.R
+import wiki.asaf.wikisayit.data.wikidata.CannedSparqlQuery
 import wiki.asaf.wikisayit.ui.components.BlueprintBox
 import wiki.asaf.wikisayit.ui.components.WsGhostButton
 import wiki.asaf.wikisayit.ui.components.WsHairlineDivider
@@ -68,6 +72,7 @@ fun ListSourceScreen(
                 onTextChange = viewModel::updateSourceText,
                 onMatchAsChange = viewModel::updateMatchAs,
                 onDepthChange = viewModel::updateCategoryDepth,
+                onCannedQueryPick = viewModel::applyCannedQuery,
                 onBack = viewModel::backToSourcePick,
                 onBuildList = viewModel::buildList,
                 modifier = modifier,
@@ -198,6 +203,7 @@ private fun SourceFormContent(
     onTextChange: (String) -> Unit,
     onMatchAsChange: (MatchAs) -> Unit,
     onDepthChange: (CategoryDepth) -> Unit,
+    onCannedQueryPick: (CannedSparqlQuery) -> Unit,
     onBack: () -> Unit,
     onBuildList: () -> Unit,
     modifier: Modifier = Modifier,
@@ -238,6 +244,9 @@ private fun SourceFormContent(
                     .padding(horizontal = WikiSayItSpacing.screenHorizontal),
             verticalArrangement = Arrangement.spacedBy(WikiSayItSpacing.space4),
         ) {
+            if (sourceType == ListSourceType.QUERY) {
+                CannedQueryPicker(onPick = onCannedQueryPick)
+            }
             OutlinedTextField(
                 value = uiState.sourceText,
                 onValueChange = onTextChange,
@@ -308,6 +317,46 @@ private fun SourceFormContent(
             )
         }
     }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun CannedQueryPicker(onPick: (CannedSparqlQuery) -> Unit) {
+    Column {
+        Text(text = stringResource(R.string.canned_query_label), style = LocalWikiSayItTypography.current.caption)
+        FlowRow(
+            modifier = Modifier.padding(top = WikiSayItSpacing.space1),
+            horizontalArrangement = Arrangement.spacedBy(WikiSayItSpacing.space1),
+            verticalArrangement = Arrangement.spacedBy(WikiSayItSpacing.space1),
+        ) {
+            CannedQueryChip(CannedSparqlQuery.ALL_LEXEMES, stringResource(R.string.canned_query_all_lexemes), onPick)
+            CannedQueryChip(CannedSparqlQuery.NOUNS, stringResource(R.string.canned_query_nouns), onPick)
+            CannedQueryChip(CannedSparqlQuery.VERBS, stringResource(R.string.canned_query_verbs), onPick)
+            CannedQueryChip(CannedSparqlQuery.ADJECTIVES, stringResource(R.string.canned_query_adjectives), onPick)
+            CannedQueryChip(CannedSparqlQuery.ADVERBS, stringResource(R.string.canned_query_adverbs), onPick)
+            CannedQueryChip(CannedSparqlQuery.PHRASES, stringResource(R.string.canned_query_phrases), onPick)
+        }
+    }
+}
+
+@Composable
+private fun CannedQueryChip(
+    query: CannedSparqlQuery,
+    label: String,
+    onPick: (CannedSparqlQuery) -> Unit,
+) {
+    val colors = LocalWikiSayItColors.current
+    val typography = LocalWikiSayItTypography.current
+    Text(
+        text = label,
+        style = typography.caption,
+        color = colors.accent700,
+        modifier =
+            Modifier
+                .clickable(onClick = { onPick(query) })
+                .border(1.dp, colors.accent)
+                .padding(horizontal = 10.dp, vertical = 6.dp),
+    )
 }
 
 @Composable

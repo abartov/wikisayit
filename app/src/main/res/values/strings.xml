@@ -79,6 +79,13 @@
     <string name="form_title_category">Name the category</string>
     <string name="form_label_paste">One word, name or phrase per line</string>
     <string name="form_label_query">SPARQL returning ?item or ?lexeme</string>
+    <string name="canned_query_label">Or start from a prepackaged query</string>
+    <string name="canned_query_all_lexemes">All lexemes</string>
+    <string name="canned_query_nouns">Nouns</string>
+    <string name="canned_query_verbs">Verbs</string>
+    <string name="canned_query_adjectives">Adjectives</string>
+    <string name="canned_query_adverbs">Adverbs</string>
+    <string name="canned_query_phrases">Phrases</string>
     <string name="form_label_category">Category on %1$s.wikipedia.org</string>
     <string name="match_as_label">These lines should match</string>
     <string name="match_as_items">Wikidata items</string>
