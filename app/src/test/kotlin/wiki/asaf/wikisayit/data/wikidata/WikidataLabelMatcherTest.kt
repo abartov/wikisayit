@@ -54,14 +54,14 @@ class WikidataLabelMatcherTest {
         }
 
     @Test
-    fun `multiple hits are all returned`() =
+    fun `multiple hits in the recording language are all returned`() =
         runTest {
             val matcher =
                 matcherFor(
                     """
                     {"search":[
-                        {"id":"L8842","label":"kestrel","description":"small falcon"},
-                        {"id":"L44120","label":"Kestrel","description":"aircraft engine"}
+                        {"id":"L8842","label":"kestrel","description":"small falcon","match":{"language":"en"}},
+                        {"id":"L44120","label":"Kestrel","description":"aircraft engine","match":{"language":"en"}}
                     ]}
                     """.trimIndent(),
                 )
@@ -70,6 +70,25 @@ class WikidataLabelMatcherTest {
             assertEquals(2, result.candidates.size)
             assertTrue(result.candidates.any { it.id == "L8842" })
             assertTrue(result.candidates.any { it.id == "L44120" })
+            assertFalse(result.hadError)
+        }
+
+    @Test
+    fun `lexeme hits whose match language differs from the recording language are filtered out`() =
+        runTest {
+            val matcher =
+                matcherFor(
+                    """
+                    {"search":[
+                        {"id":"L708539","label":"мова","description":"ukrainian noun","match":{"language":"uk"}},
+                        {"id":"L128759","label":"мова","description":"russian noun","match":{"language":"ru"}}
+                    ]}
+                    """.trimIndent(),
+                )
+            val result = matcher.search("мова", WbEntityType.LEXEME, "uk")
+
+            assertEquals(1, result.candidates.size)
+            assertEquals("L708539", result.candidates[0].id)
             assertFalse(result.hadError)
         }
 

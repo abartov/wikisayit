@@ -49,6 +49,16 @@ class WikidataLabelMatcher
                         ),
                     ).search
                 }.getOrNull()
-            return LabelSearchResult(result ?: emptyList(), hadError = result == null)
+            val candidates = result ?: emptyList()
+            // wbsearchentities matches lexeme spelling across all languages regardless of the
+            // `language` param (e.g. Ukrainian and Russian both spell "мова" the same way), so
+            // lexeme hits need an explicit post-filter down to the recording language.
+            val filtered =
+                if (type == WbEntityType.LEXEME) {
+                    candidates.filter { it.match?.language == language }
+                } else {
+                    candidates
+                }
+            return LabelSearchResult(filtered, hadError = result == null)
         }
     }
