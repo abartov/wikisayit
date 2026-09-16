@@ -93,6 +93,10 @@ data class ListBuildResult(
 
 enum class RecordingPhase { READY, SPEAKING, SILENCE }
 
+/** Pre-roll shown once, when switching into recording mode ([RecordingFlowViewModel.startSession]),
+ * before the mic actually starts listening for the first word (s-yns). */
+enum class ReadySetGoPhase { READY, SET, GO }
+
 sealed interface RecordingBlocker {
     data object MicPermissionDenied : RecordingBlocker
 

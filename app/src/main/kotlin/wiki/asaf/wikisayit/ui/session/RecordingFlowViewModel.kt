@@ -39,6 +39,11 @@ import kotlin.math.max
 private const val TICK_MILLIS = 100L
 private const val REVIEW_DECISION_SECONDS = 1.5f
 
+/** "Ready" and "set" each hold for this long, and the mic starts listening the moment "go"
+ * appears; "go" then lingers this many milliseconds longer before the pre-roll clears (s-yns). */
+private const val READY_SET_GO_STEP_MILLIS = 900L
+private const val READY_SET_GO_LINGER_MILLIS = 200L
+
 /**
  * Drives the whole recording flow (Profile through Done) from one activity-scoped ViewModel.
  * All three list sources are real: a pasted list is matched against live Wikidata via
@@ -76,6 +81,7 @@ class RecordingFlowViewModel
 
         private var tickerJob: Job? = null
         private var replayJob: Job? = null
+        private var readySetGoJob: Job? = null
         private var manualStopSignal: MutableStateFlow<Boolean>? = null
 
         init {
@@ -369,6 +375,7 @@ class RecordingFlowViewModel
 
         fun startSession() {
             tickerJob?.cancel()
+            readySetGoJob?.cancel()
             _uiState.update {
                 it.copy(
                     recordingQueue = it.finalQueue,
@@ -377,9 +384,24 @@ class RecordingFlowViewModel
                     reviewSession = emptyList(),
                     redoQueue = emptyList(),
                     approved = emptyList(),
+                    readySetGoPhase = ReadySetGoPhase.READY,
                 )
             }
-            beginRecordingForCurrentEntry()
+            // Runs on its own job, distinct from [tickerJob], so that [beginRecordingForCurrentEntry]
+            // (called mid-sequence, once "go" appears) can freely cancel/reassign tickerJob without
+            // cancelling the coroutine it's called from.
+            readySetGoJob =
+                viewModelScope.launch {
+                    delay(READY_SET_GO_STEP_MILLIS)
+                    _uiState.update { it.copy(readySetGoPhase = ReadySetGoPhase.SET) }
+                    delay(READY_SET_GO_STEP_MILLIS)
+                    _uiState.update { it.copy(readySetGoPhase = ReadySetGoPhase.GO) }
+                    beginRecordingForCurrentEntry()
+                    delay(READY_SET_GO_LINGER_MILLIS)
+                    _uiState.update {
+                        if (it.readySetGoPhase == ReadySetGoPhase.GO) it.copy(readySetGoPhase = null) else it
+                    }
+                }
         }
 
         /** Starts recording the current queue entry the way [RecordingFlowUiState.manualMode]
@@ -568,6 +590,7 @@ class RecordingFlowViewModel
                         reviewSession = it.recordingQueue,
                         reviewIndex = 0,
                         redoQueue = emptyList(),
+                        reviewPassApprovedBaseline = it.approved.size,
                         autoNavigateTo = FlowScreen.REVIEW,
                     )
                 }
@@ -608,6 +631,7 @@ class RecordingFlowViewModel
             if (state.recordingIndex !in queue.indices) return
             queue.removeAt(state.recordingIndex)
             tickerJob?.cancel()
+            readySetGoJob?.cancel()
             if (state.rerecordIndex != null) {
                 // Skipping a rerecord-in-progress cancels it: the previously approved take is
                 // left untouched, so just return to the summary rather than the empty-queue
@@ -645,6 +669,7 @@ class RecordingFlowViewModel
                         reviewSession = queue,
                         reviewIndex = 0,
                         redoQueue = emptyList(),
+                        reviewPassApprovedBaseline = it.approved.size,
                         autoNavigateTo = FlowScreen.REVIEW,
                     )
                 }
@@ -657,6 +682,7 @@ class RecordingFlowViewModel
 
         fun stopSession() {
             tickerJob?.cancel()
+            readySetGoJob?.cancel()
             val state = _uiState.value
             if (state.rerecordIndex != null) {
                 // Stopping mid-rerecord cancels it, same as skipCurrentWord: nothing was
@@ -686,6 +712,7 @@ class RecordingFlowViewModel
                         reviewSession = done,
                         reviewIndex = 0,
                         redoQueue = emptyList(),
+                        reviewPassApprovedBaseline = it.approved.size,
                         autoNavigateTo = FlowScreen.REVIEW,
                     )
                 }
@@ -698,6 +725,7 @@ class RecordingFlowViewModel
          * summary (rerecording a single approved word), mirroring [skipCurrentWord]'s branching. */
         fun backToListSource() {
             tickerJob?.cancel()
+            readySetGoJob?.cancel()
             val state = _uiState.value
             if (state.rerecordIndex != null) {
                 _uiState.update {
@@ -794,6 +822,32 @@ class RecordingFlowViewModel
             return state.reviewSession.isNotEmpty() && state.reviewIndex >= state.reviewSession.size
         }
 
+        /** Back button on the review carousel (s-arr): undoes entry into this review pass rather
+         * than just popping the nav stack, which would otherwise land on a blank
+         * [wiki.asaf.wikisayit.ui.recording.RecordingScreen] — [RecordingFlowUiState.recordingIndex]
+         * is left one-past-the-end of [RecordingFlowUiState.recordingQueue] once every take in a
+         * pass has been committed to review (see [commitWord]/[skipCurrentWord]/[stopSession]), and
+         * this cancels the review loop's auto-advancing decision timer too. Any redo/drop/approve
+         * decisions already made this pass are rolled back: [RecordingFlowUiState.redoQueue] is
+         * always empty at pass start, and [RecordingFlowUiState.approved] is truncated back to
+         * [RecordingFlowUiState.reviewPassApprovedBaseline]. */
+        fun backToRecordingFromReview() {
+            tickerJob?.cancel()
+            _uiState.update {
+                it.copy(
+                    recordingIndex = (it.reviewSession.size - 1).coerceAtLeast(0),
+                    recordingPhase = RecordingPhase.READY,
+                    reviewSession = emptyList(),
+                    reviewIndex = 0,
+                    redoQueue = emptyList(),
+                    approved = it.approved.take(it.reviewPassApprovedBaseline),
+                    reviewPassApprovedBaseline = 0,
+                    autoNavigateTo = FlowScreen.RECORDING,
+                )
+            }
+            beginRecordingForCurrentEntry()
+        }
+
         /** Replays one recording on demand, independent of the auto-advancing review loop — e.g.
          * from a play icon next to a row in the approved list. */
         fun replayEntry(entry: QueueEntry) {
@@ -826,9 +880,22 @@ class RecordingFlowViewModel
 
         fun startOver() = resetFlow()
 
+        // --- top bar "reset session" (tapping the app name from any screen) ---
+
+        fun askResetSession() {
+            _uiState.update { it.copy(showResetSessionDialog = true) }
+        }
+
+        fun cancelResetSession() {
+            _uiState.update { it.copy(showResetSessionDialog = false) }
+        }
+
+        fun confirmResetSession() = resetFlow()
+
         private fun resetFlow() {
             tickerJob?.cancel()
             replayJob?.cancel()
+            readySetGoJob?.cancel()
             manualStopSignal = null
             val state = _uiState.value
             _uiState.value = RecordingFlowUiState(profiles = state.profiles, settings = state.settings)

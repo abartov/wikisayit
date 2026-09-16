@@ -6,8 +6,11 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -77,11 +80,33 @@ class MainActivity : ComponentActivity() {
                         onSettingsClick = { navController.navigate(WikiSayItRoute.Settings) },
                         onStatsClick = { navController.navigate(WikiSayItRoute.Stats) },
                         onAboutClick = { navController.navigate(WikiSayItRoute.About) },
+                        onTitleClick = sessionViewModel::askResetSession,
                     ) { contentModifier ->
                         WikiSayItNavHost(
                             navController = navController,
                             sessionViewModel = sessionViewModel,
                             modifier = contentModifier,
+                        )
+                    }
+
+                    if (uiState.showResetSessionDialog) {
+                        AlertDialog(
+                            onDismissRequest = sessionViewModel::cancelResetSession,
+                            title = { Text(stringResource(R.string.top_bar_reset_dialog_title)) },
+                            text = { Text(stringResource(R.string.top_bar_reset_dialog_body)) },
+                            confirmButton = {
+                                TextButton(onClick = {
+                                    sessionViewModel.confirmResetSession()
+                                    navController.navigate(WikiSayItRoute.Profile) {
+                                        popUpTo(WikiSayItRoute.Profile) { inclusive = true }
+                                    }
+                                }) { Text(stringResource(R.string.top_bar_reset_confirm)) }
+                            },
+                            dismissButton = {
+                                TextButton(onClick = sessionViewModel::cancelResetSession) {
+                                    Text(stringResource(R.string.top_bar_reset_cancel))
+                                }
+                            },
                         )
                     }
                 }

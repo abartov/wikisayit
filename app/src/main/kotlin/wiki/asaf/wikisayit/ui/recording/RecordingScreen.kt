@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -56,6 +57,7 @@ import wiki.asaf.wikisayit.ui.components.WsPrimaryButton
 import wiki.asaf.wikisayit.ui.components.WsSecondaryButton
 import wiki.asaf.wikisayit.ui.session.FlowScreen
 import wiki.asaf.wikisayit.ui.session.QueueEntry
+import wiki.asaf.wikisayit.ui.session.ReadySetGoPhase
 import wiki.asaf.wikisayit.ui.session.RecordingBlocker
 import wiki.asaf.wikisayit.ui.session.RecordingFlowViewModel
 import wiki.asaf.wikisayit.ui.session.RecordingPhase
@@ -128,6 +130,7 @@ fun RecordingScreen(
                     total = uiState.recordingQueue.size,
                     pass = uiState.recordingPass,
                     phase = uiState.recordingPhase,
+                    readySetGoPhase = uiState.readySetGoPhase,
                     silenceRemainingSeconds = uiState.silenceRemainingSeconds,
                     silenceThresholdSeconds = uiState.settings.silenceThresholdSeconds,
                     manualMode = uiState.manualMode,
@@ -154,6 +157,7 @@ private fun RecordingRingContent(
     total: Int,
     pass: Int,
     phase: RecordingPhase,
+    readySetGoPhase: ReadySetGoPhase?,
     silenceRemainingSeconds: Float,
     silenceThresholdSeconds: Float,
     manualMode: Boolean,
@@ -237,18 +241,22 @@ private fun RecordingRingContent(
                     modifier = Modifier.padding(top = WikiSayItSpacing.space3),
                 )
             }
-            MicRing(
-                isLive = phase != RecordingPhase.SILENCE,
-                isSpeaking = phase == RecordingPhase.SPEAKING,
-                modifier = Modifier.padding(top = WikiSayItSpacing.space6),
-            )
-            LevelBars(phase = phase, modifier = Modifier.padding(top = WikiSayItSpacing.space4))
-            Text(
-                text = stateText.uppercase(),
-                style = typography.stateLine,
-                color = if (phase == RecordingPhase.SPEAKING) colors.accent900 else colors.accent700,
-                modifier = Modifier.padding(top = WikiSayItSpacing.space3),
-            )
+            if (readySetGoPhase != null) {
+                ReadySetGoIndicator(phase = readySetGoPhase, modifier = Modifier.padding(top = WikiSayItSpacing.space6))
+            } else {
+                MicRing(
+                    isLive = phase != RecordingPhase.SILENCE,
+                    isSpeaking = phase == RecordingPhase.SPEAKING,
+                    modifier = Modifier.padding(top = WikiSayItSpacing.space6),
+                )
+                LevelBars(phase = phase, modifier = Modifier.padding(top = WikiSayItSpacing.space4))
+                Text(
+                    text = stateText.uppercase(),
+                    style = typography.stateLine,
+                    color = if (phase == RecordingPhase.SPEAKING) colors.accent900 else colors.accent700,
+                    modifier = Modifier.padding(top = WikiSayItSpacing.space3),
+                )
+            }
         }
         Column(
             modifier = Modifier.fillMaxWidth().padding(bottom = WikiSayItSpacing.space4),
@@ -327,6 +335,39 @@ private fun RecordingRingContent(
                 modifier = Modifier.fillMaxWidth(),
             )
         }
+    }
+}
+
+/** The once-per-session pre-roll played by [RecordingFlowViewModel.startSession] before the mic
+ * starts listening: a rectangle fills in from the center outward — bidirectionally, since the
+ * fill is centered within the track — as each word ("ready"/"set"/"go") takes its turn. Durations
+ * mirror `READY_SET_GO_STEP_MILLIS`/`READY_SET_GO_LINGER_MILLIS` in [RecordingFlowViewModel] so
+ * the fill finishes right as the label changes. */
+@Composable
+private fun ReadySetGoIndicator(
+    phase: ReadySetGoPhase,
+    modifier: Modifier = Modifier,
+) {
+    val colors = LocalWikiSayItColors.current
+    val typography = LocalWikiSayItTypography.current
+    val label =
+        when (phase) {
+            ReadySetGoPhase.READY -> stringResource(R.string.recording_countdown_ready)
+            ReadySetGoPhase.SET -> stringResource(R.string.recording_countdown_set)
+            ReadySetGoPhase.GO -> stringResource(R.string.recording_countdown_go)
+        }
+    val durationMillis = if (phase == ReadySetGoPhase.GO) 200 else 900
+    val fill = remember { androidx.compose.animation.core.Animatable(0f) }
+    LaunchedEffect(phase) {
+        fill.snapTo(0f)
+        fill.animateTo(1f, animationSpec = tween(durationMillis = durationMillis, easing = LinearEasing))
+    }
+    Box(
+        modifier = modifier.fillMaxWidth().height(132.dp).background(colors.neutral300),
+        contentAlignment = Alignment.Center,
+    ) {
+        Box(modifier = Modifier.fillMaxHeight().fillMaxWidth(fill.value).background(colors.accent))
+        Text(text = label.uppercase(), style = typography.displayWord, color = colors.onAccent)
     }
 }
 

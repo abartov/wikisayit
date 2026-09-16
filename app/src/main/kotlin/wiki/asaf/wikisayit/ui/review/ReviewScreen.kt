@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import wiki.asaf.wikisayit.R
 import wiki.asaf.wikisayit.ui.components.BlueprintBox
+import wiki.asaf.wikisayit.ui.components.WsGhostButton
 import wiki.asaf.wikisayit.ui.components.WsSecondaryButton
 import wiki.asaf.wikisayit.ui.session.FlowScreen
 import wiki.asaf.wikisayit.ui.session.QueueEntry
@@ -72,6 +73,7 @@ fun ReviewScreen(
         onRedo = viewModel::reviewRedo,
         onDrop = viewModel::reviewDrop,
         onReplay = { viewModel.replayEntry(entry) },
+        onBack = viewModel::backToRecordingFromReview,
         modifier = modifier,
     )
 }
@@ -88,6 +90,7 @@ private fun ReviewContent(
     onRedo: () -> Unit,
     onDrop: () -> Unit,
     onReplay: () -> Unit,
+    onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val colors = LocalWikiSayItColors.current
@@ -198,7 +201,7 @@ private fun ReviewContent(
             )
         }
         Row(
-            modifier = Modifier.fillMaxWidth().padding(bottom = 20.dp),
+            modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             WsSecondaryButton(
@@ -214,5 +217,10 @@ private fun ReviewContent(
                 minHeight = 52.dp,
             )
         }
+        WsGhostButton(
+            text = stringResource(R.string.action_back),
+            onClick = onBack,
+            modifier = Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 20.dp),
+        )
     }
 }

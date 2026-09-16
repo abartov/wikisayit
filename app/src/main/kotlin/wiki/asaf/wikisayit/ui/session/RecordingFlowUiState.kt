@@ -37,6 +37,9 @@ data class RecordingFlowUiState(
     val recordingIndex: Int = 0,
     val recordingPass: Int = 1,
     val recordingPhase: RecordingPhase = RecordingPhase.READY,
+    /** Non-null only during the once-per-session "ready, set, go" pre-roll played by
+     * [RecordingFlowViewModel.startSession] before the mic starts listening. */
+    val readySetGoPhase: ReadySetGoPhase? = null,
     val silenceRemainingSeconds: Float = 0f,
     val recordingBlocker: RecordingBlocker? = null,
     /** Manual record/stop/next control (s-3fe), useful in noisy environments where automatic
@@ -52,12 +55,20 @@ data class RecordingFlowUiState(
     val reviewDecisionRemainingSeconds: Float = 1.5f,
     val redoQueue: List<QueueEntry> = emptyList(),
     val approved: List<QueueEntry> = emptyList(),
+    /** [approved]'s length at the moment the current review pass began — lets
+     * [RecordingFlowViewModel.backToRecordingFromReview] truncate off only this pass's
+     * auto-approved entries, not ones carried over from an earlier pass. */
+    val reviewPassApprovedBaseline: Int = 0,
     /** Set while [wiki.asaf.wikisayit.ui.session.RecordingFlowViewModel.rerecordApprovedEntry] is
      * re-recording a single already-approved entry from the summary screen: the index into
      * [approved] that the finished take will replace. Recording a full new [approved] entry from
      * scratch never sets this. */
     val rerecordIndex: Int? = null,
     val showAbandonDialog: Boolean = false,
+    /** True while the "reset session?" confirmation triggered by tapping the top bar's app name
+     * ([wiki.asaf.wikisayit.ui.scaffold.WikiSayItAppScaffold]) is open. Distinct from
+     * [showAbandonDialog], which is scoped to the summary screen's approved-count-aware copy. */
+    val showResetSessionDialog: Boolean = false,
     /** Set while an on-demand replay ([wiki.asaf.wikisayit.ui.session.RecordingFlowViewModel.replayEntry])
      * is playing, so the triggering row can show it's active. */
     val replayingEntryId: String? = null,

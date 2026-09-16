@@ -48,6 +48,7 @@ fun WikiSayItAppScaffold(
     onSettingsClick: () -> Unit,
     onStatsClick: () -> Unit,
     onAboutClick: () -> Unit,
+    onTitleClick: () -> Unit,
     modifier: Modifier = Modifier,
     content: @Composable (Modifier) -> Unit,
 ) {
@@ -117,7 +118,15 @@ fun WikiSayItAppScaffold(
                                 contentDescription = stringResource(R.string.nav_menu_open),
                             )
                         }
-                        Text(text = stringResource(R.string.app_name), style = typography.cardTitle)
+                        Text(
+                            text = stringResource(R.string.app_name),
+                            style = typography.cardTitle,
+                            modifier =
+                                Modifier.clickable(
+                                    onClickLabel = stringResource(R.string.top_bar_reset_action),
+                                    onClick = onTitleClick,
+                                ),
+                        )
                         Spacer(modifier = Modifier.weight(1f))
                         Text(text = chipText, style = typography.evidence, color = colors.neutral700)
                         Spacer(modifier = Modifier.width(12.dp))
