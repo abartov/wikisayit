@@ -11,6 +11,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -22,8 +23,14 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
+import wiki.asaf.wikisayit.data.local.db.RecordingStatDao
+import wiki.asaf.wikisayit.data.local.settings.SettingsRepository
+import wiki.asaf.wikisayit.data.profile.ProfileRepository
 import wiki.asaf.wikisayit.network.oauth.OAuthConfig
 import wiki.asaf.wikisayit.network.oauth.OAuthLoginController
+import wiki.asaf.wikisayit.ui.debug.SCREENSHOT_TARGET_EXTRA
+import wiki.asaf.wikisayit.ui.debug.ScreenshotTarget
+import wiki.asaf.wikisayit.ui.debug.applyScreenshotTarget
 import wiki.asaf.wikisayit.ui.navigation.WikiSayItNavHost
 import wiki.asaf.wikisayit.ui.navigation.WikiSayItRoute
 import wiki.asaf.wikisayit.ui.scaffold.WikiSayItAppScaffold
@@ -35,6 +42,16 @@ import javax.inject.Inject
 class MainActivity : ComponentActivity() {
     @Inject
     lateinit var oAuthLoginController: OAuthLoginController
+
+    // Only ever read behind BuildConfig.DEBUG, by the screenshot harness below.
+    @Inject
+    lateinit var profileRepository: ProfileRepository
+
+    @Inject
+    lateinit var settingsRepository: SettingsRepository
+
+    @Inject
+    lateinit var recordingStatDao: RecordingStatDao
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -50,6 +67,24 @@ class MainActivity : ComponentActivity() {
                     val sessionViewModel: RecordingFlowViewModel = hiltViewModel()
                     val uiState by sessionViewModel.uiState.collectAsStateWithLifecycle()
                     val backStackEntry by navController.currentBackStackEntryAsState()
+
+                    if (BuildConfig.DEBUG) {
+                        LaunchedEffect(Unit) {
+                            val target =
+                                intent.getStringExtra(SCREENSHOT_TARGET_EXTRA)
+                                    ?.let { name -> runCatching { ScreenshotTarget.valueOf(name) }.getOrNull() }
+                                    ?: return@LaunchedEffect
+                            val route =
+                                applyScreenshotTarget(
+                                    target = target,
+                                    sessionViewModel = sessionViewModel,
+                                    profileRepository = profileRepository,
+                                    settingsRepository = settingsRepository,
+                                    recordingStatDao = recordingStatDao,
+                                )
+                            navController.navigate(route) { popUpTo(0) { inclusive = true } }
+                        }
+                    }
 
                     // The shared chrome (hamburger/wordmark/chip) is unconditional across the main
                     // flow in the design handoff; only Sign-in (no chrome) and New profile (its own

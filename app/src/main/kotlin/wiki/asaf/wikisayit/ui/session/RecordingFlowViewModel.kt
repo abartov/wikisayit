@@ -98,6 +98,16 @@ class RecordingFlowViewModel
             viewModelScope.launch { pendingUploadResumer.resumeAll() }
         }
 
+        /** Screenshot-only escape hatch (see [wiki.asaf.wikisayit.ui.debug.ScreenshotFixtures]):
+         * jumps straight to a fixture UI state instead of driving the real flow through it.
+         * Gated on [BuildConfig.DEBUG], a compile-time constant, so release builds keep the
+         * check but R8 dead-code-strips the call sites that would ever invoke it. */
+        fun debugApplyState(state: RecordingFlowUiState) {
+            if (wiki.asaf.wikisayit.BuildConfig.DEBUG) {
+                _uiState.value = state
+            }
+        }
+
         // --- profile / language ---
 
         fun selectProfile(profile: SpeakerProfileWithLanguages) {
