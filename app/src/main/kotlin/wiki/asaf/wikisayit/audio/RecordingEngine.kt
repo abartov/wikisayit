@@ -31,10 +31,20 @@ class RecordingEngine(
 
         data class Silence(val remainingSeconds: Float) : Event
 
+        /** Emitted once per take if [DIFFICULTY_WARNING_SECONDS] pass since speech onset with no
+         * trailing silence ever detected — ambient noise may be sitting above the stop threshold
+         * continuously, so auto-stop may never trigger. Recording keeps going; this only hints
+         * that manual mode might work better in this environment. */
+        data object DifficultyDetecting : Event
+
         data class Finished(val file: File, val durationSeconds: Float) : Event
 
         /** The cropped recording was shorter than [minDurationSeconds]; nothing was written. */
         data object TooShort : Event
+    }
+
+    private companion object {
+        const val DIFFICULTY_WARNING_SECONDS = 6f
     }
 
     /**
@@ -50,15 +60,29 @@ class RecordingEngine(
             val blocks = mutableListOf<ShortArray>()
             emit(Event.Listening)
 
+            var secondsSinceSpeechStarted = 0f
+            var sawSilenceProgress = false
+            var difficultyWarningEmitted = false
+
             audioSource.frames()
                 .transformWhile { frame ->
                     blocks.add(frame)
                     val frameDurationSeconds = frame.size.toFloat() / audioSource.sampleRate
                     when (val transition = detector.onFrame(frame, frameDurationSeconds, silenceThresholdSeconds)) {
                         SpeechTransition.StartedSpeaking, SpeechTransition.ResumedSpeaking -> emit(Event.Speaking)
-                        is SpeechTransition.SilenceProgress -> emit(Event.Silence(transition.remainingSeconds))
+                        is SpeechTransition.SilenceProgress -> {
+                            sawSilenceProgress = true
+                            emit(Event.Silence(transition.remainingSeconds))
+                        }
                         SpeechTransition.AutoStop -> return@transformWhile false
                         SpeechTransition.None -> Unit
+                    }
+                    if (detector.state != SpeechState.LISTENING && !sawSilenceProgress && !difficultyWarningEmitted) {
+                        secondsSinceSpeechStarted += frameDurationSeconds
+                        if (secondsSinceSpeechStarted >= DIFFICULTY_WARNING_SECONDS) {
+                            difficultyWarningEmitted = true
+                            emit(Event.DifficultyDetecting)
+                        }
                     }
                     true
                 }.collect { emit(it) }

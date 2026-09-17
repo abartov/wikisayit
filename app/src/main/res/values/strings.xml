@@ -153,6 +153,7 @@
     <string name="recording_hint_manual_idle">tap Record to start this word</string>
     <string name="recording_hint_manual_recording">tap Stop when you\'re done</string>
     <string name="recording_hint_manual_recorded">tap Next when ready, or Record to redo</string>
+    <string name="recording_difficulty_banner">Having difficulty detecting when to start/stop — maybe switch to manual mode?</string>
     <string name="action_redo">Redo</string>
     <string name="action_skip">Skip</string>
     <string name="action_stop_session">Stop the session</string>

@@ -41,6 +41,11 @@ data class RecordingFlowUiState(
      * [RecordingFlowViewModel.startSession] before the mic starts listening. */
     val readySetGoPhase: ReadySetGoPhase? = null,
     val silenceRemainingSeconds: Float = 0f,
+    /** True once [wiki.asaf.wikisayit.audio.RecordingEngine.Event.DifficultyDetecting] fires for
+     * the take in progress: six seconds of speech with no trailing silence ever detected, hinting
+     * that ambient noise may be preventing auto-stop from triggering. Cleared on the next take
+     * (or the next genuine silence) rather than left to fade on its own. */
+    val autoDetectionDifficulty: Boolean = false,
     val recordingBlocker: RecordingBlocker? = null,
     /** Manual record/stop/next control (s-3fe), useful in noisy environments where automatic
      * speech-onset/silence detection isn't reliable. */

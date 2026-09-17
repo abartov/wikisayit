@@ -102,6 +102,29 @@ class RecordingEngineTest {
         }
 
     @Test
+    fun `emits difficulty detecting once after six seconds of speech with no trailing silence`() =
+        runTest {
+            val encoder = RecordingAudioEncoder()
+            // 100Hz sample rate, 10 samples/frame => 0.1s per frame; 62 loud frames span 6.2s of
+            // continuous "speech" with no trailing silence anywhere in the script.
+            val noSilenceScript = listOf(frame(0f)) + List(61) { frame(0.5f) }
+            val engine =
+                RecordingEngine(
+                    audioSource = ScriptedAudioSource(sampleRate = 100, script = noSilenceScript),
+                    encoder = encoder,
+                    minDurationSeconds = 0.15f,
+                )
+            val output = File.createTempFile("recording-engine-difficulty-test", ".ogg")
+            output.deleteOnExit()
+
+            val events = engine.recordWord(output, silenceThresholdSeconds = 0.3f).toList()
+
+            assertEquals(1, events.count { it is RecordingEngine.Event.DifficultyDetecting })
+            assertTrue(events.none { it is RecordingEngine.Event.Silence })
+            assertTrue(events.last() is RecordingEngine.Event.Finished)
+        }
+
+    @Test
     fun `manual recording ignores speech-silence auto-stop and captures until the source completes`() =
         runTest {
             val encoder = RecordingAudioEncoder()

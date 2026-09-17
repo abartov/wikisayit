@@ -79,6 +79,30 @@ class SpeechEndpointDetectorTest {
     }
 
     @Test
+    fun `ambient noise floor raises the effective stop threshold so silence at that level still triggers auto-stop`() {
+        // Ambient noise sample: several LISTENING frames at 0.05 peak amplitude (above the
+        // static stop threshold of 0.04, but below the start threshold) establish a nonzero
+        // noise floor, simulating a room that is never truly silent.
+        repeat(10) {
+            val transition =
+                detector.onFrame(toneFrame(0.05f), frameDurationSeconds = 0.02f, silenceThresholdSeconds = 0.1f)
+            assertEquals(SpeechTransition.None, transition)
+        }
+        assertEquals(SpeechState.LISTENING, detector.state)
+
+        detector.onFrame(toneFrame(0.5f), frameDurationSeconds = 0.02f, silenceThresholdSeconds = 0.1f)
+        assertEquals(SpeechState.SPEAKING, detector.state)
+
+        // Returning to the same 0.05 ambient level that used to sit above the static stop
+        // threshold should now register as silence, since the effective threshold was raised
+        // above the measured noise floor.
+        val afterSpeech =
+            detector.onFrame(toneFrame(0.05f), frameDurationSeconds = 0.02f, silenceThresholdSeconds = 0.1f)
+        assertTrue(afterSpeech is SpeechTransition.SilenceProgress)
+        assertEquals(SpeechState.TRAILING_SILENCE, detector.state)
+    }
+
+    @Test
     fun `reset returns detector to listening state`() {
         detector.onFrame(toneFrame(0.5f), frameDurationSeconds = 0.02f, silenceThresholdSeconds = 1.5f)
         detector.reset()

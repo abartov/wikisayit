@@ -133,6 +133,7 @@ fun RecordingScreen(
                     readySetGoPhase = uiState.readySetGoPhase,
                     silenceRemainingSeconds = uiState.silenceRemainingSeconds,
                     silenceThresholdSeconds = uiState.settings.silenceThresholdSeconds,
+                    autoDetectionDifficulty = uiState.autoDetectionDifficulty,
                     manualMode = uiState.manualMode,
                     manualRecordingActive = uiState.manualRecordingActive,
                     onToggleManualMode = { viewModel.setManualMode(!uiState.manualMode) },
@@ -160,6 +161,7 @@ private fun RecordingRingContent(
     readySetGoPhase: ReadySetGoPhase?,
     silenceRemainingSeconds: Float,
     silenceThresholdSeconds: Float,
+    autoDetectionDifficulty: Boolean,
     manualMode: Boolean,
     manualRecordingActive: Boolean,
     onToggleManualMode: () -> Unit,
@@ -221,6 +223,22 @@ private fun RecordingRingContent(
                     .background(colors.neutral300),
         ) {
             Box(Modifier.fillMaxWidth(progress).height(3.dp).background(colors.accent))
+        }
+        if (autoDetectionDifficulty && !manualMode) {
+            Box(
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(top = WikiSayItSpacing.space2)
+                        .background(colors.accent100)
+                        .padding(10.dp),
+            ) {
+                Text(
+                    text = stringResource(R.string.recording_difficulty_banner),
+                    style = typography.secondary,
+                    color = colors.accent800,
+                )
+            }
         }
         Column(
             modifier = Modifier.weight(1f).fillMaxWidth(),

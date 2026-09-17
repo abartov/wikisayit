@@ -427,6 +427,7 @@ class RecordingFlowViewModel
                         recordingPhase = RecordingPhase.READY,
                         manualRecordingActive = false,
                         silenceRemainingSeconds = 0f,
+                        autoDetectionDifficulty = false,
                     )
                 }
             } else {
@@ -486,6 +487,7 @@ class RecordingFlowViewModel
                         RecordingEngine.Event.Speaking ->
                             _uiState.update { it.copy(recordingPhase = RecordingPhase.SPEAKING) }
                         is RecordingEngine.Event.Silence -> Unit
+                        RecordingEngine.Event.DifficultyDetecting -> Unit
                         is RecordingEngine.Event.Finished -> finished = event
                         RecordingEngine.Event.TooShort -> Unit
                     }
@@ -529,7 +531,9 @@ class RecordingFlowViewModel
                 recordingEngine.recordWord(outputFile, silenceThresholdSeconds).collect { event ->
                     when (event) {
                         RecordingEngine.Event.Listening ->
-                            _uiState.update { it.copy(recordingPhase = RecordingPhase.READY) }
+                            _uiState.update {
+                                it.copy(recordingPhase = RecordingPhase.READY, autoDetectionDifficulty = false)
+                            }
                         RecordingEngine.Event.Speaking ->
                             _uiState.update { it.copy(recordingPhase = RecordingPhase.SPEAKING) }
                         is RecordingEngine.Event.Silence ->
@@ -537,8 +541,11 @@ class RecordingFlowViewModel
                                 it.copy(
                                     recordingPhase = RecordingPhase.SILENCE,
                                     silenceRemainingSeconds = event.remainingSeconds,
+                                    autoDetectionDifficulty = false,
                                 )
                             }
+                        RecordingEngine.Event.DifficultyDetecting ->
+                            _uiState.update { it.copy(autoDetectionDifficulty = true) }
                         is RecordingEngine.Event.Finished -> finished = event
                         RecordingEngine.Event.TooShort -> Unit
                     }
