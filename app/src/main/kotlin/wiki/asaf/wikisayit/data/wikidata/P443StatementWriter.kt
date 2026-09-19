@@ -3,6 +3,7 @@ package wiki.asaf.wikisayit.data.wikidata
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import wiki.asaf.wikisayit.BuildConfig
 import wiki.asaf.wikisayit.network.ActionApiError
 import wiki.asaf.wikisayit.network.MediaWikiApiException
 import wiki.asaf.wikisayit.network.WikimediaClients
@@ -55,7 +56,7 @@ class P443StatementWriter
                         "snaktype" to "value",
                         "value" to Json.encodeToString(commonsFilename),
                         "token" to csrfToken,
-                        "summary" to "Added pronunciation recorded via WikiSayIt",
+                        "summary" to "Added pronunciation recorded via WikiSayIt ${BuildConfig.VERSION_NAME}",
                     ),
                 )
             if (response.success != 1) {
@@ -88,7 +89,7 @@ class P443StatementWriter
                         "snaktype" to "value",
                         "value" to Json.encodeToString(value),
                         "token" to csrfToken,
-                        "summary" to "Added qualifier via WikiSayIt",
+                        "summary" to "Added qualifier via WikiSayIt ${BuildConfig.VERSION_NAME}",
                     ),
                 )
             if (response.success != 1) {

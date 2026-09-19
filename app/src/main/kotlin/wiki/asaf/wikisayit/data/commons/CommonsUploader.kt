@@ -1,6 +1,7 @@
 package wiki.asaf.wikisayit.data.commons
 
 import io.ktor.http.ContentType
+import wiki.asaf.wikisayit.BuildConfig
 import wiki.asaf.wikisayit.network.MediaWikiApiException
 import wiki.asaf.wikisayit.network.WikimediaClients
 import wiki.asaf.wikisayit.ui.session.QueueEntry
@@ -39,7 +40,7 @@ class CommonsUploader
                             "action" to "upload",
                             "filename" to filename,
                             "text" to buildUploadWikitext(entry, isoCode, username, speakerName, dialect, clock),
-                            "comment" to "Uploaded via WikiSayIt",
+                            "comment" to "Uploaded via WikiSayIt ${BuildConfig.VERSION_NAME}",
                             "token" to csrfToken,
                         ),
                     fileFieldName = "file",
