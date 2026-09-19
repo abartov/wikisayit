@@ -31,10 +31,12 @@ class RecordingEngine(
 
         data class Silence(val remainingSeconds: Float) : Event
 
-        /** Emitted once per take if [DIFFICULTY_WARNING_SECONDS] pass since speech onset with no
-         * trailing silence ever detected — ambient noise may be sitting above the stop threshold
-         * continuously, so auto-stop may never trigger. Recording keeps going; this only hints
-         * that manual mode might work better in this environment. */
+        /** Emitted once per take when automatic endpointing looks like it isn't going to work in
+         * this environment, either because [DIFFICULTY_WARNING_SECONDS] passed since speech onset
+         * with no trailing silence ever detected (ambient noise sitting above the stop threshold,
+         * so auto-stop may never trigger), or because that long passed with audible energy that
+         * never confirmed as speech (so the take is stuck listening and will never start).
+         * Recording keeps going; this only hints that manual mode might work better here. */
         data object DifficultyDetecting : Event
 
         data class Finished(val file: File, val durationSeconds: Float) : Event
@@ -45,6 +47,25 @@ class RecordingEngine(
 
     private companion object {
         const val DIFFICULTY_WARNING_SECONDS = 6f
+
+        /** How much near-threshold-but-unconfirmed audio has to accumulate before a take that is
+         * still listening counts as struggling rather than as a user who simply hasn't spoken yet
+         * — a silent room should never raise the hint. */
+        const val UNCONFIRMED_ENERGY_WARNING_SECONDS = 0.5f
+
+        /** The adaptive crop threshold is never allowed above this fraction of the take's own peak,
+         * so a take quiet enough to sit near the noise floor is still cropped rather than erased
+         * (an over-eager threshold trims every sample and the take is reported [Event.TooShort]). */
+        const val MAX_CROP_FRACTION_OF_PEAK = 0.2f
+
+        /** Headroom over the measured ambient peak for the adaptive crop threshold. */
+        const val CROP_NOISE_FLOOR_MARGIN = 1.5f
+
+        /** How far a take's peak must stand out from the ambient noise before the crop threshold
+         * is relaxed on its behalf. Below this the take is indistinguishable from the room — a
+         * rustle or a knock rather than a quiet word — and cropping it away to [Event.TooShort]
+         * (so the word is simply re-recorded) beats handing the user a take of nothing. */
+        const val CROP_RELAXATION_MIN_SIGNAL = 3f
     }
 
     /**
@@ -61,6 +82,7 @@ class RecordingEngine(
             emit(Event.Listening)
 
             var secondsSinceSpeechStarted = 0f
+            var listeningSeconds = 0f
             var sawSilenceProgress = false
             var difficultyWarningEmitted = false
 
@@ -77,9 +99,19 @@ class RecordingEngine(
                         SpeechTransition.AutoStop -> return@transformWhile false
                         SpeechTransition.None -> Unit
                     }
-                    if (detector.state != SpeechState.LISTENING && !sawSilenceProgress && !difficultyWarningEmitted) {
-                        secondsSinceSpeechStarted += frameDurationSeconds
-                        if (secondsSinceSpeechStarted >= DIFFICULTY_WARNING_SECONDS) {
+                    if (!difficultyWarningEmitted) {
+                        val struggling =
+                            if (detector.state == SpeechState.LISTENING) {
+                                listeningSeconds += frameDurationSeconds
+                                listeningSeconds >= DIFFICULTY_WARNING_SECONDS &&
+                                    detector.unconfirmedEnergySeconds >= UNCONFIRMED_ENERGY_WARNING_SECONDS
+                            } else if (!sawSilenceProgress) {
+                                secondsSinceSpeechStarted += frameDurationSeconds
+                                secondsSinceSpeechStarted >= DIFFICULTY_WARNING_SECONDS
+                            } else {
+                                false
+                            }
+                        if (struggling) {
                             difficultyWarningEmitted = true
                             emit(Event.DifficultyDetecting)
                         }
@@ -87,7 +119,7 @@ class RecordingEngine(
                     true
                 }.collect { emit(it) }
 
-            finish(blocks, outputFile)
+            finish(blocks, outputFile, detector.noiseFloorPeak)
         }
 
     /**
@@ -118,8 +150,10 @@ class RecordingEngine(
     private suspend fun FlowCollector<Event>.finish(
         blocks: List<ShortArray>,
         outputFile: File,
+        noiseFloorPeak: Float = 0f,
     ) {
-        val cropped = cropSilence(flattenBlocks(blocks), cropThreshold)
+        val samples = flattenBlocks(blocks)
+        val cropped = cropSilence(samples, effectiveCropThreshold(samples, noiseFloorPeak))
         if (cropped.size < (minDurationSeconds * audioSource.sampleRate).toInt()) {
             emit(Event.TooShort)
             return
@@ -128,6 +162,24 @@ class RecordingEngine(
         val padded = addPadding(cropped, audioSource.sampleRate, paddingSeconds)
         encoder.encode(padded, audioSource.sampleRate, outputFile)
         emit(Event.Finished(outputFile, cropped.size.toFloat() / audioSource.sampleRate))
+    }
+
+    /**
+     * Crop threshold for one finished take: [cropThreshold] raised to clear the ambient noise the
+     * detector measured (cropping at a level the room never goes below leaves the take untrimmed),
+     * then held under a fraction of the take's own peak. That cap matters now that speech onset is
+     * detected well below the static threshold: without it a quiet take recorded in a quiet room
+     * — peak below [cropThreshold] — would be cropped away entirely and reported [Event.TooShort].
+     */
+    private fun effectiveCropThreshold(
+        samples: ShortArray,
+        noiseFloorPeak: Float,
+    ): Float {
+        val takePeak = frameLevel(samples).peak
+        if (takePeak <= 0f) return cropThreshold
+        val floorBased = maxOf(cropThreshold, noiseFloorPeak * CROP_NOISE_FLOOR_MARGIN)
+        if (takePeak < noiseFloorPeak * CROP_RELAXATION_MIN_SIGNAL) return floorBased
+        return floorBased.coerceAtMost(takePeak * MAX_CROP_FRACTION_OF_PEAK)
     }
 
     private fun flattenBlocks(blocks: List<ShortArray>): ShortArray {

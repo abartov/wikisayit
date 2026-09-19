@@ -125,6 +125,73 @@ class RecordingEngineTest {
         }
 
     @Test
+    fun `emits difficulty detecting when a take sits listening through audible near-threshold energy`() =
+        runTest {
+            val encoder = RecordingAudioEncoder()
+            // A room at 0.008, then audio at 0.02 — above the noise floor, audible, but not the
+            // 3.5x over it that confirms speech. This is the residual case where the app shows
+            // "listening" indefinitely, and the one the manual-mode hint exists for.
+            val stuckListeningScript = List(5) { frame(0.008f) } + List(60) { frame(0.02f) }
+            val engine =
+                RecordingEngine(
+                    audioSource = ScriptedAudioSource(sampleRate = 100, script = stuckListeningScript),
+                    encoder = encoder,
+                    minDurationSeconds = 0.15f,
+                )
+            val output = File.createTempFile("recording-engine-stuck-listening-test", ".ogg")
+            output.deleteOnExit()
+
+            val events = engine.recordWord(output, silenceThresholdSeconds = 0.3f).toList()
+
+            assertEquals(1, events.count { it is RecordingEngine.Event.DifficultyDetecting })
+            assertTrue(events.none { it is RecordingEngine.Event.Speaking })
+        }
+
+    @Test
+    fun `stays quiet about a take that is simply silent`() =
+        runTest {
+            val encoder = RecordingAudioEncoder()
+            val engine =
+                RecordingEngine(
+                    audioSource = ScriptedAudioSource(sampleRate = 100, script = List(120) { frame(0f) }),
+                    encoder = encoder,
+                    minDurationSeconds = 0.15f,
+                )
+            val output = File.createTempFile("recording-engine-silent-test", ".ogg")
+            output.deleteOnExit()
+
+            val events = engine.recordWord(output, silenceThresholdSeconds = 0.3f).toList()
+
+            assertTrue(events.none { it is RecordingEngine.Event.DifficultyDetecting })
+        }
+
+    @Test
+    fun `a quiet take is cropped against its own peak rather than erased`() =
+        runTest {
+            val encoder = RecordingAudioEncoder()
+            // Speech below the static crop threshold of 0.04: cropping at a fixed threshold would
+            // trim every sample and report the take too short.
+            val quietScript =
+                listOf(frame(0f)) + List(3) { frame(0.03f) } + List(3) { frame(0f) }
+            val engine =
+                RecordingEngine(
+                    audioSource = ScriptedAudioSource(sampleRate = 100, script = quietScript),
+                    encoder = encoder,
+                    minDurationSeconds = 0.15f,
+                )
+            val output = File.createTempFile("recording-engine-quiet-test", ".ogg")
+            output.deleteOnExit()
+
+            val events = engine.recordWord(output, silenceThresholdSeconds = 0.3f).toList()
+
+            assertTrue(events.contains(RecordingEngine.Event.Speaking))
+            val finished = events.last()
+            assertTrue(finished is RecordingEngine.Event.Finished)
+            finished as RecordingEngine.Event.Finished
+            assertEquals(0.3f, finished.durationSeconds, 0.001f)
+        }
+
+    @Test
     fun `manual recording ignores speech-silence auto-stop and captures until the source completes`() =
         runTest {
             val encoder = RecordingAudioEncoder()
