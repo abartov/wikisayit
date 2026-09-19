@@ -1,6 +1,7 @@
 package wiki.asaf.wikisayit.ui.profile
 
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -12,7 +13,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -72,6 +75,10 @@ fun ProfileScreen(
             onProfileSelected()
         },
         onNewProfile = onNewProfile,
+        pendingDeleteProfileId = uiState.pendingDeleteProfileId,
+        onDeleteRequest = { profile -> viewModel.askDeleteProfile(profile.profile.id) },
+        onCancelDelete = viewModel::cancelDeleteProfile,
+        onConfirmDelete = viewModel::confirmDeleteProfile,
         modifier = modifier,
     )
 }
@@ -82,6 +89,10 @@ private fun ProfileScreenContent(
     recordingCountFor: (Long) -> Flow<Int>,
     onPick: (SpeakerProfileWithLanguages) -> Unit,
     onNewProfile: () -> Unit,
+    pendingDeleteProfileId: Long? = null,
+    onDeleteRequest: (SpeakerProfileWithLanguages) -> Unit = {},
+    onCancelDelete: () -> Unit = {},
+    onConfirmDelete: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     val typography = LocalWikiSayItTypography.current
@@ -113,6 +124,7 @@ private fun ProfileScreenContent(
                     profile = profile,
                     recordingsFlow = recordingCountFor(profile.profile.id),
                     onClick = { onPick(profile) },
+                    onLongClick = { onDeleteRequest(profile) },
                 )
             }
             item {
@@ -131,14 +143,37 @@ private fun ProfileScreenContent(
             modifier = Modifier.padding(WikiSayItSpacing.screenHorizontal),
         )
     }
+
+    val pendingDelete = profiles.firstOrNull { it.profile.id == pendingDeleteProfileId }
+    if (pendingDelete != null) {
+        AlertDialog(
+            onDismissRequest = onCancelDelete,
+            title = { Text(stringResource(R.string.profile_delete_dialog_title)) },
+            text = {
+                Text(
+                    stringResource(
+                        R.string.profile_delete_dialog_body,
+                        pendingDelete.profile.speakerName.ifBlank { pendingDelete.profile.wikimediaUsername },
+                    ),
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = onConfirmDelete) { Text(stringResource(R.string.profile_delete_confirm)) }
+            },
+            dismissButton = {
+                TextButton(onClick = onCancelDelete) { Text(stringResource(R.string.profile_delete_cancel)) }
+            },
+        )
+    }
 }
 
-@OptIn(ExperimentalLayoutApi::class)
+@OptIn(ExperimentalLayoutApi::class, ExperimentalFoundationApi::class)
 @Composable
 private fun ProfileCard(
     profile: SpeakerProfileWithLanguages,
     recordingsFlow: Flow<Int>,
     onClick: () -> Unit,
+    onLongClick: () -> Unit,
 ) {
     val typography = LocalWikiSayItTypography.current
     val colors = LocalWikiSayItColors.current
@@ -152,7 +187,7 @@ private fun ProfileCard(
         modifier =
             Modifier
                 .fillMaxWidth()
-                .clickable(onClick = onClick),
+                .combinedClickable(onClick = onClick, onLongClick = onLongClick),
     ) {
         Column(
             modifier = Modifier.fillMaxWidth().padding(WikiSayItSpacing.space3),
@@ -163,12 +198,20 @@ private fun ProfileCard(
                 horizontalArrangement = Arrangement.spacedBy(WikiSayItSpacing.space2),
             ) {
                 Text(text = profile.profile.wikimediaUsername, style = typography.cardTitle)
-                CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
+                if (profile.profile.speakerName.isNotBlank()) {
                     Text(
-                        text = stringResource(R.string.profile_home_wikis),
+                        text = profile.profile.speakerName,
                         style = typography.evidence,
                         color = colors.neutral600,
                     )
+                } else {
+                    CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
+                        Text(
+                            text = stringResource(R.string.profile_home_wikis),
+                            style = typography.evidence,
+                            color = colors.neutral600,
+                        )
+                    }
                 }
             }
             FlowRow(

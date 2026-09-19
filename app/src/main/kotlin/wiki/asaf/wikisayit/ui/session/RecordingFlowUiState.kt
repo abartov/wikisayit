@@ -12,6 +12,9 @@ data class RecordingFlowUiState(
     val profiles: List<SpeakerProfileWithLanguages> = emptyList(),
     val settings: AppSettings = AppSettings(),
     val activeProfile: SpeakerProfileWithLanguages? = null,
+    /** Set while the "delete this profile?" confirmation triggered by long-pressing a profile
+     * card on [wiki.asaf.wikisayit.ui.profile.ProfileScreen] is open. */
+    val pendingDeleteProfileId: Long? = null,
     val language: SelectedLanguage? = null,
     // --- list sourcing (step 3 of 4) ---
     val listSourceType: ListSourceType? = null,

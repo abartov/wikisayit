@@ -36,6 +36,10 @@
     <string name="profile_home_wikis">commons · wikidata</string>
     <string name="profile_new_button">+ New speaker profile</string>
     <string name="profile_footer_note">Choosing a profile signs you in to Commons and Wikidata with that account (OAuth). Recording without an account is not possible.</string>
+    <string name="profile_delete_dialog_title">Delete this profile?</string>
+    <string name="profile_delete_dialog_body">This removes %1$s and its languages from this device. Recordings already uploaded are not affected.</string>
+    <string name="profile_delete_confirm">Delete</string>
+    <string name="profile_delete_cancel">Cancel</string>
     <string name="proficiency_native">native</string>
     <string name="proficiency_proficient">proficient</string>
     <string name="proficiency_native_titlecase">Native</string>

@@ -121,6 +121,22 @@ class RecordingFlowViewModel
 
         fun recordingCountFor(profileId: Long) = statsRepository.observeRecordingCountForProfile(profileId)
 
+        fun askDeleteProfile(profileId: Long) {
+            _uiState.update { it.copy(pendingDeleteProfileId = profileId) }
+        }
+
+        fun cancelDeleteProfile() {
+            _uiState.update { it.copy(pendingDeleteProfileId = null) }
+        }
+
+        fun confirmDeleteProfile() {
+            val profile = _uiState.value.profiles.firstOrNull { it.profile.id == _uiState.value.pendingDeleteProfileId }
+            _uiState.update { it.copy(pendingDeleteProfileId = null) }
+            if (profile != null) {
+                viewModelScope.launch { profileRepository.deleteProfile(profile.profile) }
+            }
+        }
+
         // --- list sourcing ---
 
         fun selectSourceType(type: ListSourceType) {
