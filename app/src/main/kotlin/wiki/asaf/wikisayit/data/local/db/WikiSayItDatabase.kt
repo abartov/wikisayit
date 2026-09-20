@@ -27,8 +27,9 @@ class RecordingEnumConverters {
         ProfileLanguageEntity::class,
         RecordingStatEntity::class,
         PendingUploadEntity::class,
+        SkippedEntryEntity::class,
     ],
-    version = 4,
+    version = 5,
     exportSchema = false,
 )
 @TypeConverters(RecordingEnumConverters::class)
@@ -38,6 +39,8 @@ abstract class WikiSayItDatabase : RoomDatabase() {
     abstract fun recordingStatDao(): RecordingStatDao
 
     abstract fun pendingUploadDao(): PendingUploadDao
+
+    abstract fun skippedEntryDao(): SkippedEntryDao
 
     companion object {
         const val DATABASE_NAME = "wikisayit.db"
@@ -80,6 +83,20 @@ abstract class WikiSayItDatabase : RoomDatabase() {
             object : Migration(3, 4) {
                 override fun migrate(db: SupportSQLiteDatabase) {
                     db.execSQL("ALTER TABLE pending_uploads ADD COLUMN dialect TEXT NOT NULL DEFAULT ''")
+                }
+            }
+
+        val MIGRATION_4_5 =
+            object : Migration(4, 5) {
+                override fun migrate(db: SupportSQLiteDatabase) {
+                    db.execSQL(
+                        """
+                        CREATE TABLE IF NOT EXISTS `skipped_entries` (
+                        `entity_id` TEXT PRIMARY KEY NOT NULL,
+                        `label` TEXT NOT NULL,
+                        `skipped_at_millis` INTEGER NOT NULL)
+                        """.trimIndent(),
+                    )
                 }
             }
     }

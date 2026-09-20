@@ -14,6 +14,7 @@ import wiki.asaf.wikisayit.ui.session.ListBuildResult
 import wiki.asaf.wikisayit.ui.session.QueueEntry
 import javax.inject.Inject
 import kotlin.math.min
+import kotlin.random.Random
 
 private const val MAIN_NAMESPACE = 0
 private const val CATEGORY_NAMESPACE = 14
@@ -26,6 +27,13 @@ private const val PAGEPROPS_BATCH_SIZE = 50
  * spec, just a ceiling so a bad category name can't hang the list-build step. */
 private const val MAX_PAGES = 2000
 private const val MAX_CONTINUATIONS_PER_CATEGORY = 4
+
+/** How many candidate pages to collect for every one the list will actually hold, before the
+ * pool is shuffled and sampled (s-fi0.2). Collecting more than the list needs is what makes
+ * repeat builds of the same category differ — and what leaves a caller-side [filter] spare
+ * candidates to draw on when it drops entries. Members arrive 500 at a time, so a deeper pool
+ * usually costs no extra `categorymembers` requests at all. */
+private const val CANDIDATE_POOL_FACTOR = 5
 
 private val CategoryDepth.maxSubcategoryLevels: Int
     get() =
@@ -42,35 +50,49 @@ private val CategoryDepth.maxSubcategoryLevels: Int
  * (a category already visited, however it was reached, is never re-queued). Each member page is
  * then resolved to its connected Wikidata item via `pageprops`; pages with no linked item are
  * dropped, since there is no id left to record a pronunciation against.
+ *
+ * The pages found are shuffled before the list is cut down to `maxListSize`, so building a list
+ * from the same category twice doesn't serve up the same words the speaker already chose to skip
+ * (s-fi0.2).
  */
 class WikipediaCategorySource
     @Inject
     constructor(
         private val httpClient: HttpClient,
     ) {
+        /**
+         * @param filter applied to each freshly resolved batch of candidates, letting the caller
+         *   drop entries (already recorded, previously skipped) while there are still unresolved
+         *   pages left to replace them with. Whatever it returns is appended to the list.
+         * @param random seam for tests; production callers take the default source of randomness.
+         */
         suspend fun build(
             categoryName: String,
             languageCode: String,
             depth: CategoryDepth,
             maxListSize: Int = DEFAULT_MAX_LIST_SIZE,
+            random: Random = Random.Default,
+            filter: suspend (List<QueueEntry>) -> List<QueueEntry> = { it },
         ): ListBuildResult {
             val apiBaseUrl = "https://${languageCode.ifBlank { "en" }}.wikipedia.org/w/api.php"
+            val poolSize = min(maxListSize.toLong() * CANDIDATE_POOL_FACTOR, MAX_PAGES.toLong()).toInt()
             val (titles, traverseHadError) =
-                traverse(normalizeCategoryTitle(categoryName), depth.maxSubcategoryLevels, apiBaseUrl, maxListSize)
-            val (entries, resolveHadError) = resolveToQueueEntries(titles.take(maxListSize), apiBaseUrl)
+                traverse(normalizeCategoryTitle(categoryName), depth.maxSubcategoryLevels, apiBaseUrl, poolSize)
+            val (entries, resolveHadError) =
+                resolveToQueueEntries(titles.shuffled(random), apiBaseUrl, maxListSize, filter)
             return ListBuildResult(entries, hadFetchError = traverseHadError || resolveHadError)
         }
 
         /** @return (collected page titles, whether any `categorymembers` request failed). Stops
-         * once [maxListSize] pages are collected (s-53x), still bounded by [MAX_PAGES] as an
-         * absolute ceiling regardless of how large [maxListSize] is configured. */
+         * once [poolSize] pages are collected, itself derived from the configured list cap
+         * (s-53x) and bounded by [MAX_PAGES] as an absolute ceiling. */
         private suspend fun traverse(
             rootTitle: String,
             maxLevels: Int,
             apiBaseUrl: String,
-            maxListSize: Int,
+            poolSize: Int,
         ): Pair<List<String>, Boolean> {
-            val effectiveCap = min(maxListSize, MAX_PAGES)
+            val effectiveCap = min(poolSize, MAX_PAGES)
             val visitedCategories = mutableSetOf<String>()
             val pageTitles = LinkedHashSet<String>()
             val queue = ArrayDeque<Pair<String, Int>>()
@@ -129,15 +151,24 @@ class WikipediaCategorySource
             return Triple(pages, subcats, hadError)
         }
 
-        /** @return (resolved entries, whether a `pageprops` request failed). */
+        /** Resolves [titles] to queue entries a batch at a time, running each batch past [filter]
+         * and stopping as soon as [maxListSize] survivors are in hand — so a filter that drops a
+         * lot of candidates reaches deeper into the pool, while one that drops none costs exactly
+         * as many `pageprops` requests as before.
+         *
+         * @return (resolved entries, whether a `pageprops` request failed).
+         */
         private suspend fun resolveToQueueEntries(
             titles: List<String>,
             apiBaseUrl: String,
+            maxListSize: Int,
+            filter: suspend (List<QueueEntry>) -> List<QueueEntry>,
         ): Pair<List<QueueEntry>, Boolean> {
             if (titles.isEmpty()) return emptyList<QueueEntry>() to false
             val entries = mutableListOf<QueueEntry>()
             var hadError = false
             for (batch in titles.chunked(PAGEPROPS_BATCH_SIZE)) {
+                if (entries.size >= maxListSize) break
                 val response =
                     runCatching {
                         httpClient
@@ -150,15 +181,14 @@ class WikipediaCategorySource
                             }.body<WikiPagePropsResponse>()
                     }.getOrNull()
                 if (response == null) hadError = true
-                response?.query?.pages?.values?.forEach { page ->
-                    val qid = page.pageprops.wikibaseItem
-                    if (qid != null) {
-                        entries +=
-                            QueueEntry(label = page.title, kind = EntryKind.ITEM, detail = "Wikidata item", qid = qid)
+                val resolved =
+                    response?.query?.pages?.values.orEmpty().mapNotNull { page ->
+                        val qid = page.pageprops.wikibaseItem ?: return@mapNotNull null
+                        QueueEntry(label = page.title, kind = EntryKind.ITEM, detail = "Wikidata item", qid = qid)
                     }
-                }
+                if (resolved.isNotEmpty()) entries += filter(resolved)
             }
-            return entries to hadError
+            return entries.take(maxListSize) to hadError
         }
     }
 

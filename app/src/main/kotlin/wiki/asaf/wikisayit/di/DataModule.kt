@@ -14,11 +14,14 @@ import dagger.hilt.components.SingletonComponent
 import wiki.asaf.wikisayit.data.local.db.PendingUploadDao
 import wiki.asaf.wikisayit.data.local.db.ProfileDao
 import wiki.asaf.wikisayit.data.local.db.RecordingStatDao
+import wiki.asaf.wikisayit.data.local.db.SkippedEntryDao
 import wiki.asaf.wikisayit.data.local.db.WikiSayItDatabase
 import wiki.asaf.wikisayit.data.local.settings.DataStoreSettingsRepository
 import wiki.asaf.wikisayit.data.local.settings.SettingsRepository
 import wiki.asaf.wikisayit.data.profile.ProfileRepository
 import wiki.asaf.wikisayit.data.profile.RoomProfileRepository
+import wiki.asaf.wikisayit.data.skipped.RoomSkippedEntryRepository
+import wiki.asaf.wikisayit.data.skipped.SkippedEntryRepository
 import wiki.asaf.wikisayit.data.stats.RoomStatsRepository
 import wiki.asaf.wikisayit.data.stats.StatsRepository
 import wiki.asaf.wikisayit.data.uploads.PendingUploadRepository
@@ -41,6 +44,7 @@ object DataModule {
                 WikiSayItDatabase.MIGRATION_1_2,
                 WikiSayItDatabase.MIGRATION_2_3,
                 WikiSayItDatabase.MIGRATION_3_4,
+                WikiSayItDatabase.MIGRATION_4_5,
             )
             .build()
 
@@ -52,6 +56,9 @@ object DataModule {
 
     @Provides
     fun providePendingUploadDao(database: WikiSayItDatabase): PendingUploadDao = database.pendingUploadDao()
+
+    @Provides
+    fun provideSkippedEntryDao(database: WikiSayItDatabase): SkippedEntryDao = database.skippedEntryDao()
 
     @Provides
     @Singleton
@@ -77,4 +84,7 @@ interface DataBindingsModule {
 
     @Binds
     fun bindPendingUploadRepository(impl: RoomPendingUploadRepository): PendingUploadRepository
+
+    @Binds
+    fun bindSkippedEntryRepository(impl: RoomSkippedEntryRepository): SkippedEntryRepository
 }

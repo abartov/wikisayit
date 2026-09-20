@@ -11,6 +11,7 @@ import kotlinx.coroutines.launch
 import wiki.asaf.wikisayit.data.auth.TokenStore
 import wiki.asaf.wikisayit.data.local.settings.AppSettings
 import wiki.asaf.wikisayit.data.local.settings.SettingsRepository
+import wiki.asaf.wikisayit.data.skipped.SkippedEntryRepository
 import javax.inject.Inject
 
 @HiltViewModel
@@ -18,10 +19,16 @@ class SettingsViewModel
     @Inject
     constructor(
         private val settingsRepository: SettingsRepository,
+        private val skippedEntryRepository: SkippedEntryRepository,
         private val tokenStore: TokenStore,
     ) : ViewModel() {
         val settings: StateFlow<AppSettings> =
             settingsRepository.settings.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), AppSettings())
+
+        /** How many entries the speaker has skipped and had remembered (s-fi0.2); drives the
+         * "forget them" action, which is only worth offering when there are some. */
+        val skippedEntryCount: StateFlow<Int> =
+            skippedEntryRepository.observeCount().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0)
 
         val signedInUsername: StateFlow<String?> =
             tokenStore.tokens.map { it?.username }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
@@ -49,5 +56,10 @@ class SettingsViewModel
 
         fun setMaxListSize(size: Int) {
             viewModelScope.launch { settingsRepository.setMaxListSize(size) }
+        }
+
+        /** Puts every skipped word back in circulation for future category list builds. */
+        fun forgetSkippedEntries() {
+            viewModelScope.launch { skippedEntryRepository.clear() }
         }
     }

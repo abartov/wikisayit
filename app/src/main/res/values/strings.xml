@@ -106,6 +106,8 @@
     <string name="depth_two">2</string>
     <string name="depth_five">5 (max)</string>
     <string name="depth_note">Loops are detected and skipped.</string>
+    <string name="include_recorded_label">Include items that have pronunciations?</string>
+    <string name="include_recorded_note">Leave this off to record only what is still missing: items that already carry a pronunciation (P443) are dropped while the list is built, and more category members are pulled in to take their place.</string>
     <string name="list_source_build_button">Build the list</string>
     <string name="resolving_title">Matching against Wikidata</string>
     <string name="resolving_explainer">Looking up each line before it joins the list.</string>
@@ -124,6 +126,8 @@
     <string name="list_blurb_category">From your chosen category.</string>
     <string name="worth_checking_kicker">Worth checking first</string>
     <string name="worth_checking_body">Wiki-Say-It exists to fill gaps, so it can drop every entry that already has a recording on Wikidata before you open your mouth.</string>
+    <string name="gaps_only_kicker">Gaps only</string>
+    <string name="gaps_only_body">Entries that already have a recording on Wikidata were left out while this list was built, so everything here still needs your voice.</string>
     <string name="checking_label">checking for existing audio…</string>
     <string name="check_button">Check for existing recordings</string>
     <string name="skip_check_button">Skip the check, use the list as-is</string>
@@ -133,6 +137,9 @@
     <string name="check_row_final">to record</string>
     <string name="start_button">START</string>
     <string name="empty_check_complete_kicker">Check complete</string>
+    <string name="empty_filtered_kicker">Nothing missing</string>
+    <string name="empty_filtered_title">Nothing here needs your voice</string>
+    <string name="empty_filtered_body">Every entry this category offered already carries a pronunciation (P443), or was one you skipped earlier. Try another category, a greater sub-category depth, or tick “Include items that have pronunciations?” to record second takes.</string>
     <string name="empty_body">Somebody got there first — every item and every lexeme form in this list already carries a pronunciation (P443). Nothing here needs your voice.</string>
     <string name="empty_where_gaps_kicker">where the gaps are</string>
     <string name="empty_where_gaps_body">Try a different word list, or search Wikidata directly for entries that are still missing audio.</string>
@@ -265,6 +272,8 @@
     <string name="settings_seconds_format">%.1f s</string>
     <string name="settings_max_list_size_label">Maximum list size</string>
     <string name="settings_max_list_size_note">Caps how many entries a SPARQL query or Wikipedia category can add to a list. Query LIMIT clauses larger than this are lowered to match; smaller ones are left alone.</string>
+    <string name="settings_skipped_label">Skipped words</string>
+    <string name="settings_skipped_note">Words you skip while recording are left out of lists built from a category afterwards. Forgetting them puts every one of them back in circulation.</string>
     <string name="settings_account_label">Account</string>
     <string name="settings_log_out_button">Log out of Wikimedia account %1$s</string>
     <string name="settings_back_to_session">Back to the session</string>
@@ -284,6 +293,11 @@
     <string name="about_credits_heading">Credits</string>
     <string name="about_closing_note">Recordings you contribute are released under CC0. The app itself carries no advertising and collects no analytics.</string>
 
+    <plurals name="settings_forget_skipped_button">
+        <item quantity="one">Forget the %1$d word I skipped</item>
+        <item quantity="other">Forget the %1$d words I skipped</item>
+    </plurals>
+
     <plurals name="interrupted_stop_review">
         <item quantity="one">Stop and review the %1$d take I have</item>
         <item quantity="other">Stop and review the %1$d takes I have</item>
@@ -292,6 +306,16 @@
     <plurals name="list_entries_found_count">
         <item quantity="one">%1$d entry found</item>
         <item quantity="other">%1$d entries found</item>
+    </plurals>
+
+    <plurals name="list_filtered_already_recorded">
+        <item quantity="one">Left out %1$d entry that already had a recording.</item>
+        <item quantity="other">Left out %1$d entries that already had a recording.</item>
+    </plurals>
+
+    <plurals name="list_filtered_previously_skipped">
+        <item quantity="one">Left out %1$d entry you skipped in an earlier session.</item>
+        <item quantity="other">Left out %1$d entries you skipped in earlier sessions.</item>
     </plurals>
 
     <plurals name="empty_title">

@@ -2,17 +2,10 @@ package wiki.asaf.wikisayit.ui.settings
 
 import android.app.Activity
 import androidx.appcompat.app.AppCompatDelegate
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -27,10 +20,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -41,6 +33,7 @@ import kotlinx.coroutines.launch
 import wiki.asaf.wikisayit.R
 import wiki.asaf.wikisayit.data.language.InterfaceLanguages
 import wiki.asaf.wikisayit.data.local.settings.AppSettings
+import wiki.asaf.wikisayit.ui.components.WsCheckboxRow
 import wiki.asaf.wikisayit.ui.components.WsSecondaryButton
 import wiki.asaf.wikisayit.ui.components.WsSegmentedControl
 import wiki.asaf.wikisayit.ui.theme.LocalWikiSayItColors
@@ -58,11 +51,14 @@ fun SettingsScreen(
 ) {
     val settings by viewModel.settings.collectAsStateWithLifecycle()
     val signedInUsername by viewModel.signedInUsername.collectAsStateWithLifecycle()
+    val skippedCount by viewModel.skippedEntryCount.collectAsStateWithLifecycle()
     val activity = LocalContext.current as? Activity
     val scope = rememberCoroutineScope()
     SettingsContent(
         settings = settings,
         signedInUsername = signedInUsername,
+        skippedCount = skippedCount,
+        onForgetSkipped = viewModel::forgetSkippedEntries,
         onToggleAutoUseLastProfile = { viewModel.setAutoUseLastProfile(!settings.autoUseLastProfile) },
         onToggleTrimSilence = { viewModel.setTrimSilenceAutomatically(!settings.trimSilenceAutomatically) },
         onInterfaceLanguageSelected = { tag ->
@@ -92,6 +88,8 @@ fun SettingsScreen(
 private fun SettingsContent(
     settings: AppSettings,
     signedInUsername: String?,
+    skippedCount: Int,
+    onForgetSkipped: () -> Unit,
     onToggleAutoUseLastProfile: () -> Unit,
     onToggleTrimSilence: () -> Unit,
     onInterfaceLanguageSelected: (String) -> Unit,
@@ -106,13 +104,13 @@ private fun SettingsContent(
         Column(modifier = Modifier.weight(1f).fillMaxWidth().padding(horizontal = 14.dp, vertical = 18.dp)) {
             Text(text = stringResource(R.string.settings_title), style = typography.h2)
             Column(modifier = Modifier.padding(top = 16.dp)) {
-                SettingsCheckboxRow(
+                WsCheckboxRow(
                     checked = settings.autoUseLastProfile,
                     title = stringResource(R.string.settings_auto_use_last_profile_title),
                     explainer = stringResource(R.string.settings_auto_use_last_profile_explainer),
                     onToggle = onToggleAutoUseLastProfile,
                 )
-                SettingsCheckboxRow(
+                WsCheckboxRow(
                     checked = settings.trimSilenceAutomatically,
                     title = stringResource(R.string.settings_trim_silence_title),
                     explainer = stringResource(R.string.settings_trim_silence_explainer),
@@ -158,6 +156,27 @@ private fun SettingsContent(
                     color = LocalWikiSayItColors.current.neutral700,
                     modifier = Modifier.padding(top = 6.dp),
                 )
+            }
+            if (skippedCount > 0) {
+                Column(modifier = Modifier.padding(top = 18.dp)) {
+                    Text(text = stringResource(R.string.settings_skipped_label), style = typography.caption)
+                    WsSecondaryButton(
+                        text =
+                            pluralStringResource(
+                                R.plurals.settings_forget_skipped_button,
+                                skippedCount,
+                                skippedCount,
+                            ),
+                        onClick = onForgetSkipped,
+                        modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+                    )
+                    Text(
+                        text = stringResource(R.string.settings_skipped_note),
+                        style = typography.caption,
+                        color = LocalWikiSayItColors.current.neutral700,
+                        modifier = Modifier.padding(top = 6.dp),
+                    )
+                }
             }
             if (signedInUsername != null) {
                 Column(modifier = Modifier.padding(top = 18.dp)) {
@@ -239,36 +258,4 @@ private fun MaxListSizeField(
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
         modifier = modifier.fillMaxWidth(),
     )
-}
-
-@Composable
-private fun SettingsCheckboxRow(
-    checked: Boolean,
-    title: String,
-    explainer: String,
-    onToggle: () -> Unit,
-) {
-    val colors = LocalWikiSayItColors.current
-    val typography = LocalWikiSayItTypography.current
-    Row(
-        modifier = Modifier.fillMaxWidth().clickable(onClick = onToggle).padding(vertical = 13.dp),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        Box(
-            modifier =
-                Modifier
-                    .size(20.dp)
-                    .border(1.5.dp, colors.accent)
-                    .background(if (checked) colors.accent else Color.Transparent),
-            contentAlignment = Alignment.Center,
-        ) {
-            if (checked) {
-                Text(text = "✓", color = colors.onAccent, style = typography.caption)
-            }
-        }
-        Column {
-            Text(text = title, style = typography.body)
-            Text(text = explainer, style = typography.caption, color = colors.neutral700)
-        }
-    }
 }

@@ -19,6 +19,7 @@ import wiki.asaf.wikisayit.data.local.db.RecordingEntryType
 import wiki.asaf.wikisayit.data.local.db.SpeakerProfileWithLanguages
 import wiki.asaf.wikisayit.data.local.settings.SettingsRepository
 import wiki.asaf.wikisayit.data.profile.ProfileRepository
+import wiki.asaf.wikisayit.data.skipped.SkippedEntryRepository
 import wiki.asaf.wikisayit.data.stats.StatsRepository
 import wiki.asaf.wikisayit.data.uploads.PendingUploadItem
 import wiki.asaf.wikisayit.data.uploads.PendingUploadRepository
@@ -63,6 +64,7 @@ class RecordingFlowViewModel
     constructor(
         private val profileRepository: ProfileRepository,
         private val settingsRepository: SettingsRepository,
+        private val skippedEntryRepository: SkippedEntryRepository,
         private val statsRepository: StatsRepository,
         private val existenceChecker: WikidataExistenceChecker,
         private val labelMatcher: WikidataLabelMatcher,
@@ -174,6 +176,10 @@ class RecordingFlowViewModel
             _uiState.update { it.copy(categoryDepth = depth) }
         }
 
+        fun updateIncludeRecordedItems(include: Boolean) {
+            _uiState.update { it.copy(includeRecordedItems = include) }
+        }
+
         fun buildList() {
             val state = _uiState.value
             when (state.listSourceType) {
@@ -182,18 +188,54 @@ class RecordingFlowViewModel
                     val language = state.language?.isoCode.orEmpty()
                     resolveAsyncList { queryListBuilder.build(state.sourceText, language, state.settings.maxListSize) }
                 }
-                ListSourceType.CATEGORY -> {
-                    val language = state.language?.isoCode.orEmpty()
-                    resolveAsyncList {
-                        categorySource.build(
-                            state.sourceText,
-                            language,
-                            state.categoryDepth,
-                            state.settings.maxListSize,
-                        )
+                ListSourceType.CATEGORY -> buildCategoryList(state)
+                null -> Unit
+            }
+        }
+
+        /**
+         * A category build (s-fi0) filters while it walks the category rather than afterwards:
+         * entries skipped in an earlier session are always dropped, and — unless "Include items
+         * that have pronunciations?" is ticked — so is anything that already carries P443. The
+         * source draws on a pool larger than the list needs, so the filtered list still reaches
+         * the configured size instead of shrinking by however much was dropped.
+         *
+         * Having filtered on P443 already, the pre-filtered list lands straight on the
+         * ready-to-record screen: offering "check for existing recordings" there would just
+         * re-run the check that produced this list.
+         */
+        private fun buildCategoryList(state: RecordingFlowUiState) {
+            val language = state.language?.isoCode.orEmpty()
+            val excludeRecorded = !state.includeRecordedItems
+            var alreadyRecorded = 0
+            var previouslySkipped = 0
+            resolveAsyncList(
+                landOnChecked = excludeRecorded,
+                extraUpdate = {
+                    it.copy(
+                        listPreFiltered = excludeRecorded,
+                        filteredAlreadyRecordedCount = alreadyRecorded,
+                        filteredPreviouslySkippedCount = previouslySkipped,
+                    )
+                },
+            ) {
+                val skippedIds = skippedEntryRepository.skippedIds()
+                categorySource.build(
+                    categoryName = state.sourceText,
+                    languageCode = language,
+                    depth = state.categoryDepth,
+                    maxListSize = state.settings.maxListSize,
+                ) { candidates ->
+                    val unskipped = candidates.filterNot { it.evidenceId in skippedIds }
+                    previouslySkipped += candidates.size - unskipped.size
+                    if (!excludeRecorded || unskipped.isEmpty()) {
+                        unskipped
+                    } else {
+                        val checked = existenceChecker.check(unskipped, language)
+                        alreadyRecorded += checked.excludedCount
+                        checked.finalQueue
                     }
                 }
-                null -> Unit
             }
         }
 
@@ -201,8 +243,20 @@ class RecordingFlowViewModel
          * while the RESOLVING stage shows an indeterminate spinner, then lands on FRESH — or, if
          * fetching failed and left nothing to show, jumps straight to EMPTY with
          * [RecordingFlowUiState.listBuildHadError] set so that screen can explain the list
-         * couldn't be fetched rather than claiming it's genuinely empty (s-fns). */
-        private fun resolveAsyncList(build: suspend () -> ListBuildResult) {
+         * couldn't be fetched rather than claiming it's genuinely empty (s-fns).
+         *
+         * @param landOnChecked for builds that already dropped everything an existence check
+         *   would have (see [buildCategoryList]): land on CHECKED, and treat an empty result as
+         *   the EMPTY outcome — nothing in this category still needs a voice — rather than as a
+         *   list waiting to be checked.
+         * @param extraUpdate folded into the same state update that lands the result, for fields
+         *   only the calling build knows about.
+         */
+        private fun resolveAsyncList(
+            landOnChecked: Boolean = false,
+            extraUpdate: (RecordingFlowUiState) -> RecordingFlowUiState = { it },
+            build: suspend () -> ListBuildResult,
+        ) {
             tickerJob?.cancel()
             _uiState.update {
                 it.copy(
@@ -210,25 +264,31 @@ class RecordingFlowViewModel
                     rawCount = 0,
                     resolveDone = 0,
                     listBuildHadError = false,
+                    listPreFiltered = false,
+                    filteredAlreadyRecordedCount = 0,
+                    filteredPreviouslySkippedCount = 0,
                 )
             }
             tickerJob =
                 viewModelScope.launch {
                     val result = build()
                     _uiState.update {
-                        it.copy(
-                            finalQueue = result.entries,
-                            rawCount = result.entries.size,
-                            checkDone = 0,
-                            excludedCount = 0,
-                            formsAddedCount = 0,
-                            listBuildHadError = result.hadFetchError,
-                            listBuildStage =
-                                if (result.entries.isEmpty() && result.hadFetchError) {
-                                    ListBuildStage.EMPTY
-                                } else {
-                                    ListBuildStage.FRESH
-                                },
+                        extraUpdate(
+                            it.copy(
+                                finalQueue = result.entries,
+                                rawCount = result.entries.size,
+                                checkDone = if (landOnChecked) result.entries.size else 0,
+                                excludedCount = 0,
+                                formsAddedCount = 0,
+                                listBuildHadError = result.hadFetchError,
+                                listBuildStage =
+                                    when {
+                                        result.entries.isEmpty() && (result.hadFetchError || landOnChecked) ->
+                                            ListBuildStage.EMPTY
+                                        landOnChecked -> ListBuildStage.CHECKED
+                                        else -> ListBuildStage.FRESH
+                                    },
+                            ),
                         )
                     }
                 }
@@ -246,6 +306,9 @@ class RecordingFlowViewModel
                     listBuildStage = ListBuildStage.RESOLVING,
                     rawCount = lines.size,
                     resolveDone = 0,
+                    listPreFiltered = false,
+                    filteredAlreadyRecordedCount = 0,
+                    filteredPreviouslySkippedCount = 0,
                     disambiguationQueue = emptyList(),
                     disambiguationIndex = 0,
                 )
@@ -387,6 +450,9 @@ class RecordingFlowViewModel
                     finalQueue = emptyList(),
                     rawCount = 0,
                     listBuildHadError = false,
+                    listPreFiltered = false,
+                    filteredAlreadyRecordedCount = 0,
+                    filteredPreviouslySkippedCount = 0,
                     disambiguationQueue = emptyList(),
                     disambiguationIndex = 0,
                 )
@@ -662,7 +728,7 @@ class RecordingFlowViewModel
             val state = _uiState.value
             val queue = state.recordingQueue.toMutableList()
             if (state.recordingIndex !in queue.indices) return
-            queue.removeAt(state.recordingIndex)
+            val skipped = queue.removeAt(state.recordingIndex)
             tickerJob?.cancel()
             readySetGoJob?.cancel()
             if (state.rerecordIndex != null) {
@@ -678,6 +744,9 @@ class RecordingFlowViewModel
                 }
                 return
             }
+            // A genuine skip (not a cancelled rerecord): remember it so future category builds
+            // leave this entry out instead of offering it again every time (s-fi0.2).
+            viewModelScope.launch { skippedEntryRepository.remember(skipped) }
             if (queue.isEmpty()) {
                 // finalQueue is already the checked/expanded list from before recording started —
                 // land on CHECKED (accurate counts, "Start" to try again), not FRESH: FRESH's

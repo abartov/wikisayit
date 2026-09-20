@@ -19,6 +19,7 @@ import wiki.asaf.wikisayit.data.local.db.WikiSayItDatabase
 import wiki.asaf.wikisayit.data.local.settings.DataStoreSettingsRepository
 import wiki.asaf.wikisayit.data.profile.ProfileLanguageInput
 import wiki.asaf.wikisayit.data.profile.RoomProfileRepository
+import wiki.asaf.wikisayit.data.skipped.RoomSkippedEntryRepository
 import wiki.asaf.wikisayit.data.stats.RoomStatsRepository
 import wiki.asaf.wikisayit.data.uploads.PendingUploadItem
 import wiki.asaf.wikisayit.data.uploads.RoomPendingUploadRepository
@@ -197,6 +198,28 @@ class PersistenceInstrumentedTest {
             durableFile.delete()
 
             assertTrue(repository.loadAll().isEmpty())
+        }
+
+    @Test
+    fun skippedEntryRepository_remembersEntriesByEvidenceIdUntilForgotten() =
+        runTest {
+            val repository = RoomSkippedEntryRepository(database.skippedEntryDao())
+            val item = QueueEntry(label = "мова", kind = EntryKind.ITEM, detail = "item", qid = "Q42")
+            val form =
+                QueueEntry(label = "мови", kind = EntryKind.FORM, detail = "form", lexemeId = "L1", formId = "L1-F2")
+
+            repository.remember(item)
+            repository.remember(form)
+            // Skipping the same entry twice must refresh it, not blow up on the primary key.
+            repository.remember(item)
+            // An entry that never resolved to a Wikidata id has nothing to remember it by.
+            repository.remember(QueueEntry(label = "загадка", kind = EntryKind.ITEM, detail = "no match"))
+
+            assertEquals(setOf("Q42", "L1-F2"), repository.skippedIds())
+            assertEquals(2, repository.observeCount().first())
+
+            repository.clear()
+            assertTrue(repository.skippedIds().isEmpty())
         }
 
     @Test

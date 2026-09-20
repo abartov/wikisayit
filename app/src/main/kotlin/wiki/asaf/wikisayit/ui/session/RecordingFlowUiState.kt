@@ -22,6 +22,18 @@ data class RecordingFlowUiState(
     val sourceText: String = "",
     val matchAs: MatchAs = MatchAs.ITEMS,
     val categoryDepth: CategoryDepth = CategoryDepth.TWO,
+    /** Category mode's "Include items that already have pronunciations?" checkbox (s-fi0.1).
+     * Unchecked by default: the build itself drops items that already carry P443. */
+    val includeRecordedItems: Boolean = false,
+    /** True when the list on screen was already filtered while it was being built — so the
+     * ready-to-record screen presents it as final instead of offering an existence check that
+     * has, in effect, already run. */
+    val listPreFiltered: Boolean = false,
+    /** How many candidates the last category build dropped for already carrying P443. */
+    val filteredAlreadyRecordedCount: Int = 0,
+    /** How many candidates the last category build dropped because they were skipped in an
+     * earlier session (s-fi0.2). */
+    val filteredPreviouslySkippedCount: Int = 0,
     val rawCount: Int = 0,
     val resolveDone: Int = 0,
     /** True when the most recent list build hit a network failure it couldn't recover from —

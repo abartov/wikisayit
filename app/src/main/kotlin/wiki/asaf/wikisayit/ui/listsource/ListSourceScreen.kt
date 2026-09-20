@@ -31,6 +31,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import wiki.asaf.wikisayit.R
 import wiki.asaf.wikisayit.data.wikidata.CannedSparqlQuery
 import wiki.asaf.wikisayit.ui.components.BlueprintBox
+import wiki.asaf.wikisayit.ui.components.WsCheckboxRow
 import wiki.asaf.wikisayit.ui.components.WsGhostButton
 import wiki.asaf.wikisayit.ui.components.WsHairlineDivider
 import wiki.asaf.wikisayit.ui.components.WsKicker
@@ -72,6 +73,7 @@ fun ListSourceScreen(
                 onTextChange = viewModel::updateSourceText,
                 onMatchAsChange = viewModel::updateMatchAs,
                 onDepthChange = viewModel::updateCategoryDepth,
+                onIncludeRecordedChange = viewModel::updateIncludeRecordedItems,
                 onCannedQueryPick = viewModel::applyCannedQuery,
                 onBack = viewModel::backToSourcePick,
                 onBuildList = viewModel::buildList,
@@ -204,6 +206,7 @@ private fun SourceFormContent(
     onTextChange: (String) -> Unit,
     onMatchAsChange: (MatchAs) -> Unit,
     onDepthChange: (CategoryDepth) -> Unit,
+    onIncludeRecordedChange: (Boolean) -> Unit,
     onCannedQueryPick: (CannedSparqlQuery) -> Unit,
     onBack: () -> Unit,
     onBuildList: () -> Unit,
@@ -300,6 +303,12 @@ private fun SourceFormContent(
                         style = LocalWikiSayItTypography.current.caption,
                         color = colors.neutral700,
                         modifier = Modifier.padding(top = WikiSayItSpacing.space1),
+                    )
+                    WsCheckboxRow(
+                        checked = uiState.includeRecordedItems,
+                        title = stringResource(R.string.include_recorded_label),
+                        explainer = stringResource(R.string.include_recorded_note),
+                        onToggle = { onIncludeRecordedChange(!uiState.includeRecordedItems) },
                     )
                 }
             }
@@ -535,8 +544,14 @@ private fun ListCheckContent(
                         modifier = Modifier.fillMaxWidth().padding(WikiSayItSpacing.space3),
                         verticalArrangement = Arrangement.spacedBy(WikiSayItSpacing.space1),
                     ) {
-                        WsKicker(text = stringResource(R.string.worth_checking_kicker))
-                        Text(text = stringResource(R.string.worth_checking_body), style = typography.secondary)
+                        if (uiState.listPreFiltered) {
+                            WsKicker(text = stringResource(R.string.gaps_only_kicker))
+                            Text(text = stringResource(R.string.gaps_only_body), style = typography.secondary)
+                        } else {
+                            WsKicker(text = stringResource(R.string.worth_checking_kicker))
+                            Text(text = stringResource(R.string.worth_checking_body), style = typography.secondary)
+                        }
+                        FilteredOutNotes(uiState)
                     }
                 }
                 if (uiState.listBuildStage == ListBuildStage.CHECKING) {
@@ -563,7 +578,10 @@ private fun ListCheckContent(
                         )
                     }
                 }
-                if (uiState.listBuildStage == ListBuildStage.CHECKED) {
+                // A pre-filtered list (s-fi0.1) has no check to account for: its rawCount is
+                // already the final count, so the entries/excluded/added breakdown would just
+                // restate it.
+                if (uiState.listBuildStage == ListBuildStage.CHECKED && !uiState.listPreFiltered) {
                     val finalCount = uiState.rawCount - uiState.excludedCount + uiState.formsAddedCount
                     WsTable(
                         modifier = Modifier.padding(top = WikiSayItSpacing.space4),
@@ -639,6 +657,39 @@ private fun ListCheckContent(
     }
 }
 
+/** What a category build left out on the speaker's behalf (s-fi0): entries that already carry a
+ * pronunciation, and entries skipped in an earlier session. Each line only appears when that
+ * filter actually dropped something. */
+@Composable
+private fun FilteredOutNotes(uiState: RecordingFlowUiState) {
+    val typography = LocalWikiSayItTypography.current
+    val colors = LocalWikiSayItColors.current
+    if (uiState.filteredAlreadyRecordedCount > 0) {
+        Text(
+            text =
+                pluralStringResource(
+                    R.plurals.list_filtered_already_recorded,
+                    uiState.filteredAlreadyRecordedCount,
+                    uiState.filteredAlreadyRecordedCount,
+                ),
+            style = typography.caption,
+            color = colors.neutral700,
+        )
+    }
+    if (uiState.filteredPreviouslySkippedCount > 0) {
+        Text(
+            text =
+                pluralStringResource(
+                    R.plurals.list_filtered_previously_skipped,
+                    uiState.filteredPreviouslySkippedCount,
+                    uiState.filteredPreviouslySkippedCount,
+                ),
+            style = typography.caption,
+            color = colors.neutral700,
+        )
+    }
+}
+
 @Composable
 private fun EvidenceCell(
     text: String,
@@ -663,36 +714,64 @@ private fun EmptyOutcomeContent(
     val typography = LocalWikiSayItTypography.current
     val colors = LocalWikiSayItColors.current
     val hadError = uiState.listBuildHadError
+    // A pre-filtered list (s-fi0.1) never had a separate check to report on, and the entries it
+    // dropped are gone rather than held back as second-take candidates.
+    val filteredEmpty = !hadError && uiState.listPreFiltered
     Column(modifier = modifier.fillMaxSize()) {
         Column(modifier = Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState())) {
             ScreenHeader(
                 kicker =
                     stringResource(
-                        if (hadError) R.string.list_build_error_kicker else R.string.empty_check_complete_kicker,
+                        when {
+                            hadError -> R.string.list_build_error_kicker
+                            filteredEmpty -> R.string.empty_filtered_kicker
+                            else -> R.string.empty_check_complete_kicker
+                        },
                     ),
                 title =
-                    if (hadError) {
-                        stringResource(R.string.list_build_error_title)
-                    } else {
-                        pluralStringResource(R.plurals.empty_title, uiState.rawCount, uiState.rawCount)
+                    when {
+                        hadError -> stringResource(R.string.list_build_error_title)
+                        filteredEmpty -> stringResource(R.string.empty_filtered_title)
+                        else -> pluralStringResource(R.plurals.empty_title, uiState.rawCount, uiState.rawCount)
                     },
-                explainer = stringResource(if (hadError) R.string.list_build_error_body else R.string.empty_body),
+                explainer =
+                    stringResource(
+                        when {
+                            hadError -> R.string.list_build_error_body
+                            filteredEmpty -> R.string.empty_filtered_body
+                            else -> R.string.empty_body
+                        },
+                    ),
             )
             Column(modifier = Modifier.padding(horizontal = WikiSayItSpacing.screenHorizontal)) {
                 if (!hadError) {
-                    WsTable(
-                        rows =
-                            listOf(
+                    if (filteredEmpty) {
+                        FilteredOutNotes(uiState)
+                    } else {
+                        WsTable(
+                            rows =
                                 listOf(
-                                    { EvidenceCell(uiState.rawCount.toString()) },
-                                    { Text(stringResource(R.string.check_row_entries), style = typography.secondary) },
+                                    listOf(
+                                        { EvidenceCell(uiState.rawCount.toString()) },
+                                        {
+                                            Text(
+                                                stringResource(R.string.check_row_entries),
+                                                style = typography.secondary,
+                                            )
+                                        },
+                                    ),
+                                    listOf(
+                                        { EvidenceCell("0", emphasized = true) },
+                                        {
+                                            Text(
+                                                stringResource(R.string.check_row_final),
+                                                style = typography.secondary,
+                                            )
+                                        },
+                                    ),
                                 ),
-                                listOf(
-                                    { EvidenceCell("0", emphasized = true) },
-                                    { Text(stringResource(R.string.check_row_final), style = typography.secondary) },
-                                ),
-                            ),
-                    )
+                        )
+                    }
                     BlueprintBox(modifier = Modifier.fillMaxWidth().padding(top = WikiSayItSpacing.space4)) {
                         Column(
                             modifier = Modifier.fillMaxWidth().padding(WikiSayItSpacing.space3),
@@ -715,7 +794,9 @@ private fun EmptyOutcomeContent(
                 onClick = onPickDifferentList,
                 modifier = Modifier.fillMaxWidth(),
             )
-            if (!hadError) {
+            // Nothing to offer as second takes: a pre-filtered build dropped those entries
+            // while walking the category rather than holding them back.
+            if (!hadError && !filteredEmpty) {
                 WsGhostButton(
                     text = stringResource(R.string.empty_record_anyway_button),
                     onClick = onRecordAnyway,
