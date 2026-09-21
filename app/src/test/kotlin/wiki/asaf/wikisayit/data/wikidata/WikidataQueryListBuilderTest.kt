@@ -19,6 +19,10 @@ import wiki.asaf.wikisayit.network.WikimediaClients
 import wiki.asaf.wikisayit.ui.session.EntryKind
 
 class WikidataQueryListBuilderTest {
+    /** The queries the builder actually sent to the query service, so tests can assert on the
+     * `LIMIT` it asked for (s-3ux). */
+    private val sentQueries = mutableListOf<String>()
+
     private fun builderFor(
         sparqlBody: String,
         entitiesBody: String,
@@ -27,6 +31,7 @@ class WikidataQueryListBuilderTest {
             MockEngine { request ->
                 val body =
                     if (request.url.host == "query.wikidata.org") {
+                        sentQueries += request.url.parameters["query"].orEmpty()
                         sparqlBody
                     } else {
                         entitiesBody
@@ -140,5 +145,83 @@ class WikidataQueryListBuilderTest {
 
             assertTrue(result.entries.isEmpty())
             assertTrue(result.hadFetchError)
+        }
+
+    @Test
+    fun `query asks for more hits than the list needs, so a filter has spares to draw on`() =
+        runTest {
+            val builder = builderFor("""{"results":{"bindings":[]}}""", entitiesBody = """{"entities":{}}""")
+
+            builder.build("SELECT ?item WHERE {}", preferredLanguage = "en", maxListSize = 20)
+
+            // 20 × the pool factor of 5 (s-3ux), not the bare 20.
+            assertEquals(1, sentQueries.size)
+            assertTrue(sentQueries[0], sentQueries[0].endsWith("LIMIT 100"))
+        }
+
+    @Test
+    fun `filtered-out hits are replaced from the surplus rather than shortening the list`() =
+        runTest {
+            val bindings =
+                (1..6).joinToString(",") {
+                    """{"item":{"type":"uri","value":"http://www.wikidata.org/entity/Q$it"}}"""
+                }
+            val labels =
+                (1..6).joinToString(",") { """"Q$it":{"labels":{"en":{"language":"en","value":"word $it"}}}""" }
+            val builder =
+                builderFor(
+                    sparqlBody = """{"results":{"bindings":[$bindings]}}""",
+                    entitiesBody = """{"entities":{$labels}}""",
+                )
+
+            val result =
+                builder.build("SELECT ?item WHERE {}", preferredLanguage = "en", maxListSize = 2) { candidates ->
+                    candidates.filterNot { it.qid in setOf("Q1", "Q2", "Q3") }
+                }
+
+            assertEquals(listOf("Q4", "Q5"), result.entries.map { it.qid })
+        }
+
+    @Test
+    fun `a filter that drops everything yields an empty list, not an error`() =
+        runTest {
+            val builder =
+                builderFor(
+                    sparqlBody =
+                        """
+                        {"results":{"bindings":[
+                            {"item":{"type":"uri","value":"http://www.wikidata.org/entity/Q42"}}
+                        ]}}
+                        """.trimIndent(),
+                    entitiesBody =
+                        """{"entities":{"Q42":{"labels":{"en":{"language":"en","value":"Douglas Adams"}}}}}""",
+                )
+
+            val result =
+                builder.build("SELECT ?item WHERE {}", preferredLanguage = "en") { emptyList() }
+
+            assertTrue(result.entries.isEmpty())
+            assertFalse(result.hadFetchError)
+        }
+
+    @Test
+    fun `a hit bound twice by the query is only listed once`() =
+        runTest {
+            val builder =
+                builderFor(
+                    sparqlBody =
+                        """
+                        {"results":{"bindings":[
+                            {"item":{"type":"uri","value":"http://www.wikidata.org/entity/Q42"}},
+                            {"item":{"type":"uri","value":"http://www.wikidata.org/entity/Q42"}}
+                        ]}}
+                        """.trimIndent(),
+                    entitiesBody =
+                        """{"entities":{"Q42":{"labels":{"en":{"language":"en","value":"Douglas Adams"}}}}}""",
+                )
+
+            val result = builder.build("SELECT ?item WHERE {}", preferredLanguage = "en")
+
+            assertEquals(listOf("Q42"), result.entries.map { it.qid })
         }
 }

@@ -107,7 +107,7 @@
     <string name="depth_five">5 (max)</string>
     <string name="depth_note">Loops are detected and skipped.</string>
     <string name="include_recorded_label">Include items that have pronunciations?</string>
-    <string name="include_recorded_note">Leave this off to record only what is still missing: items that already carry a pronunciation (P443) are dropped while the list is built, and more category members are pulled in to take their place.</string>
+    <string name="include_recorded_note">Leave this off to record only what is still missing: items that already carry a pronunciation (P443) are dropped while the list is built, and more candidates are pulled in to take their place.</string>
     <string name="list_source_build_button">Build the list</string>
     <string name="resolving_title">Matching against Wikidata</string>
     <string name="resolving_explainer">Looking up each line before it joins the list.</string>
@@ -128,6 +128,8 @@
     <string name="worth_checking_body">Wiki-Say-It exists to fill gaps, so it can drop every entry that already has a recording on Wikidata before you open your mouth.</string>
     <string name="gaps_only_kicker">Gaps only</string>
     <string name="gaps_only_body">Entries that already have a recording on Wikidata were left out while this list was built, so everything here still needs your voice.</string>
+    <string name="second_takes_kicker">Second takes</string>
+    <string name="second_takes_body">Every entry here already has a recording on Wikidata. Yours will be added alongside the existing one, not replace it.</string>
     <string name="checking_label">checking for existing audio…</string>
     <string name="check_button">Check for existing recordings</string>
     <string name="skip_check_button">Skip the check, use the list as-is</string>

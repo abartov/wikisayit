@@ -20,6 +20,11 @@ data class ExistenceCheckResult(
     val finalQueue: List<QueueEntry>,
     val excludedCount: Int,
     val formsAddedCount: Int,
+    /** The entries [finalQueue] left out for already having P443, kept so the caller can offer
+     * them as second takes when the check excluded everything (s-39z). Lexemes are expanded into
+     * their forms here too — a form entry needs its own [QueueEntry.formId] to be recordable —
+     * so this is not the same length as [excludedCount], which counts excluded *candidates*. */
+    val excludedEntries: List<QueueEntry>,
 )
 
 /**
@@ -45,6 +50,7 @@ class WikidataExistenceChecker
             val entitiesById = fetchEntities(ids)
 
             val finalQueue = mutableListOf<QueueEntry>()
+            val excludedEntries = mutableListOf<QueueEntry>()
             var excludedCount = 0
             var formsAddedCount = 0
             var done = 0
@@ -55,6 +61,7 @@ class WikidataExistenceChecker
                         val entity = candidate.qid?.let { entitiesById[it] }?.takeUnless { it.missing != null }
                         if (entity != null && P443 in entity.claims) {
                             excludedCount++
+                            excludedEntries += candidate
                         } else {
                             finalQueue += candidate
                         }
@@ -74,6 +81,7 @@ class WikidataExistenceChecker
                             val form = entity.forms.firstOrNull { it.id == candidate.formId }
                             if (form != null && P443 in form.claims) {
                                 excludedCount++
+                                excludedEntries += candidate
                             } else {
                                 finalQueue += candidate
                             }
@@ -81,14 +89,14 @@ class WikidataExistenceChecker
                             val missingForms = entity.forms.filterNot { P443 in it.claims }
                             if (missingForms.isEmpty()) {
                                 excludedCount++
+                                // Expand anyway, so each excluded form is a recordable second-take
+                                // candidate rather than a lexeme with no form to attach P443 to.
+                                entity.forms.forEach { form ->
+                                    excludedEntries += candidate.expandedTo(form, preferredLanguage)
+                                }
                             } else {
                                 missingForms.forEachIndexed { index, form ->
-                                    finalQueue +=
-                                        candidate.copy(
-                                            label = form.labelFor(preferredLanguage, fallback = candidate.label),
-                                            formId = form.id,
-                                            scriptVariants = form.representations.values.map { it.value }.distinct(),
-                                        )
+                                    finalQueue += candidate.expandedTo(form, preferredLanguage)
                                     if (index > 0) formsAddedCount++
                                 }
                             }
@@ -99,7 +107,7 @@ class WikidataExistenceChecker
                 onProgress(done)
             }
 
-            return ExistenceCheckResult(finalQueue, excludedCount, formsAddedCount)
+            return ExistenceCheckResult(finalQueue, excludedCount, formsAddedCount, excludedEntries)
         }
 
         private suspend fun fetchEntities(ids: List<String>): Map<String, WbEntity> {
@@ -126,3 +134,14 @@ private fun WbForm.labelFor(
     isoCode: String,
     fallback: String,
 ): String = representations.labelFor(isoCode, fallback)
+
+/** Turns a bare lexeme candidate into an entry for one of its [form]s. */
+private fun QueueEntry.expandedTo(
+    form: WbForm,
+    preferredLanguage: String,
+): QueueEntry =
+    copy(
+        label = form.labelFor(preferredLanguage, fallback = label),
+        formId = form.id,
+        scriptVariants = form.representations.values.map { it.value }.distinct(),
+    )

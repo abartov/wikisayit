@@ -73,6 +73,8 @@ class WikidataExistenceCheckerTest {
             assertEquals(0, result.finalQueue.size)
             assertEquals(1, result.excludedCount)
             assertEquals(0, result.formsAddedCount)
+            // Held back rather than dropped, so "record them anyway" has something to record (s-39z).
+            assertEquals(listOf("Q1"), result.excludedEntries.map { it.qid })
         }
 
     @Test
@@ -105,6 +107,29 @@ class WikidataExistenceCheckerTest {
         }
 
     @Test
+    fun `excluded lexeme is still expanded into its forms as second-take candidates`() =
+        runTest {
+            val checker =
+                checkerFor(
+                    """
+                    {"entities":{"L1":{"claims":{},"forms":[
+                        {"id":"L1-F1","representations":{"en":{"language":"en","value":"water"}},
+                         "claims":{"P443":[{}]}},
+                        {"id":"L1-F2","representations":{"en":{"language":"en","value":"waters"}},
+                         "claims":{"P443":[{}]}}
+                    ]}}}
+                    """.trimIndent(),
+                )
+            val result = checker.check(listOf(formEntry("water", "L1")), preferredLanguage = "en")
+
+            // One excluded *candidate*, but two recordable entries: a form entry needs its own
+            // formId for the P443 statement, so the bare lexeme wouldn't do (s-39z).
+            assertEquals(1, result.excludedCount)
+            assertEquals(listOf("L1-F1", "L1-F2"), result.excludedEntries.map { it.formId })
+            assertEquals(listOf("water", "waters"), result.excludedEntries.map { it.label })
+        }
+
+    @Test
     fun `lexeme with no forms is excluded`() =
         runTest {
             val checker = checkerFor("""{"entities":{"L1":{"claims":{},"forms":[]}}}""")
@@ -112,6 +137,8 @@ class WikidataExistenceCheckerTest {
 
             assertEquals(0, result.finalQueue.size)
             assertEquals(1, result.excludedCount)
+            // Nothing to attach a P443 statement to, so it isn't a second-take candidate either.
+            assertEquals(0, result.excludedEntries.size)
         }
 
     @Test
@@ -231,6 +258,7 @@ class WikidataExistenceCheckerTest {
 
             assertEquals(0, result.finalQueue.size)
             assertEquals(1, result.excludedCount)
+            assertEquals(listOf("L1-F1"), result.excludedEntries.map { it.formId })
         }
 
     @Test

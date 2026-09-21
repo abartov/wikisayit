@@ -184,21 +184,16 @@ class RecordingFlowViewModel
             val state = _uiState.value
             when (state.listSourceType) {
                 ListSourceType.PASTE -> resolvePastedList(state)
-                ListSourceType.QUERY -> {
-                    val language = state.language?.isoCode.orEmpty()
-                    resolveAsyncList { queryListBuilder.build(state.sourceText, language, state.settings.maxListSize) }
-                }
+                ListSourceType.QUERY -> buildQueryList(state)
                 ListSourceType.CATEGORY -> buildCategoryList(state)
                 null -> Unit
             }
         }
 
         /**
-         * A category build (s-fi0) filters while it walks the category rather than afterwards:
-         * entries skipped in an earlier session are always dropped, and — unless "Include items
-         * that have pronunciations?" is ticked — so is anything that already carries P443. The
-         * source draws on a pool larger than the list needs, so the filtered list still reaches
-         * the configured size instead of shrinking by however much was dropped.
+         * A category build (s-fi0) applies [GapsOnlyFilter] while it walks the category rather
+         * than afterwards; the source draws on a pool larger than the list needs, so the filtered
+         * list still reaches the configured size instead of shrinking by however much was dropped.
          *
          * Having filtered on P443 already, the pre-filtered list lands straight on the
          * ready-to-record screen: offering "check for existing recordings" there would just
@@ -206,37 +201,71 @@ class RecordingFlowViewModel
          */
         private fun buildCategoryList(state: RecordingFlowUiState) {
             val language = state.language?.isoCode.orEmpty()
-            val excludeRecorded = !state.includeRecordedItems
-            var alreadyRecorded = 0
-            var previouslySkipped = 0
-            resolveAsyncList(
-                landOnChecked = excludeRecorded,
-                extraUpdate = {
-                    it.copy(
-                        listPreFiltered = excludeRecorded,
-                        filteredAlreadyRecordedCount = alreadyRecorded,
-                        filteredPreviouslySkippedCount = previouslySkipped,
-                    )
-                },
-            ) {
-                val skippedIds = skippedEntryRepository.skippedIds()
+            val filter = GapsOnlyFilter(language, excludeRecorded = !state.includeRecordedItems)
+            resolveAsyncList(landOnChecked = filter.excludeRecorded, extraUpdate = filter::applyTo) {
                 categorySource.build(
                     categoryName = state.sourceText,
                     languageCode = language,
                     depth = state.categoryDepth,
                     maxListSize = state.settings.maxListSize,
-                ) { candidates ->
-                    val unskipped = candidates.filterNot { it.evidenceId in skippedIds }
-                    previouslySkipped += candidates.size - unskipped.size
-                    if (!excludeRecorded || unskipped.isEmpty()) {
-                        unskipped
-                    } else {
-                        val checked = existenceChecker.check(unskipped, language)
-                        alreadyRecorded += checked.excludedCount
-                        checked.finalQueue
-                    }
-                }
+                    filter = filter::apply,
+                )
             }
+        }
+
+        /**
+         * A SPARQL query build filters exactly as a category build does (s-3ux): the query service
+         * gets a `LIMIT` raised above the configured list size, and the surplus hits cover whatever
+         * the skip-list and the P443 check drop, so the list still reaches its full length instead
+         * of handing back the same skipped words every time.
+         */
+        private fun buildQueryList(state: RecordingFlowUiState) {
+            val language = state.language?.isoCode.orEmpty()
+            val filter = GapsOnlyFilter(language, excludeRecorded = !state.includeRecordedItems)
+            resolveAsyncList(landOnChecked = filter.excludeRecorded, extraUpdate = filter::applyTo) {
+                queryListBuilder.build(
+                    query = state.sourceText,
+                    preferredLanguage = language,
+                    maxListSize = state.settings.maxListSize,
+                    filter = filter::apply,
+                )
+            }
+        }
+
+        /**
+         * The "gaps only" filter shared by the two list sources that over-fetch and filter as they
+         * go (s-fi0, s-3ux): entries skipped in an earlier session are always dropped, and — unless
+         * "Include items that have pronunciations?" is ticked — so is anything that already carries
+         * P443. Keeps running totals so the built list can report what it left out.
+         */
+        private inner class GapsOnlyFilter(
+            private val language: String,
+            val excludeRecorded: Boolean,
+        ) {
+            private var alreadyRecorded = 0
+            private var previouslySkipped = 0
+
+            /** Read once per build, on first use rather than up front, because building the filter
+             * itself isn't a suspending context. */
+            private var skippedIds: Set<String>? = null
+
+            suspend fun apply(candidates: List<QueueEntry>): List<QueueEntry> {
+                val skipped = skippedIds ?: skippedEntryRepository.skippedIds().also { skippedIds = it }
+                val unskipped = candidates.filterNot { it.evidenceId in skipped }
+                previouslySkipped += candidates.size - unskipped.size
+                if (!excludeRecorded || unskipped.isEmpty()) return unskipped
+                val checked = existenceChecker.check(unskipped, language)
+                alreadyRecorded += checked.excludedCount
+                return checked.finalQueue
+            }
+
+            /** Folds the totals into the state update that lands the finished list. */
+            fun applyTo(state: RecordingFlowUiState): RecordingFlowUiState =
+                state.copy(
+                    listPreFiltered = excludeRecorded,
+                    filteredAlreadyRecordedCount = alreadyRecorded,
+                    filteredPreviouslySkippedCount = previouslySkipped,
+                )
         }
 
         /** Runs [build] (a SPARQL query execution or a category traversal) on a background job
@@ -263,6 +292,8 @@ class RecordingFlowViewModel
                     listBuildStage = ListBuildStage.RESOLVING,
                     rawCount = 0,
                     resolveDone = 0,
+                    excludedEntries = emptyList(),
+                    secondTakes = false,
                     listBuildHadError = false,
                     listPreFiltered = false,
                     filteredAlreadyRecordedCount = 0,
@@ -306,6 +337,8 @@ class RecordingFlowViewModel
                     listBuildStage = ListBuildStage.RESOLVING,
                     rawCount = lines.size,
                     resolveDone = 0,
+                    excludedEntries = emptyList(),
+                    secondTakes = false,
                     listPreFiltered = false,
                     filteredAlreadyRecordedCount = 0,
                     filteredPreviouslySkippedCount = 0,
@@ -419,6 +452,7 @@ class RecordingFlowViewModel
                     _uiState.update {
                         it.copy(
                             finalQueue = result.finalQueue,
+                            excludedEntries = result.excludedEntries,
                             excludedCount = result.excludedCount,
                             formsAddedCount = result.formsAddedCount,
                             checkDone = it.rawCount,
@@ -430,7 +464,8 @@ class RecordingFlowViewModel
 
         fun skipCheck() {
             tickerJob?.cancel()
-            _uiState.update { it.copy(checkDone = it.rawCount) }
+            // No check ran, so nothing was held back as a second-take candidate.
+            _uiState.update { it.copy(checkDone = it.rawCount, excludedEntries = emptyList()) }
             finishCheck()
         }
 
@@ -448,6 +483,8 @@ class RecordingFlowViewModel
                     listSourceType = null,
                     sourceText = "",
                     finalQueue = emptyList(),
+                    excludedEntries = emptyList(),
+                    secondTakes = false,
                     rawCount = 0,
                     listBuildHadError = false,
                     listPreFiltered = false,
@@ -459,8 +496,30 @@ class RecordingFlowViewModel
             }
         }
 
+        /**
+         * Takes up the EMPTY outcome's "record them anyway, as second takes" offer: the entries the
+         * existence check excluded become the queue (s-39z). It used to move on to the CHECKED
+         * screen without touching the queue the check had just emptied, so the session started with
+         * no words at all.
+         */
         fun recordAsSecondTakes() {
-            _uiState.update { it.copy(listBuildStage = ListBuildStage.CHECKED) }
+            _uiState.update {
+                if (it.excludedEntries.isEmpty()) {
+                    it
+                } else {
+                    it.copy(
+                        listBuildStage = ListBuildStage.CHECKED,
+                        finalQueue = it.excludedEntries,
+                        secondTakes = true,
+                        // These all already have audio: there is no excluded/added breakdown left
+                        // to report, just the count now queued up for a second take.
+                        rawCount = it.excludedEntries.size,
+                        checkDone = it.excludedEntries.size,
+                        excludedCount = 0,
+                        formsAddedCount = 0,
+                    )
+                }
+            }
         }
 
         // --- recording session ---

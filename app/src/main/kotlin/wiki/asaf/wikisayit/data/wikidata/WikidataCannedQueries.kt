@@ -4,9 +4,9 @@ package wiki.asaf.wikisayit.data.wikidata
  * Prepackaged SPARQL queries offered on the "Wikidata query" list source, per s-xxb: each finds
  * lexemes in the recording language, optionally restricted to one lexical category. They all
  * bind `?lexeme` (never a specific form), same as a hand-written query would — the per-form
- * "missing pronunciation" expansion already happens downstream in [WikidataExistenceChecker]
- * once the built list goes through the existing "Check for existing recordings" step, same as a
- * pasted list matched as lexemes.
+ * "missing pronunciation" expansion already happens downstream in [WikidataExistenceChecker],
+ * either while the list is built (the default gaps-only path, s-3ux) or, when the user asked to
+ * include items that already have pronunciations, at the "Check for existing recordings" step.
  */
 enum class CannedSparqlQuery(val lexicalCategoryQid: String?) {
     ALL_LEXEMES(lexicalCategoryQid = null),

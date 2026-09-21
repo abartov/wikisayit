@@ -44,6 +44,12 @@ data class RecordingFlowUiState(
     val excludedCount: Int = 0,
     val formsAddedCount: Int = 0,
     val finalQueue: List<QueueEntry> = emptyList(),
+    /** What the existence check left out for already having audio, held back so "Record them
+     * anyway, as second takes" has something to record when the check excluded everything (s-39z). */
+    val excludedEntries: List<QueueEntry> = emptyList(),
+    /** True once the user took that offer: the list on screen is a list of re-recordings, not of
+     * gaps, and the ready-to-record screen says so. */
+    val secondTakes: Boolean = false,
     // --- disambiguation ---
     val disambiguationQueue: List<DisambiguationCase> = emptyList(),
     val disambiguationIndex: Int = 0,

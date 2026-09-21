@@ -304,13 +304,17 @@ private fun SourceFormContent(
                         color = colors.neutral700,
                         modifier = Modifier.padding(top = WikiSayItSpacing.space1),
                     )
-                    WsCheckboxRow(
-                        checked = uiState.includeRecordedItems,
-                        title = stringResource(R.string.include_recorded_label),
-                        explainer = stringResource(R.string.include_recorded_note),
-                        onToggle = { onIncludeRecordedChange(!uiState.includeRecordedItems) },
-                    )
                 }
+            }
+            // Both sources that over-fetch and filter as they build (s-fi0, s-3ux) offer the
+            // same opt-out; a pasted list is exactly what the user typed, so it doesn't.
+            if (sourceType == ListSourceType.CATEGORY || sourceType == ListSourceType.QUERY) {
+                WsCheckboxRow(
+                    checked = uiState.includeRecordedItems,
+                    title = stringResource(R.string.include_recorded_label),
+                    explainer = stringResource(R.string.include_recorded_note),
+                    onToggle = { onIncludeRecordedChange(!uiState.includeRecordedItems) },
+                )
             }
         }
         WsHairlineDivider()
@@ -544,7 +548,10 @@ private fun ListCheckContent(
                         modifier = Modifier.fillMaxWidth().padding(WikiSayItSpacing.space3),
                         verticalArrangement = Arrangement.spacedBy(WikiSayItSpacing.space1),
                     ) {
-                        if (uiState.listPreFiltered) {
+                        if (uiState.secondTakes) {
+                            WsKicker(text = stringResource(R.string.second_takes_kicker))
+                            Text(text = stringResource(R.string.second_takes_body), style = typography.secondary)
+                        } else if (uiState.listPreFiltered) {
                             WsKicker(text = stringResource(R.string.gaps_only_kicker))
                             Text(text = stringResource(R.string.gaps_only_body), style = typography.secondary)
                         } else {
@@ -578,10 +585,13 @@ private fun ListCheckContent(
                         )
                     }
                 }
-                // A pre-filtered list (s-fi0.1) has no check to account for: its rawCount is
-                // already the final count, so the entries/excluded/added breakdown would just
-                // restate it.
-                if (uiState.listBuildStage == ListBuildStage.CHECKED && !uiState.listPreFiltered) {
+                // A pre-filtered list (s-fi0.1) has no check to account for, and a second-takes
+                // list (s-39z) is the check's excluded pile itself: in both, rawCount is already
+                // the final count, so the entries/excluded/added breakdown would just restate it.
+                if (uiState.listBuildStage == ListBuildStage.CHECKED &&
+                    !uiState.listPreFiltered &&
+                    !uiState.secondTakes
+                ) {
                     val finalCount = uiState.rawCount - uiState.excludedCount + uiState.formsAddedCount
                     WsTable(
                         modifier = Modifier.padding(top = WikiSayItSpacing.space4),
@@ -794,9 +804,10 @@ private fun EmptyOutcomeContent(
                 onClick = onPickDifferentList,
                 modifier = Modifier.fillMaxWidth(),
             )
-            // Nothing to offer as second takes: a pre-filtered build dropped those entries
-            // while walking the category rather than holding them back.
-            if (!hadError && !filteredEmpty) {
+            // Only worth offering when the check actually held something back (s-39z): a
+            // pre-filtered build (s-fi0.1) dropped its excluded entries while walking the
+            // category, and a genuinely empty list never had any to drop.
+            if (!hadError && uiState.excludedEntries.isNotEmpty()) {
                 WsGhostButton(
                     text = stringResource(R.string.empty_record_anyway_button),
                     onClick = onRecordAnyway,
