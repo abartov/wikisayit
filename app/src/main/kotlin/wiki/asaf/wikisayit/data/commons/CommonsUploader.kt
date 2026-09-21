@@ -2,6 +2,8 @@ package wiki.asaf.wikisayit.data.commons
 
 import io.ktor.http.ContentType
 import wiki.asaf.wikisayit.BuildConfig
+import wiki.asaf.wikisayit.data.language.LanguageCatalog
+import wiki.asaf.wikisayit.data.local.db.LanguageProficiency
 import wiki.asaf.wikisayit.network.MediaWikiApiException
 import wiki.asaf.wikisayit.network.WikimediaClients
 import wiki.asaf.wikisayit.ui.session.QueueEntry
@@ -14,7 +16,7 @@ private val OGG_CONTENT_TYPE = ContentType("audio", "ogg")
 
 /**
  * Uploads an approved take to Commons per the s-1s5.2 spec: named via [commonsFilename] and
- * tagged with the two WikiSayIt categories (by language and by uploader).
+ * tagged with the two Wiki-Say-It! categories (by language and by uploader).
  */
 class CommonsUploader
     @Inject
@@ -29,6 +31,7 @@ class CommonsUploader
             username: String,
             speakerName: String = "",
             dialect: String = "",
+            proficiency: LanguageProficiency? = null,
         ): String {
             val audioFile = requireNotNull(entry.audioFile) { "Cannot upload '${entry.label}': no recorded audio" }
             val filename = entry.commonsFilename(isoCode, username, speakerName)
@@ -39,8 +42,8 @@ class CommonsUploader
                         mapOf(
                             "action" to "upload",
                             "filename" to filename,
-                            "text" to buildUploadWikitext(entry, isoCode, username, speakerName, dialect, clock),
-                            "comment" to "Uploaded via WikiSayIt ${BuildConfig.VERSION_NAME}",
+                            "text" to buildUploadWikitext(entry, isoCode, username, speakerName, dialect, proficiency, clock),
+                            "comment" to "Uploaded via Wiki-Say-It! ${BuildConfig.VERSION_NAME}",
                             "token" to csrfToken,
                         ),
                     fileFieldName = "file",
@@ -54,8 +57,14 @@ class CommonsUploader
 /** The file description page wikitext: a proper `{{Information}}` template (machine-readable
  * `date=`/`source=`/`author=`, per Commons convention — without it, tools and other editors have
  * no structured way to see who recorded this or when), the `{{cc-zero}}` license tag, and both
- * WikiSayIt categories. Internal (rather than private) so [CommonsUploaderTest] can check its
+ * Wiki-Say-It! categories. Internal (rather than private) so [CommonsUploaderTest] can check its
  * content directly instead of parsing the multipart request wire format.
+ *
+ * The description names the language in English ("Hebrew", not "he") — the file page is read by
+ * people who have no reason to know ISO codes — and states the speaker's [proficiency] right
+ * after it, since "who said this and how well do they know the language" is the first thing a
+ * reuser of a pronunciation recording needs. A null [proficiency] (only possible for uploads
+ * queued by an older build, before it was persisted) just omits that clause.
  *
  * When [speakerName] is set and differs from [username] — someone else is speaking on this
  * account — the credited author is the speaker, not the uploader: `author=` names the speaker
@@ -69,16 +78,24 @@ internal fun buildUploadWikitext(
     username: String,
     speakerName: String = "",
     dialect: String = "",
+    proficiency: LanguageProficiency? = null,
     clock: Clock = Clock.systemUTC(),
 ): String {
     val isSpeakerCredited = speakerName.isNotBlank() && speakerName != username
     val authorLine = if (isSpeakerCredited) speakerName else "[[User:$username|$username]]"
-    val languageClause = if (dialect.isNotBlank()) "$isoCode ($dialect)" else isoCode
-    val facilitatedClause = if (isSpeakerCredited) ", facilitated by [[User:$username|$username]]" else ""
+    val languageName = LanguageCatalog.englishName(isoCode)
+    val languageClause = if (dialect.isNotBlank()) "$languageName ($dialect)" else languageName
+    val proficiencyClause =
+        when (proficiency) {
+            LanguageProficiency.NATIVE -> ", a native speaker"
+            LanguageProficiency.PROFICIENT -> ", a proficient speaker"
+            null -> ""
+        }
+    val facilitatedClause = if (isSpeakerCredited) ", facilitated by [[User:$username|$username]]." else ""
     return """
         =={{int:filedesc}}==
         {{Information
-        |description={{en|1=Pronunciation of "${entry.label}" (${entry.evidenceId}) in $languageClause, recorded via WikiSayIt$facilitatedClause.}}
+        |description={{en|1=Pronunciation of "${entry.label}" (${entry.evidenceId}) in $languageClause, by $authorLine$proficiencyClause, recorded via Wiki-Say-It!$facilitatedClause}}
         |date=${LocalDate.now(clock)}
         |source={{own}}
         |author=$authorLine
@@ -87,8 +104,8 @@ internal fun buildUploadWikitext(
         =={{int:license-header}}==
         {{cc-zero}}
 
-        [[Category:WikiSayIt pronunciations: $isoCode]]
-        [[Category:WikiSayIt pronunciations by $username]]
+        [[Category:Wiki-Say-It! pronunciations: $languageName]]
+        [[Category:Wiki-Say-It! pronunciations by $username]]
         """.trimIndent()
 }
 

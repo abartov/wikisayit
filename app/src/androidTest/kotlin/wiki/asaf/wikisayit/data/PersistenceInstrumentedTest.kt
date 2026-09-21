@@ -151,6 +151,7 @@ class PersistenceInstrumentedTest {
                         isoCode = "uk",
                         username = "Ijon",
                         speakerName = "",
+                        proficiency = LanguageProficiency.NATIVE,
                     ),
                 ),
             )
@@ -159,6 +160,7 @@ class PersistenceInstrumentedTest {
             assertEquals(1, loaded.size)
             val item = loaded.first()
             assertEquals("мова", item.entry.label)
+            assertEquals(LanguageProficiency.NATIVE, item.proficiency)
             assertTrue(item.entry.audioFile!!.exists())
             // The source file was moved, not copied, into durable storage.
             assertTrue(!audioFile.exists())

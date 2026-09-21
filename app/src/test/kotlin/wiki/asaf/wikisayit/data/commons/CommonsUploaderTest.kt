@@ -14,6 +14,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import wiki.asaf.wikisayit.data.local.db.LanguageProficiency
 import wiki.asaf.wikisayit.network.MediaWikiApiException
 import wiki.asaf.wikisayit.network.NoAuthTokenProvider
 import wiki.asaf.wikisayit.network.WikimediaClients
@@ -103,8 +104,52 @@ class CommonsUploaderTest {
         assertTrue(wikitext.contains("|source={{own}}"))
         assertTrue(wikitext.contains("|author=[[User:Ijon|Ijon]]"))
         assertTrue(wikitext.contains("{{cc-zero}}"))
-        assertTrue(wikitext.contains("[[Category:WikiSayIt pronunciations: he]]"))
-        assertTrue(wikitext.contains("[[Category:WikiSayIt pronunciations by Ijon]]"))
+        assertTrue(wikitext.contains("[[Category:Wiki-Say-It! pronunciations: Hebrew]]"))
+        assertTrue(wikitext.contains("[[Category:Wiki-Say-It! pronunciations by Ijon]]"))
+    }
+
+    @Test
+    fun `the description names the language in English and states the speaker's proficiency`() {
+        val entry = entryWithAudio()
+        val wikitext =
+            buildUploadWikitext(
+                entry,
+                isoCode = "he",
+                username = "Ijon",
+                proficiency = LanguageProficiency.NATIVE,
+            )
+
+        assertTrue(
+            wikitext.contains("in Hebrew, by [[User:Ijon|Ijon]], a native speaker, recorded via Wiki-Say-It!"),
+        )
+        assertTrue(!wikitext.contains("in he,"))
+    }
+
+    @Test
+    fun `a proficient - not native - speaker is described as such`() {
+        val entry = entryWithAudio()
+        val wikitext =
+            buildUploadWikitext(entry, isoCode = "he", username = "Ijon", proficiency = LanguageProficiency.PROFICIENT)
+
+        assertTrue(wikitext.contains("by [[User:Ijon|Ijon]], a proficient speaker,"))
+    }
+
+    @Test
+    fun `an upload queued before proficiency was recorded just omits the clause`() {
+        val entry = entryWithAudio()
+        val wikitext = buildUploadWikitext(entry, isoCode = "he", username = "Ijon", proficiency = null)
+
+        assertTrue(wikitext.contains("in Hebrew, by [[User:Ijon|Ijon]], recorded via Wiki-Say-It!"))
+        assertTrue(!wikitext.contains("speaker,"))
+    }
+
+    @Test
+    fun `an iso code with no English name in CLDR falls back to the code itself`() {
+        val entry = entryWithAudio()
+        val wikitext = buildUploadWikitext(entry, isoCode = "zzz", username = "Ijon")
+
+        assertTrue(wikitext.contains("in zzz, by"))
+        assertTrue(wikitext.contains("[[Category:Wiki-Say-It! pronunciations: zzz]]"))
     }
 
     @Test
@@ -131,6 +176,6 @@ class CommonsUploaderTest {
         val entry = entryWithAudio()
         val wikitext = buildUploadWikitext(entry, isoCode = "yi", username = "Ijon", dialect = "Litvish")
 
-        assertTrue(wikitext.contains("in yi (Litvish), recorded via WikiSayIt"))
+        assertTrue(wikitext.contains("in Yiddish (Litvish), by [[User:Ijon|Ijon]], recorded via Wiki-Say-It!"))
     }
 }

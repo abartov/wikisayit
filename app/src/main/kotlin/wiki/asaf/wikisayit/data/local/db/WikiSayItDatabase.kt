@@ -29,7 +29,7 @@ class RecordingEnumConverters {
         PendingUploadEntity::class,
         SkippedEntryEntity::class,
     ],
-    version = 5,
+    version = 6,
     exportSchema = false,
 )
 @TypeConverters(RecordingEnumConverters::class)
@@ -97,6 +97,13 @@ abstract class WikiSayItDatabase : RoomDatabase() {
                         `skipped_at_millis` INTEGER NOT NULL)
                         """.trimIndent(),
                     )
+                }
+            }
+
+        val MIGRATION_5_6 =
+            object : Migration(5, 6) {
+                override fun migrate(db: SupportSQLiteDatabase) {
+                    db.execSQL("ALTER TABLE pending_uploads ADD COLUMN proficiency TEXT NOT NULL DEFAULT ''")
                 }
             }
     }

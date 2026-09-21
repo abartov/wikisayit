@@ -45,6 +45,7 @@ class PendingUploadResumer
                             item.username,
                             item.speakerName,
                             item.dialect,
+                            item.proficiency,
                         )
                     } catch (cancellation: CancellationException) {
                         throw cancellation

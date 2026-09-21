@@ -56,7 +56,7 @@ class P443StatementWriter
                         "snaktype" to "value",
                         "value" to Json.encodeToString(commonsFilename),
                         "token" to csrfToken,
-                        "summary" to "Added pronunciation recorded via WikiSayIt ${BuildConfig.VERSION_NAME}",
+                        "summary" to "Added pronunciation recorded via Wiki-Say-It! ${BuildConfig.VERSION_NAME}",
                     ),
                 )
             if (response.success != 1) {
@@ -89,7 +89,7 @@ class P443StatementWriter
                         "snaktype" to "value",
                         "value" to Json.encodeToString(value),
                         "token" to csrfToken,
-                        "summary" to "Added qualifier via WikiSayIt ${BuildConfig.VERSION_NAME}",
+                        "summary" to "Added qualifier via Wiki-Say-It! ${BuildConfig.VERSION_NAME}",
                     ),
                 )
             if (response.success != 1) {

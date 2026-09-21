@@ -45,6 +45,7 @@ object DataModule {
                 WikiSayItDatabase.MIGRATION_2_3,
                 WikiSayItDatabase.MIGRATION_3_4,
                 WikiSayItDatabase.MIGRATION_4_5,
+                WikiSayItDatabase.MIGRATION_5_6,
             )
             .build()
 

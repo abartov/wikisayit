@@ -2,6 +2,7 @@ package wiki.asaf.wikisayit.data.uploads
 
 import android.content.Context
 import dagger.hilt.android.qualifiers.ApplicationContext
+import wiki.asaf.wikisayit.data.local.db.LanguageProficiency
 import wiki.asaf.wikisayit.data.local.db.PendingUploadDao
 import wiki.asaf.wikisayit.data.local.db.PendingUploadEntity
 import wiki.asaf.wikisayit.ui.session.EntryKind
@@ -15,8 +16,9 @@ private const val SCRIPT_VARIANTS_DELIMITER = ""
 
 /** One approved recording left for later (s-o8f): the [entry] it belongs to (with [QueueEntry.audioFile]
  * pointing at durable storage, not the cache directory it was recorded into) plus the contribution
- * context ([profileId]/[isoCode]/[username]/[speakerName]/[dialect]) and per-entry upload progress
- * needed to resume without redoing already-finished steps. */
+ * context ([profileId]/[isoCode]/[username]/[speakerName]/[dialect]/[proficiency]) and per-entry upload
+ * progress needed to resume without redoing already-finished steps. [proficiency] is null for rows
+ * saved by a build that predates it. */
 data class PendingUploadItem(
     val id: Long = 0,
     val entry: QueueEntry,
@@ -25,6 +27,7 @@ data class PendingUploadItem(
     val username: String,
     val speakerName: String,
     val dialect: String = "",
+    val proficiency: LanguageProficiency? = null,
     val commonsDone: Boolean = false,
     val p443Done: Boolean = false,
     val renameSuffix: Int = 0,
@@ -111,6 +114,7 @@ private fun PendingUploadItem.toEntity(
     username = username,
     speakerName = speakerName,
     dialect = dialect,
+    proficiency = proficiency?.name.orEmpty(),
     commonsDone = commonsDone,
     p443Done = p443Done,
     renameSuffix = renameSuffix,
@@ -136,6 +140,7 @@ private fun PendingUploadEntity.toItem(audioFile: File) =
         username = username,
         speakerName = speakerName,
         dialect = dialect,
+        proficiency = proficiency.takeIf { it.isNotEmpty() }?.let { LanguageProficiency.valueOf(it) },
         commonsDone = commonsDone,
         p443Done = p443Done,
         renameSuffix = renameSuffix,

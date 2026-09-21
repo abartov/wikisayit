@@ -15,6 +15,7 @@ import wiki.asaf.wikisayit.audio.AudioPlayer
 import wiki.asaf.wikisayit.audio.RecordingEngine
 import wiki.asaf.wikisayit.audio.RecordingFileStore
 import wiki.asaf.wikisayit.data.commons.CommonsUploader
+import wiki.asaf.wikisayit.data.local.db.LanguageProficiency
 import wiki.asaf.wikisayit.data.local.db.RecordingEntryType
 import wiki.asaf.wikisayit.data.local.db.SpeakerProfileWithLanguages
 import wiki.asaf.wikisayit.data.local.settings.SettingsRepository
@@ -1107,6 +1108,7 @@ class RecordingFlowViewModel
                             username = state.username,
                             speakerName = state.speakerName,
                             dialect = state.dialect,
+                            proficiency = state.language?.proficiency,
                             commonsDone = entryState.commonsDone,
                             p443Done = entryState.p443Done,
                             renameSuffix = entryState.renameSuffix,
@@ -1151,10 +1153,11 @@ class RecordingFlowViewModel
             val username = _uiState.value.username
             val speakerName = _uiState.value.speakerName
             val dialect = _uiState.value.dialect
+            val proficiency = _uiState.value.language?.proficiency
             for (index in indices) {
                 val entry = _uiState.value.approved.getOrNull(index) ?: continue
                 _uiState.update { it.copy(activeUploadIndex = index) }
-                uploadEntry(index, entry, isoCode, username, speakerName, dialect, profileId)
+                uploadEntry(index, entry, isoCode, username, speakerName, dialect, proficiency, profileId)
             }
             _uiState.update { it.copy(activeUploadIndex = null) }
             finishContributionIfComplete()
@@ -1174,6 +1177,7 @@ class RecordingFlowViewModel
             username: String,
             speakerName: String,
             dialect: String,
+            proficiency: LanguageProficiency?,
             profileId: Long,
         ) {
             val entryState = _uiState.value.uploadStates.getOrNull(index) ?: return
@@ -1189,7 +1193,7 @@ class RecordingFlowViewModel
             if (!entryState.commonsDone) {
                 filename =
                     try {
-                        commonsUploader.upload(renamedEntry, isoCode, username, speakerName, dialect)
+                        commonsUploader.upload(renamedEntry, isoCode, username, speakerName, dialect, proficiency)
                     } catch (cancellation: CancellationException) {
                         throw cancellation
                     } catch (error: Exception) {

@@ -24,6 +24,10 @@ data class PendingUploadEntity(
     val username: String,
     @ColumnInfo(name = "speaker_name") val speakerName: String,
     @ColumnInfo(name = "dialect", defaultValue = "") val dialect: String = "",
+    /** The speaker's proficiency in this language, for the Commons file description. Empty for
+     * rows queued before it was persisted — the description then just omits the clause rather
+     * than guessing a level. */
+    @ColumnInfo(name = "proficiency", defaultValue = "") val proficiency: String = "",
     @ColumnInfo(name = "commons_done") val commonsDone: Boolean,
     @ColumnInfo(name = "p443_done") val p443Done: Boolean,
     @ColumnInfo(name = "rename_suffix") val renameSuffix: Int,

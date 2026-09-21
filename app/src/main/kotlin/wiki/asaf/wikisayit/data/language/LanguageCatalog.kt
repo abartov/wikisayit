@@ -20,6 +20,16 @@ object LanguageCatalog {
             .sortedBy { it.displayName }
     }
 
+    /** The language's English name (e.g. "Hebrew" for "he"), for on-wiki text that shouldn't be
+     * written in whatever locale the phone happens to be set to. Falls back to [isoCode] itself
+     * when CLDR has no English name for it. */
+    fun englishName(isoCode: String): String {
+        val code = isoCode.trim()
+        if (code.isEmpty()) return ""
+        val name = Locale(code).getDisplayLanguage(Locale.ENGLISH)
+        return if (name.isBlank() || name.equals(code, ignoreCase = true)) code else name
+    }
+
     fun search(
         query: String,
         limit: Int = 30,
