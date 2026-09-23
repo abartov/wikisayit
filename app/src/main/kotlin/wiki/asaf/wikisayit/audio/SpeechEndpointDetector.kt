@@ -9,6 +9,12 @@ data class SpeechDetectorConfig(
      * Frames must hold this for [ONSET_CONFIRMATION_SECONDS] before speech is declared, which is
      * what makes a threshold this sensitive safe. */
     val startThresholdRms: Float = 0.012f,
+    /** Lowest the start threshold may go once the noise floor is calibrated and turns out to be
+     * well below [startThresholdRms] (~-44 dBFS). Mic gain varies a lot between devices, and on a
+     * low-gain one a softly spoken word can peak under [startThresholdRms] while still standing
+     * 20 dB clear of a quiet room — keying the bar to the measured floor down to here is what
+     * lets such a word start the take instead of leaving it listening indefinitely. */
+    val quietRoomStartThresholdRms: Float = 0.006f,
     /** Frame RMS (0f..1f) below which a frame counts as silence once speech has started; half the
      * start threshold, so a take that has begun needs a real 6 dB drop to look silent. */
     val stopThresholdRms: Float = 0.006f,
@@ -32,7 +38,8 @@ private const val NOISE_FLOOR_RISE_WINDOW_SECONDS = 1f
 
 /** How far above the measured noise floor the effective start/stop thresholds sit, so a room with
  * a nonzero background level doesn't get stuck never seeing the level drop back below a threshold
- * set for near-total silence. */
+ * set for near-total silence — and, in a quiet room, how far above the floor speech has to be
+ * for the start threshold to sit below [SpeechDetectorConfig.startThresholdRms]. */
 private const val NOISE_FLOOR_STOP_MARGIN = 2.0f
 private const val NOISE_FLOOR_START_MARGIN = 3.5f
 
@@ -77,8 +84,10 @@ sealed interface SpeechTransition {
  * all is left to the user to abandon, per the product spec (auto-stop only follows speech).
  *
  * The LISTENING frames before speech onset double as an ambient noise sample feeding a running
- * noise floor estimate, which raises the effective start/stop thresholds above
- * [SpeechDetectorConfig]'s static defaults in a room with a nonzero background level — otherwise
+ * noise floor estimate. In a quiet room that lowers the start threshold toward
+ * [SpeechDetectorConfig.quietRoomStartThresholdRms], so soft speech on a low-gain mic still
+ * registers; in a room with a nonzero background level it raises the effective start/stop
+ * thresholds above [SpeechDetectorConfig]'s static defaults — otherwise
  * the level can sit above [SpeechDetectorConfig.stopThresholdRms] indefinitely after the user
  * stops talking, and auto-stop never triggers. Everything about how that estimate moves is
  * deliberately biased against the estimate growing: it starts as a minimum, then falls fast and
@@ -128,7 +137,7 @@ class SpeechEndpointDetector(
             if (!floorIsCalibrated) {
                 config.startThresholdRms
             } else {
-                maxOf(config.startThresholdRms, noiseFloorRms * NOISE_FLOOR_START_MARGIN)
+                maxOf(config.quietRoomStartThresholdRms, noiseFloorRms * NOISE_FLOOR_START_MARGIN)
                     .coerceAtMost(config.startThresholdRms * MAX_ADAPTIVE_START_GAIN)
             }
 

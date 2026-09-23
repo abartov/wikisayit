@@ -154,9 +154,44 @@ class SpeechEndpointDetectorTest {
         assertEquals(0f, quiet.unconfirmedEnergySeconds, 1e-4f)
 
         // Audible, in the neighbourhood of the threshold, but never over it.
-        repeat(50) { quiet.onFrame(toneFrame(0.008f), FRAME, silenceThresholdSeconds = 1.5f) }
+        repeat(50) { quiet.onFrame(toneFrame(0.004f), FRAME, silenceThresholdSeconds = 1.5f) }
         assertEquals(SpeechState.LISTENING, quiet.state)
         assertTrue(quiet.unconfirmedEnergySeconds >= 0.5f)
+    }
+
+    @Test
+    fun `soft speech well clear of a quiet room starts the take below the static threshold`() {
+        // A low-gain mic: the room sits near -66 dBFS and the word near -42 dBFS — 24 dB of
+        // separation, yet under the 0.012 static start threshold.
+        val quiet = SpeechEndpointDetector(SpeechDetectorConfig())
+        repeat(30) { quiet.onFrame(toneFrame(0.0005f), FRAME, silenceThresholdSeconds = 1.5f) }
+
+        var started: SpeechTransition = SpeechTransition.None
+        repeat(3) {
+            val transition = quiet.onFrame(toneFrame(0.008f), FRAME, silenceThresholdSeconds = 1.5f)
+            if (transition != SpeechTransition.None) started = transition
+        }
+        assertEquals(SpeechTransition.StartedSpeaking, started)
+    }
+
+    @Test
+    fun `the quiet-room threshold does not apply before the floor is calibrated`() {
+        val quiet = SpeechEndpointDetector(SpeechDetectorConfig())
+        repeat(3) {
+            assertEquals(SpeechTransition.None, quiet.onFrame(toneFrame(0.008f), FRAME, silenceThresholdSeconds = 1.5f))
+        }
+        assertEquals(SpeechState.LISTENING, quiet.state)
+    }
+
+    @Test
+    fun `a moderately noisy room still keeps its floor-based start threshold`() {
+        val room = SpeechEndpointDetector(SpeechDetectorConfig())
+        repeat(30) { room.onFrame(toneFrame(0.004f), FRAME, silenceThresholdSeconds = 1.5f) }
+        // 0.008 is only 2x this room's floor: not speech here.
+        repeat(5) {
+            assertEquals(SpeechTransition.None, room.onFrame(toneFrame(0.008f), FRAME, silenceThresholdSeconds = 1.5f))
+        }
+        assertEquals(SpeechState.LISTENING, room.state)
     }
 
     @Test
