@@ -32,6 +32,20 @@ class SilenceCropperTest {
     }
 
     @Test
+    fun `keeps a margin of original audio around the speech`() {
+        val input = samples(0f, 0.01f, 0.02f, 0.5f, 0.6f, 0.02f, 0.01f, 0f)
+        val result = cropSilence(input, threshold = 0.04f, marginSamples = 2)
+        assertArrayEquals(samples(0.01f, 0.02f, 0.5f, 0.6f, 0.02f, 0.01f), result)
+    }
+
+    @Test
+    fun `margin is clamped to the ends of the recording`() {
+        val input = samples(0.01f, 0.5f, 0.6f, 0.02f)
+        val result = cropSilence(input, threshold = 0.04f, marginSamples = 5)
+        assertArrayEquals(input, result)
+    }
+
+    @Test
     fun `handles empty input`() {
         assertEquals(0, cropSilence(ShortArray(0)).size)
     }

@@ -75,11 +75,13 @@ class RecordingEngineTest {
             assertTrue(finished is RecordingEngine.Event.Finished)
             finished as RecordingEngine.Event.Finished
             assertEquals(output, finished.file)
-            // Cropped to just the two loud frames (20 samples @ 100Hz = 0.2s), pre-padding.
-            assertEquals(0.2f, finished.durationSeconds, 0.001f)
+            // The two loud frames (20 samples @ 100Hz) plus a 0.2s margin of original audio on
+            // each side — clamped to the 10 samples recorded before speech — pre-padding: 50
+            // samples = 0.5s.
+            assertEquals(0.5f, finished.durationSeconds, 0.001f)
 
             // Encoder receives the cropped audio plus 0.2s (20 samples @ 100Hz) padding on each side.
-            assertEquals(60, encoder.lastSamples?.size)
+            assertEquals(90, encoder.lastSamples?.size)
         }
 
     @Test
@@ -188,7 +190,8 @@ class RecordingEngineTest {
             val finished = events.last()
             assertTrue(finished is RecordingEngine.Event.Finished)
             finished as RecordingEngine.Event.Finished
-            assertEquals(0.3f, finished.durationSeconds, 0.001f)
+            // 3 quiet frames plus the margin, clamped to the 1 frame before and 2 frames after.
+            assertEquals(0.6f, finished.durationSeconds, 0.001f)
         }
 
     @Test
@@ -216,8 +219,9 @@ class RecordingEngineTest {
             assertTrue(finished is RecordingEngine.Event.Finished)
             finished as RecordingEngine.Event.Finished
             // Cropped span covers the first through last loud frame (indices 1..6), including the
-            // silent gap between them: 6 frames @ 100Hz = 0.6s.
-            assertEquals(0.6f, finished.durationSeconds, 0.001f)
+            // silent gap between them, plus a 0.2s margin clamped to the 0.1s recorded before
+            // it; the last loud frame ends the recording: 7 frames @ 100Hz = 0.7s.
+            assertEquals(0.7f, finished.durationSeconds, 0.001f)
         }
 
     @Test

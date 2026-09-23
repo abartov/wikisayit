@@ -21,6 +21,7 @@ class RecordingEngine(
     private val encoder: AudioEncoder = OggVorbisEncoder(),
     private val speechConfig: SpeechDetectorConfig = SpeechDetectorConfig(),
     private val cropThreshold: Float = DEFAULT_CROP_THRESHOLD,
+    private val cropMarginSeconds: Float = DEFAULT_CROP_MARGIN_SECONDS,
     private val paddingSeconds: Float = DEFAULT_PADDING_SECONDS,
     private val minDurationSeconds: Float = 0.15f,
 ) {
@@ -41,7 +42,7 @@ class RecordingEngine(
 
         data class Finished(val file: File, val durationSeconds: Float) : Event
 
-        /** The cropped recording was shorter than [minDurationSeconds]; nothing was written. */
+        /** The detected speech was shorter than [minDurationSeconds]; nothing was written. */
         data object TooShort : Event
     }
 
@@ -153,11 +154,13 @@ class RecordingEngine(
         noiseFloorPeak: Float = 0f,
     ) {
         val samples = flattenBlocks(blocks)
-        val cropped = cropSilence(samples, effectiveCropThreshold(samples, noiseFloorPeak))
-        if (cropped.size < (minDurationSeconds * audioSource.sampleRate).toInt()) {
+        val speech = speechBounds(samples, effectiveCropThreshold(samples, noiseFloorPeak))
+        if (speech == null || speech.count() < (minDurationSeconds * audioSource.sampleRate).toInt()) {
             emit(Event.TooShort)
             return
         }
+
+        val cropped = cropTo(samples, speech, (cropMarginSeconds * audioSource.sampleRate).toInt())
 
         val padded = addPadding(cropped, audioSource.sampleRate, paddingSeconds)
         encoder.encode(padded, audioSource.sampleRate, outputFile)
