@@ -203,6 +203,7 @@ class RecordingFlowViewModel
         private fun buildCategoryList(state: RecordingFlowUiState) {
             val language = state.language?.isoCode.orEmpty()
             val filter = GapsOnlyFilter(language, excludeRecorded = !state.includeRecordedItems)
+            viewModelScope.launch { settingsRepository.rememberCategory(language, state.sourceText) }
             resolveAsyncList(landOnChecked = filter.excludeRecorded, extraUpdate = filter::applyTo) {
                 categorySource.build(
                     categoryName = state.sourceText,

@@ -26,6 +26,12 @@ interface SettingsRepository {
     suspend fun setInterfaceLanguageTag(tag: String?)
 
     suspend fun setMaxListSize(size: Int)
+
+    /** Moves [category] to the top of [languageCode]'s past categories, adding it if new. */
+    suspend fun rememberCategory(
+        languageCode: String,
+        category: String,
+    )
 }
 
 class DataStoreSettingsRepository
@@ -40,6 +46,7 @@ class DataStoreSettingsRepository
             val SILENCE_THRESHOLD_SECONDS = floatPreferencesKey("silence_threshold_seconds")
             val INTERFACE_LANGUAGE_TAG = stringPreferencesKey("interface_language_tag")
             val MAX_LIST_SIZE = intPreferencesKey("max_list_size")
+            val RECENT_CATEGORIES = stringPreferencesKey("recent_categories")
         }
 
         override val settings: Flow<AppSettings> =
@@ -51,6 +58,7 @@ class DataStoreSettingsRepository
                     silenceThresholdSeconds = preferences[Keys.SILENCE_THRESHOLD_SECONDS] ?: 1.5f,
                     interfaceLanguageTag = preferences[Keys.INTERFACE_LANGUAGE_TAG],
                     maxListSize = preferences[Keys.MAX_LIST_SIZE] ?: DEFAULT_MAX_LIST_SIZE,
+                    recentCategories = decodeRecentCategories(preferences[Keys.RECENT_CATEGORIES]),
                 )
             }
 
@@ -89,4 +97,35 @@ class DataStoreSettingsRepository
         override suspend fun setMaxListSize(size: Int) {
             dataStore.edit { it[Keys.MAX_LIST_SIZE] = size.coerceAtLeast(1) }
         }
+
+        override suspend fun rememberCategory(
+            languageCode: String,
+            category: String,
+        ) {
+            val name = category.trim().replace(Regex("\\s+"), " ")
+            if (name.isEmpty()) return
+            dataStore.edit {
+                val all = decodeRecentCategories(it[Keys.RECENT_CATEGORIES])
+                val updated =
+                    (listOf(name) + all[languageCode].orEmpty().filterNot { old -> old == name })
+                        .take(MAX_RECENT_CATEGORIES)
+                it[Keys.RECENT_CATEGORIES] = encodeRecentCategories(all + (languageCode to updated))
+            }
+        }
     }
+
+/** One "lang<TAB>category" pair per line; neither a language code nor a category title can
+ * contain a tab or a newline, so no escaping is needed. */
+private fun encodeRecentCategories(categories: Map<String, List<String>>): String =
+    categories
+        .flatMap { (language, names) -> names.map { "$language\t$it" } }
+        .joinToString("\n")
+
+private fun decodeRecentCategories(encoded: String?): Map<String, List<String>> =
+    encoded
+        .orEmpty()
+        .lineSequence()
+        .mapNotNull { line ->
+            val tab = line.indexOf('\t')
+            if (tab <= 0 || tab == line.lastIndex) null else line.substring(0, tab) to line.substring(tab + 1)
+        }.groupBy({ it.first }, { it.second })

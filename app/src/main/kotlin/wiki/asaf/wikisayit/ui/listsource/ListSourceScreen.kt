@@ -13,11 +13,19 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.pluralStringResource
@@ -271,15 +279,24 @@ private fun SourceFormContent(
             if (sourceType == ListSourceType.QUERY) {
                 CannedQueryPicker(onPick = onCannedQueryPick)
             }
-            OutlinedTextField(
-                value = uiState.sourceText,
-                onValueChange = onTextChange,
-                label = { Text(formLabel) },
-                modifier = Modifier.fillMaxWidth(),
-                minLines = 6,
-                textStyle = TextStyle(fontFamily = MonospaceEvidence, fontSize = 12.5.sp),
-                keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.None),
-            )
+            if (sourceType == ListSourceType.CATEGORY) {
+                CategoryField(
+                    value = uiState.sourceText,
+                    label = formLabel,
+                    pastCategories = uiState.settings.recentCategories[uiState.language?.isoCode.orEmpty()].orEmpty(),
+                    onValueChange = onTextChange,
+                )
+            } else {
+                OutlinedTextField(
+                    value = uiState.sourceText,
+                    onValueChange = onTextChange,
+                    label = { Text(formLabel) },
+                    modifier = Modifier.fillMaxWidth(),
+                    minLines = 6,
+                    textStyle = sourceTextStyle,
+                    keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.None),
+                )
+            }
             if (sourceType == ListSourceType.PASTE) {
                 Column {
                     Text(
@@ -349,6 +366,67 @@ private fun SourceFormContent(
                 enabled = uiState.sourceText.isNotBlank(),
                 modifier = Modifier.weight(1f),
             )
+        }
+    }
+}
+
+private val sourceTextStyle = TextStyle(fontFamily = MonospaceEvidence, fontSize = 12.5.sp)
+
+/** The category name field, with a dropdown of categories already used on this wiki (s-3u4):
+ * speakers usually record several batches from one category, so they shouldn't retype it each
+ * time. Typing narrows the dropdown to matching past categories. */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun CategoryField(
+    value: String,
+    label: String,
+    pastCategories: List<String>,
+    onValueChange: (String) -> Unit,
+) {
+    var expanded by remember { mutableStateOf(false) }
+    val typed = value.trim()
+    val suggestions =
+        if (typed.isEmpty() || typed in pastCategories) {
+            pastCategories
+        } else {
+            pastCategories.filter { it.contains(typed, ignoreCase = true) }
+        }
+    ExposedDropdownMenuBox(
+        expanded = expanded && suggestions.isNotEmpty(),
+        onExpandedChange = { expanded = it },
+    ) {
+        OutlinedTextField(
+            value = value,
+            onValueChange = {
+                onValueChange(it)
+                expanded = true
+            },
+            label = { Text(label) },
+            trailingIcon =
+                if (pastCategories.isEmpty()) {
+                    null
+                } else {
+                    { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded && suggestions.isNotEmpty()) }
+                },
+            singleLine = true,
+            textStyle = sourceTextStyle,
+            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.None),
+            modifier = Modifier.fillMaxWidth().menuAnchor(MenuAnchorType.PrimaryEditable),
+        )
+        ExposedDropdownMenu(
+            expanded = expanded && suggestions.isNotEmpty(),
+            onDismissRequest = { expanded = false },
+        ) {
+            suggestions.forEach { category ->
+                DropdownMenuItem(
+                    text = { Text(text = category, style = sourceTextStyle) },
+                    onClick = {
+                        onValueChange(category)
+                        expanded = false
+                    },
+                    contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding,
+                )
+            }
         }
     }
 }
