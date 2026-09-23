@@ -13,6 +13,7 @@ import wiki.asaf.wikisayit.ui.listsource.ListSourceScreen
 import wiki.asaf.wikisayit.ui.profile.NewProfileScreen
 import wiki.asaf.wikisayit.ui.profile.ProfileScreen
 import wiki.asaf.wikisayit.ui.recording.RecordingScreen
+import wiki.asaf.wikisayit.ui.recovery.RecoveryScreen
 import wiki.asaf.wikisayit.ui.review.ReviewScreen
 import wiki.asaf.wikisayit.ui.session.RecordingFlowViewModel
 import wiki.asaf.wikisayit.ui.settings.SettingsScreen
@@ -70,7 +71,11 @@ fun WikiSayItNavHost(
             ListSourceScreen(
                 viewModel = sessionViewModel,
                 onStartRecording = { navController.navigate(WikiSayItRoute.Recording) },
+                onRecoveryMode = { navController.navigate(WikiSayItRoute.Recovery) },
             )
+        }
+        composable<WikiSayItRoute.Recovery> {
+            RecoveryScreen(onBack = { navController.popBackStack() })
         }
         composable<WikiSayItRoute.Recording> {
             RecordingScreen(

@@ -60,13 +60,18 @@ import wiki.asaf.wikisayit.ui.theme.WikiSayItSpacing
 fun ListSourceScreen(
     viewModel: RecordingFlowViewModel,
     onStartRecording: () -> Unit,
+    onRecoveryMode: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     when (uiState.listBuildStage) {
         ListBuildStage.PICK_SOURCE ->
-            SourcePickContent(onPick = viewModel::selectSourceType, modifier = modifier)
+            SourcePickContent(
+                onPick = viewModel::selectSourceType,
+                onRecoveryMode = onRecoveryMode,
+                modifier = modifier,
+            )
         ListBuildStage.SOURCE_FORM ->
             SourceFormContent(
                 uiState = uiState,
@@ -146,6 +151,7 @@ private fun ScreenHeader(
 @Composable
 private fun SourcePickContent(
     onPick: (ListSourceType) -> Unit,
+    onRecoveryMode: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
@@ -176,6 +182,20 @@ private fun SourcePickContent(
                 body = stringResource(R.string.source_category_body),
                 onClick = { onPick(ListSourceType.CATEGORY) },
             )
+            // Not a list source: re-links an earlier session's uploads instead of recording (s-7f3).
+            Column(modifier = Modifier.padding(bottom = WikiSayItSpacing.space4)) {
+                WsGhostButton(
+                    text = stringResource(R.string.recovery_mode_button),
+                    onClick = onRecoveryMode,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                Text(
+                    text = stringResource(R.string.recovery_mode_button_note),
+                    style = LocalWikiSayItTypography.current.caption,
+                    color = LocalWikiSayItColors.current.neutral700,
+                    modifier = Modifier.padding(top = WikiSayItSpacing.space1),
+                )
+            }
         }
     }
 }

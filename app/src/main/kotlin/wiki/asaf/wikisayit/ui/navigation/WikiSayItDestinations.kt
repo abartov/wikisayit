@@ -24,6 +24,10 @@ sealed interface WikiSayItRoute {
     @Serializable
     data object ListSource : WikiSayItRoute
 
+    /** Re-links an earlier session's Commons uploads to Wikidata (s-7f3), offered from [ListSource]. */
+    @Serializable
+    data object Recovery : WikiSayItRoute
+
     @Serializable
     data object Recording : WikiSayItRoute
 
