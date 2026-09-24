@@ -4,10 +4,19 @@
 # ./keystore/release.jks; if that keystore (and keystore.properties) don't
 # exist yet, this script generates them on first run.
 #
+# A release build first bumps VERSION and VERSION_CODE (patch level by default),
+# and once the build succeeds commits them as "vX.Y.Z" and tags that commit
+# vX.Y.Z (F-Droid builds from these tags). Nothing is pushed. If the build
+# fails, both files are restored. Write the F-Droid changelog for the new
+# versionCode beforehand (fastlane/metadata/android/en-US/changelogs/<code>.txt)
+# and it's included in the release commit.
+#
 # Usage:
-#   ./build_and_sign.sh                 # build debug + release
-#   ./build_and_sign.sh --debug-only    # build debug only
-#   ./build_and_sign.sh --release-only  # build release only (generates keystore if needed)
+#   ./build_and_sign.sh                 # bump patch, build debug + release
+#   ./build_and_sign.sh --debug-only    # build debug only (no bump)
+#   ./build_and_sign.sh --release-only  # bump patch, build release only (generates keystore if needed)
+#   ./build_and_sign.sh --bump=minor    # bump minor (or major) instead of patch
+#   ./build_and_sign.sh --no-bump       # build release without bumping, committing, or tagging
 #   ./build_and_sign.sh --init-keystore # (re)generate the release keystore, then exit
 #
 # Env overrides for keystore generation:
@@ -28,6 +37,7 @@ KEYSTORE_PROPERTIES="keystore.properties"
 BUILD_DEBUG=1
 BUILD_RELEASE=1
 INIT_KEYSTORE_ONLY=0
+BUMP=patch
 
 for arg in "$@"; do
     case "$arg" in
@@ -39,6 +49,12 @@ for arg in "$@"; do
             ;;
         --init-keystore)
             INIT_KEYSTORE_ONLY=1
+            ;;
+        --bump=major|--bump=minor|--bump=patch)
+            BUMP="${arg#--bump=}"
+            ;;
+        --no-bump)
+            BUMP=""
             ;;
         -h|--help)
             grep -E '^#( |$)' "$0" | sed -E 's/^# ?//'
@@ -104,9 +120,74 @@ EOF
     echo
 }
 
+# Must match the formula app/build.gradle.kts enforces.
+version_code_for() {
+    local major minor patch
+    IFS=. read -r major minor patch <<< "$1"
+    echo $((2000000 + major * 10000 + minor * 100 + patch))
+}
+
+bump_version() {
+    local old_version major minor patch
+    old_version="$(tr -d '[:space:]' < VERSION)"
+    IFS=. read -r major minor patch <<< "$old_version"
+    case "$BUMP" in
+        major) major=$((major + 1)); minor=0; patch=0 ;;
+        minor) minor=$((minor + 1)); patch=0 ;;
+        patch) patch=$((patch + 1)) ;;
+    esac
+    NEW_VERSION="${major}.${minor}.${patch}"
+    NEW_VERSION_CODE="$(version_code_for "$NEW_VERSION")"
+
+    if git rev-parse -q --verify "refs/tags/v${NEW_VERSION}" >/dev/null; then
+        echo "Tag v${NEW_VERSION} already exists; refusing to bump." >&2
+        exit 1
+    fi
+
+    OLD_VERSION_FILE="$(cat VERSION)"
+    OLD_VERSION_CODE_FILE="$(cat VERSION_CODE)"
+    echo "$NEW_VERSION" > VERSION
+    echo "$NEW_VERSION_CODE" > VERSION_CODE
+    trap restore_version EXIT
+    echo "==> Bumped version ${old_version} -> ${NEW_VERSION} (versionCode ${NEW_VERSION_CODE})"
+
+    # F-Droid reads the changelog from the tagged commit, so it has to exist before tagging.
+    CHANGELOG="fastlane/metadata/android/en-US/changelogs/${NEW_VERSION_CODE}.txt"
+    if [[ ! -f "$CHANGELOG" ]]; then
+        echo "Note: no F-Droid changelog at ${CHANGELOG}; v${NEW_VERSION} will be tagged without one."
+    fi
+}
+
+restore_version() {
+    [[ "$?" -eq 0 ]] && return
+    echo "$OLD_VERSION_FILE" > VERSION
+    echo "$OLD_VERSION_CODE_FILE" > VERSION_CODE
+    echo "Build failed; restored VERSION and VERSION_CODE." >&2
+}
+
+commit_and_tag_version() {
+    trap - EXIT
+    local files=(VERSION VERSION_CODE)
+    if [[ -f "$CHANGELOG" ]]; then
+        git add -- "$CHANGELOG"
+        files+=("$CHANGELOG")
+    fi
+    git commit -q -m "v${NEW_VERSION}" -- "${files[@]}"
+    git tag "v${NEW_VERSION}"
+    echo "==> Committed and tagged v${NEW_VERSION} (not pushed)"
+}
+
 if [[ "$INIT_KEYSTORE_ONLY" -eq 1 ]]; then
     generate_keystore
     exit 0
+fi
+
+if [[ "$BUILD_RELEASE" -eq 0 ]]; then
+    BUMP=""
+fi
+
+if [[ -n "$BUMP" ]]; then
+    bump_version
 fi
 
 if [[ "$BUILD_DEBUG" -eq 1 ]]; then
@@ -118,6 +199,10 @@ if [[ "$BUILD_RELEASE" -eq 1 ]]; then
     generate_keystore
     echo "==> Building signed release APK"
     ./gradlew assembleRelease
+fi
+
+if [[ -n "$BUMP" ]]; then
+    commit_and_tag_version
 fi
 
 echo
