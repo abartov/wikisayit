@@ -74,6 +74,12 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
+        // The Vorbis AARs also ship an "armeabi" build that no device can use at minSdk 26
+        // (the ARM ones all take armeabi-v7a or arm64-v8a); F-Droid flags the uneven ABI set.
+        ndk {
+            abiFilters += listOf("armeabi-v7a", "arm64-v8a", "x86", "x86_64")
+        }
+
         buildConfigField(
             "String",
             "SUPPORTED_INTERFACE_LANGUAGES",
