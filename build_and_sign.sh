@@ -198,7 +198,9 @@ fi
 if [[ "$BUILD_RELEASE" -eq 1 ]]; then
     generate_keystore
     echo "==> Building signed release APK"
-    ./gradlew assembleRelease
+    # Clean, so the published APK matches F-Droid's reproducible rebuild byte for byte;
+    # stale incremental outputs have produced a differing classes.dex.
+    ./gradlew clean assembleRelease
 fi
 
 if [[ -n "$BUMP" ]]; then

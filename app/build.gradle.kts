@@ -96,6 +96,9 @@ android {
         release {
             isMinifyEnabled = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            // The embedded git revision would differ from F-Droid's rebuild, since
+            // build_and_sign.sh builds before committing the version bump.
+            vcsInfo.include = false
             if (hasReleaseSigning) {
                 signingConfig = signingConfigs.getByName("release")
             }
