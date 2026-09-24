@@ -1,0 +1,4 @@
+* Offer past categories in a dropdown when building a list from a Wikipedia category
+* Recovery mode to re-link past Commons uploads to Wikidata
+* Keep 0.2s of original audio around detected speech when cropping
+* Auto mode no longer keeps listening indefinitely through a spoken word

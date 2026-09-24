@@ -1,0 +1,27 @@
+Categories:
+  - Multimedia
+  - Science & Education
+License: Apache-2.0
+AuthorName: Asaf Bartov
+AuthorEmail: asaf.bartov@gmail.com
+SourceCode: https://github.com/abartov/wikisayit
+IssueTracker: https://github.com/abartov/wikisayit/issues
+
+AutoName: Wiki-Say-It!
+
+RepoType: git
+Repo: https://github.com/abartov/wikisayit.git
+
+Builds:
+  - versionName: 0.2.8
+    versionCode: 2000208
+    commit: v0.2.8
+    subdir: app
+    gradle:
+      - yes
+
+AutoUpdateMode: Version
+UpdateCheckMode: Tags ^v\d+\.\d+\.\d+$
+UpdateCheckData: VERSION_CODE|(\d+)|VERSION|(.+)
+CurrentVersion: 0.2.8
+CurrentVersionCode: 2000208

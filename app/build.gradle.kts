@@ -1,6 +1,4 @@
 import java.util.Properties
-import java.text.SimpleDateFormat
-import java.util.Date
 
 plugins {
     alias(libs.plugins.android.application)
@@ -49,13 +47,18 @@ val supportedInterfaceLanguages: List<String> =
         tags.sorted()
     }
 
-
-// Minutes since a fixed epoch, not yyMMddHHmm-as-int: the latter overflows Int
-// (Play Store's versionCode ceiling) once the year prefix pushes the string past
-// 10 digits, e.g. "2609150141" > Int.MAX_VALUE.
-fun generateVersionCode(): Int {
-    val epochMillis = SimpleDateFormat("yyyyMMdd").parse("20240101").time
-    return ((Date().time - epochMillis) / 60_000L).toInt()
+// versionCode lives in its own file as a plain integer so F-Droid's update checker can
+// read it (it can't evaluate Gradle), and it must be deterministic for F-Droid to rebuild
+// a release. It's derived from VERSION as 2_000_000 + major*10_000 + minor*100 + patch;
+// the 2_000_000 offset keeps it above the minutes-since-2024 codes used before 0.2.9.
+// The build fails if the two files drift, so a release bumps both together.
+val appVersionCode = rootProject.file("VERSION_CODE").readText().trim().toInt()
+run {
+    val (major, minor, patch) = appVersionName.split(".").map { it.toInt() }
+    val expected = 2_000_000 + major * 10_000 + minor * 100 + patch
+    check(appVersionCode == expected) {
+        "VERSION_CODE is $appVersionCode but VERSION $appVersionName requires $expected"
+    }
 }
 
 android {
@@ -66,7 +69,7 @@ android {
         applicationId = "wiki.asaf.wikisayit"
         minSdk = 26
         targetSdk = 36
-        versionCode = generateVersionCode()
+        versionCode = appVersionCode
         versionName = appVersionName
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -97,6 +100,13 @@ android {
                 signingConfig = signingConfigs.getByName("release")
             }
         }
+    }
+
+    // AGP otherwise embeds a dependency-metadata block encrypted with Google's key, which
+    // F-Droid rejects as an opaque blob. Play only needs it in the bundle.
+    dependenciesInfo {
+        includeInApk = false
+        includeInBundle = true
     }
 
     compileOptions {

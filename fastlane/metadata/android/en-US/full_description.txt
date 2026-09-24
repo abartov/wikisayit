@@ -1,0 +1,20 @@
+<p>Wiki-Say-It! lets you record pronunciations of words, names, and phrases in your language and contribute them to <b>Wikimedia Commons</b>, linking each recording from the matching <b>Wikidata</b> item or lexeme form. It brings the flow of the browser-based <a href="https://lingualibre.org/">Lingua Libre</a> to your phone.</p>
+
+<p><b>How it works</b></p>
+<ul>
+<li>Sign in with your Wikimedia account (OAuth — the app never sees your password) and set up a speaker profile with the languages you speak, your proficiency, and your dialect.</li>
+<li>Build a list of things to record: paste your own words (matched to Wikidata items or lexemes), run a Wikidata SPARQL query, or pull the pages of a Wikipedia category and its subcategories.</li>
+<li>The app skips entries that already have a pronunciation recording, so you only record what's missing.</li>
+<li>Record the list one entry at a time. Auto mode detects when you start and stop speaking and trims silence and background noise automatically.</li>
+<li>Review every take, re-record the ones you don't like, and skip the ones you'd rather not contribute.</li>
+<li>Contribute: recordings are encoded as Ogg Vorbis, uploaded to Commons under CC0, and added to Wikidata as "pronunciation audio" (P443) statements.</li>
+</ul>
+
+<p><b>Also</b></p>
+<ul>
+<li>Multiple speaker profiles on one device</li>
+<li>Recording statistics by month and year</li>
+<li>Right-to-left interface support; translations welcome via translatewiki.net</li>
+</ul>
+
+<p>Wiki-Say-It! is free and open-source software (Apache-2.0), written by a volunteer. It has no ads, no analytics, and no tracking; the only network connections it makes are to Wikimedia sites.</p>
