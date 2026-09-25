@@ -1,0 +1,2 @@
+* Smaller download (about 740 KB less) by leaving out native libraries for an old CPU type that no supported device uses
+* Build changes so F-Droid can verify its builds match the official release
