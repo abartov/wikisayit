@@ -19,6 +19,12 @@ class InterfaceLanguagesTest {
     }
 
     @Test
+    fun `excludes the qq message-documentation pseudo-language`() {
+        val tags = InterfaceLanguages.options.map { it.tag }
+        assertTrue("qq" !in tags)
+    }
+
+    @Test
     fun `each option's display name is a non-blank endonym`() {
         InterfaceLanguages.options.forEach { option ->
             assertTrue("displayName for ${option.tag} should not be blank", option.displayName.isNotBlank())

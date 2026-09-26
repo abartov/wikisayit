@@ -1,0 +1,352 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Message documentation for translators on translatewiki.net ("qqq" there, exported as values-qq).
+    Every key in values/strings.xml needs an entry here. Describe parameters in words; never paste
+    Android format placeholders into this file, or Android lint will compare them against the
+    English strings and fail the build.
+-->
+<resources>
+    <string name="app_name">The name of the app. It is a brand name: keep it as is, or transliterate it into your script only if that is the usual practice in your language.</string>
+
+    <string name="nav_menu_open">Accessibility label for the button that opens the navigation (hamburger) menu.</string>
+    <string name="nav_menu_signed_in_as">Line at the top of the navigation menu. Parameter 1 is the Wikimedia username of the signed-in user.</string>
+    <string name="top_bar_reset_action">Accessibility label for the top-bar button that resets the current recording session and returns to the first step (choosing a speaker profile).</string>
+    <string name="top_bar_reset_dialog_title">Title of the confirmation dialog shown before resetting the current session.</string>
+    <string name="top_bar_reset_dialog_body">Body text of the confirmation dialog shown before resetting the current session.</string>
+    <string name="top_bar_reset_confirm">Button in the reset-session confirmation dialog that confirms the reset.</string>
+    <string name="top_bar_reset_cancel">Button in the reset-session confirmation dialog that cancels the reset and returns to the session.</string>
+
+    <string name="sign_in_kicker">Small lowercase tagline above the sign-in screen headline, summarizing the three things the app does. The dots are separators.</string>
+    <string name="sign_in_promise">Main pitch on the sign-in screen, explaining why recording pronunciations is useful.</string>
+    <string name="sign_in_you_will_need_kicker">Small lowercase heading on the sign-in screen, above a list of things the user needs.</string>
+    <string name="sign_in_you_will_need_body">The list of things the user needs before starting, shown under the heading \'you will need\'. The dots are separators.</string>
+    <string name="sign_in_primary_cta">Main button on the sign-in screen. Opens the Wikimedia login page in the browser.</string>
+    <string name="sign_in_primary_cta_in_progress">Replaces the sign-in button text while signing in is in progress.</string>
+    <string name="sign_in_note">Reassurance note under the sign-in button: the login is done on the Wikimedia website (OAuth), so the app never handles the password.</string>
+    <string name="sign_in_logged_out_note">Notice on the sign-in screen after the user was logged out (for example because their login expired).</string>
+    <string name="sign_in_no_account">Link on the sign-in screen that opens the Wikimedia account creation page.</string>
+    <string name="nav_destination_language">Name of the language-selection screen, used in navigation. Refers to the language the user will record in, not the interface language.</string>
+    <string name="language_step_kicker">Small heading on the language-selection screen: this is the second of the four steps for setting up a recording session.</string>
+    <string name="language_title">Headline on the language-selection screen, asking which language the user will record words in.</string>
+    <string name="language_explainer">Explanation under the language-selection headline. Parameter 1 is the name of the chosen speaker profile (a Wikimedia username).</string>
+    <string name="nav_destination_list_source">Name of the screen where the user chooses where the list of words to record comes from, used in navigation.</string>
+    <string name="nav_destination_recording">Name of the recording screen, used in navigation. A noun: the act of recording.</string>
+    <string name="nav_destination_review">Name of the screen where the user listens back to their recordings, used in navigation.</string>
+    <string name="nav_destination_contribution">Name of the screen that uploads recordings to Wikimedia Commons and Wikidata, used in navigation.</string>
+    <string name="nav_destination_settings">Name of the Settings screen, used in the navigation menu.</string>
+    <string name="nav_destination_stats">Name of the statistics screen (how many recordings the user has made), used in the navigation menu.</string>
+    <string name="nav_destination_about">Name of the About screen (version, license, credits), used in the navigation menu.</string>
+
+    <string name="profile_step_kicker">Small heading on the profile-selection screen: this is the first of the four steps for setting up a recording session. \'Speaker\' is the person who will be recorded.</string>
+    <string name="profile_title">Headline on the profile-selection screen, asking who will be recorded.</string>
+    <string name="profile_explainer">Explanation of what a speaker profile is, under the profile-selection headline.</string>
+    <string name="profile_home_wikis">Small lowercase line on each profile card, naming the two wikis the profile contributes to (Wikimedia Commons and Wikidata). The dot is a separator.</string>
+    <string name="profile_new_button">Button that opens the form for creating a new speaker profile.</string>
+    <string name="profile_footer_note">Note at the bottom of the profile-selection screen.</string>
+    <string name="profile_delete_dialog_title">Title of the confirmation dialog shown before deleting a speaker profile.</string>
+    <string name="profile_delete_dialog_body">Body of the confirmation dialog shown before deleting a speaker profile. Parameter 1 is the name of the profile (a Wikimedia username).</string>
+    <string name="profile_delete_confirm">Button in the delete-profile dialog that confirms deletion.</string>
+    <string name="profile_delete_cancel">Button in the delete-profile dialog that cancels deletion.</string>
+    <string name="proficiency_native">Lowercase label on a profile card, next to a language the speaker speaks natively (as a mother tongue).</string>
+    <string name="proficiency_proficient">Lowercase label on a profile card, next to a language the speaker speaks well but not natively.</string>
+    <string name="proficiency_native_titlecase">Option (capitalized) for choosing how well the speaker speaks a language: natively, as a mother tongue.</string>
+    <string name="proficiency_proficient_titlecase">Option (capitalized) for choosing how well the speaker speaks a language: well, but not natively.</string>
+    <string name="dialect_standard">Lowercase label shown instead of a dialect name when the speaker records the standard form of a language (no particular dialect or region).</string>
+
+    <string name="action_back">Generic Back button, returning to the previous screen.</string>
+    <string name="action_cancel">Generic Cancel button.</string>
+    <string name="action_add">Generic Add button, for example to add a language to a profile.</string>
+
+    <string name="new_profile_title">Title of the screen for creating a new speaker profile.</string>
+    <string name="new_profile_username_label">Label of the field showing the Wikimedia account username of the new profile.</string>
+    <string name="new_profile_verified_tag">Small tag next to the username, showing that the account was confirmed by signing in.</string>
+    <string name="new_profile_speaker_name_label">Label of an optional field for the name of the person being recorded, when that is not the account owner.</string>
+    <string name="new_profile_speaker_name_explainer">Explanation under the optional speaker name field.</string>
+    <string name="new_profile_languages_heading">Heading above the list of languages the speaker can record in.</string>
+    <string name="new_profile_languages_explainer">Explanation under the languages heading on the new-profile screen.</string>
+    <string name="new_profile_add_language_button">Button that opens a dialog for adding one more language to the profile.</string>
+    <string name="new_profile_footer_note">Note at the bottom of the new-profile screen, explaining why proficiency and dialect are asked for.</string>
+    <string name="new_profile_save_button">Button that saves the new speaker profile.</string>
+    <string name="new_profile_remove_language">Accessibility label for the button that removes a language from the profile. Parameter 1 is the language name.</string>
+
+    <string name="add_language_title">Title of the dialog for adding a language to a speaker profile.</string>
+    <string name="add_language_name_label">Label of the field for searching and choosing a language by name.</string>
+    <string name="add_language_iso_label">Label of the field showing the ISO 639 code of the chosen language (for example \'en\' or \'he\').</string>
+    <string name="add_language_proficiency_label">Label above the choice between native and proficient.</string>
+    <string name="add_language_dialect_label">Label of the optional field for a dialect or regional variety of the language.</string>
+
+    <string name="list_source_step_kicker">Small heading: this is the third of the four steps for setting up a recording session, where the user chooses the list of words to record.</string>
+    <string name="list_source_title">Headline on the screen for choosing where the list of words to record comes from.</string>
+    <string name="list_source_explainer">Explanation under the list-source headline.</string>
+    <string name="source_paste_kicker">Small lowercase tag on the card for typing or pasting your own list of words.</string>
+    <string name="source_paste_title">Title of the card for typing or pasting your own list of words.</string>
+    <string name="source_paste_body">Description on the card for typing or pasting your own list. \'Item labels\' are names of Wikidata items (things, places, people); \'lexemes\' are Wikidata dictionary entries (words).</string>
+    <string name="source_query_kicker">Small lowercase tag on the card for using a Wikidata SPARQL query. SPARQL is the name of a query language; usually left untranslated.</string>
+    <string name="source_query_title">Title of the card for getting the list of words from a Wikidata SPARQL query.</string>
+    <string name="source_query_body">Description on the card for using a Wikidata SPARQL query.</string>
+    <string name="source_category_kicker">Small lowercase tag on the card for getting the list of words from a Wikipedia category.</string>
+    <string name="source_category_title">Title of the card for getting the list of words from a Wikipedia category.</string>
+    <string name="source_category_body">Description on the card for using a Wikipedia category.</string>
+    <string name="recovery_mode_button">Button that opens Recovery mode: a tool that finds the user\'s past uploads that were never linked from Wikidata and links them.</string>
+    <string name="recovery_mode_button_note">Note under the Recovery mode button, explaining when to use it.</string>
+    <string name="recovery_kicker">Small heading on the Recovery mode screen.</string>
+    <string name="recovery_title">Headline on the Recovery mode screen. \'Re-link\' means adding the missing links from Wikidata to recordings already on Commons.</string>
+    <string name="recovery_explainer">Explanation of what Recovery mode does.</string>
+    <string name="recovery_limit_label">Label of the field for how many recent uploads to check. Parameter 1 is the maximum allowed number.</string>
+    <string name="recovery_start_button">Button that starts checking the user\'s recent uploads.</string>
+    <string name="recovery_running_title">Headline shown while Recovery mode is running.</string>
+    <string name="recovery_progress_listing">Progress stage in Recovery mode: fetching the list of the user\'s recent Commons uploads.</string>
+    <string name="recovery_progress_checking">Progress stage in Recovery mode: checking Wikidata for existing links to each recording.</string>
+    <string name="recovery_progress_linking">Progress stage in Recovery mode: adding the missing links on Wikidata.</string>
+    <string name="recovery_failed_title">Headline shown when Recovery mode could not run (for example, no connection).</string>
+    <string name="recovery_done_title">Headline shown when Recovery mode has finished.</string>
+    <string name="recovery_row_scanned">Row label in the Recovery mode results table; a number is shown before it. Counts how many uploads were checked.</string>
+    <string name="recovery_row_recognized">Row label in the Recovery mode results table; a number is shown before it. Counts how many of the checked uploads are recordings made with this app.</string>
+    <string name="recovery_row_already_linked">Row label in the Recovery mode results table; a number is shown before it. Counts recordings that were already linked from Wikidata.</string>
+    <string name="recovery_row_link_added">Row label in the Recovery mode results table; a number is shown before it. Counts links newly added on Wikidata.</string>
+    <string name="recovery_row_link_failed">Row label in the Recovery mode results table; a number is shown before it. Counts links that could not be added because of an error.</string>
+    <string name="recovery_row_unresolved">Row label in the Recovery mode results table; a number is shown before it. Counts recordings for which the app could not work out which Wikidata item or lexeme form they belong to.</string>
+    <string name="recovery_findings_kicker">Small heading above the per-recording list of Recovery mode results.</string>
+    <string name="recovery_no_recordings">Shown when none of the checked uploads were made with this app.</string>
+    <string name="recovery_tag_already_linked">Short status tag on a recording in the Recovery mode results: it was already linked from Wikidata.</string>
+    <string name="recovery_tag_link_added">Short status tag on a recording in the Recovery mode results: the missing link was added.</string>
+    <string name="recovery_tag_link_failed">Short status tag on a recording in the Recovery mode results: adding the link failed.</string>
+    <string name="recovery_tag_unresolved">Short status tag on a recording in the Recovery mode results: the app could not tell where to link it.</string>
+    <string name="recovery_run_again_button">Button that runs the Recovery mode check again.</string>
+    <string name="source_name_paste">Lowercase name of the list source, inserted as parameter 1 into the step heading \'Step 3 of 4 — ...\'. Refers to a list the user typed or pasted.</string>
+    <string name="source_name_query">Name of the list source, inserted as parameter 1 into the step heading \'Step 3 of 4 — ...\'.</string>
+    <string name="source_name_category">Name of the list source, inserted as parameter 1 into the step heading \'Step 3 of 4 — ...\'.</string>
+    <string name="form_step_kicker">Small heading on the screen where the user fills in the chosen list source. Parameter 1 is the name of the source: \'your own list\', \'Wikidata query\' or \'Wikipedia category\' (translated separately).</string>
+    <string name="form_title_paste">Headline on the screen for typing or pasting your own list of words.</string>
+    <string name="form_title_query">Headline on the screen for pasting a Wikidata SPARQL query.</string>
+    <string name="form_title_category">Headline on the screen for entering a Wikipedia category name.</string>
+    <string name="form_label_paste">Label of the text box for typing or pasting the words, one per line.</string>
+    <string name="form_label_query">Label of the text box for the SPARQL query. \'?item\' and \'?lexeme\' are SPARQL variable names and must not be translated.</string>
+    <string name="canned_query_label">Label of a menu of ready-made Wikidata queries the user can start from.</string>
+    <string name="canned_query_all_lexemes">Ready-made query: all lexemes (Wikidata dictionary entries) in the chosen language.</string>
+    <string name="canned_query_nouns">Ready-made query: all nouns in the chosen language.</string>
+    <string name="canned_query_verbs">Ready-made query: all verbs in the chosen language.</string>
+    <string name="canned_query_adjectives">Ready-made query: all adjectives in the chosen language.</string>
+    <string name="canned_query_adverbs">Ready-made query: all adverbs in the chosen language.</string>
+    <string name="canned_query_phrases">Ready-made query: all phrases (multi-word lexemes) in the chosen language.</string>
+    <string name="form_label_category">Label of the Wikipedia category name field. Parameter 1 is the Wikipedia language code (for example \'en\'), forming a domain name like en.wikipedia.org; do not translate the domain.</string>
+    <string name="match_as_label">Label above a choice between matching each typed line to Wikidata items or to lexemes.</string>
+    <string name="match_as_items">Option: match each line to Wikidata items (things, places, people, concepts).</string>
+    <string name="match_as_lexemes">Option: match each line to Wikidata lexemes (dictionary entries for words).</string>
+    <string name="match_as_note">Note under the item/lexeme choice. A disambiguation card lets the user pick the right entry when several share the same name.</string>
+    <string name="depth_label">Label above a choice of how many levels of sub-categories to include.</string>
+    <string name="depth_none">Option for sub-category depth: do not include any sub-categories.</string>
+    <string name="depth_two">Option for sub-category depth: two levels. Just the number; localize the digit only if your language uses different digits.</string>
+    <string name="depth_five">Option for sub-category depth: five levels, which is the maximum allowed.</string>
+    <string name="depth_note">Note under the sub-category depth choice: categories that contain each other in a loop are detected and not followed again.</string>
+    <string name="include_recorded_label">Label of a checkbox: whether to also include Wikidata entries that already have a recorded pronunciation.</string>
+    <string name="include_recorded_note">Explanation under the include-recorded checkbox. P443 is the Wikidata property for pronunciation audio; keep it as is.</string>
+    <string name="list_source_build_button">Button that fetches and builds the list of words to record from the chosen source.</string>
+    <string name="resolving_title">Headline while each typed line is being looked up on Wikidata.</string>
+    <string name="resolving_explainer">Explanation while each typed line is being looked up on Wikidata.</string>
+    <string name="resolving_label">Short lowercase progress label while lines are being matched against Wikidata.</string>
+    <string name="resolving_title_query">Headline while the user\'s SPARQL query is running.</string>
+    <string name="resolving_explainer_query">Explanation while the user\'s SPARQL query is running.</string>
+    <string name="resolving_title_category">Headline while the pages in a Wikipedia category are being collected. \'Walking\' means going through the category and its sub-categories.</string>
+    <string name="resolving_explainer_category">Explanation while the pages in a Wikipedia category are being collected.</string>
+    <string name="disambiguation_kicker">Small heading on a disambiguation card, for a line that matched several entries. Parameter 1 is the number of this card; parameter 2 is the total number of lines that need a choice.</string>
+    <string name="disambiguation_explainer_items">Explanation on a disambiguation card. Parameter 1 is how many Wikidata items share the label (always 2 or more).</string>
+    <string name="disambiguation_explainer_lexemes">Explanation on a disambiguation card. Parameter 1 is how many lexemes share the spelling (always 2 or more).</string>
+    <string name="disambiguation_record_all_button">Button on a disambiguation card: record every matching entry instead of choosing one. Parameter 1 is how many entries (always 2 or more). The part after the dot means the typed word itself is removed from the list and replaced by those entries.</string>
+    <string name="list_step_kicker">Small heading: the fourth and last setup step, where the user sees the finished list of words to record.</string>
+    <string name="list_blurb_paste">Short description of the finished list when it came from the user\'s own typed list.</string>
+    <string name="list_blurb_query">Short description of the finished list when it came from a SPARQL query.</string>
+    <string name="list_blurb_category">Short description of the finished list when it came from a Wikipedia category.</string>
+    <string name="worth_checking_kicker">Small heading of a box suggesting the user check whether list entries already have recordings.</string>
+    <string name="worth_checking_body">Text of the box suggesting the user check for existing recordings before starting.</string>
+    <string name="gaps_only_kicker">Small heading of a box saying the list contains only entries without a recording (\'gaps\' are missing recordings).</string>
+    <string name="gaps_only_body">Text of the box saying the list contains only entries without a recording.</string>
+    <string name="second_takes_kicker">Small heading of a box saying every entry already has a recording, so new ones will be additional recordings (\'takes\').</string>
+    <string name="second_takes_body">Text of the box saying every entry already has a recording.</string>
+    <string name="checking_label">Short lowercase progress label while checking Wikidata for existing recordings.</string>
+    <string name="check_button">Button that checks which list entries already have recordings on Wikidata.</string>
+    <string name="skip_check_button">Button that skips the check and uses the list unchanged.</string>
+    <string name="check_row_entries">Row label in the check results table; a number is shown next to it. Counts the entries in the list.</string>
+    <string name="check_row_excluded">Row label in the check results table; a number with a minus sign is shown next to it. Counts entries removed because they already have audio. P443 is the Wikidata pronunciation audio property; keep it as is.</string>
+    <string name="check_row_forms_added">Row label in the check results table; a number with a plus sign is shown next to it. Counts lexeme forms (inflected forms of a word, such as plurals) added because they have no audio yet.</string>
+    <string name="check_row_final">Row label for the total in the check results table; a number is shown next to it. Counts how many entries are left to record.</string>
+    <string name="start_button">Big button that starts the recording session. Written in capital letters in English; use capitals only if your script has them.</string>
+    <string name="empty_check_complete_kicker">Small heading when the check found that nothing in the list needs recording.</string>
+    <string name="empty_filtered_kicker">Small heading when every entry was left out, because it already had a recording or had been skipped earlier.</string>
+    <string name="empty_filtered_title">Headline when every entry was left out, so there is nothing to record.</string>
+    <string name="empty_filtered_body">Explanation when every entry was left out. The quoted text refers to the checkbox label translated in the message \'include_recorded_label\'; keep the two consistent.</string>
+    <string name="empty_body">Explanation when every entry in the list already has a recording. P443 is the Wikidata pronunciation audio property; keep it as is.</string>
+    <string name="empty_where_gaps_kicker">Small lowercase heading of a box with suggestions for finding words that still need recording.</string>
+    <string name="empty_where_gaps_body">Suggestions for finding words that still need recording.</string>
+    <string name="empty_pick_different_button">Button that goes back to choose a different source for the word list.</string>
+    <string name="empty_record_anyway_button">Button that records the words even though they already have recordings, adding additional recordings (\'second takes\').</string>
+    <string name="list_build_error_kicker">Small heading when building the word list failed.</string>
+    <string name="list_build_error_title">Headline when building the word list failed.</string>
+    <string name="list_build_error_body">Explanation when building the word list failed.</string>
+    <string name="list_build_partial_error_banner">Warning banner shown above a list when some of the requests used to build it failed.</string>
+
+    <string name="recording_counter">Progress counter on the recording screen. Parameter 1 is the number of the current word; parameter 2 is the total number of words in the session.</string>
+    <string name="recording_countdown_ready">First word of the countdown before recording starts (like \'ready, set, go!\'). Keep it very short.</string>
+    <string name="recording_countdown_set">Second word of the countdown before recording starts (like \'ready, set, go!\'). Keep it very short.</string>
+    <string name="recording_countdown_go">Last word of the countdown before recording starts (like \'ready, set, go!\'). Keep it very short.</string>
+    <string name="recording_hint_speak_when_ready">Lowercase hint on the recording screen in automatic mode: recording starts by itself when the user starts speaking.</string>
+    <string name="recording_hint_silence">Lowercase hint on the recording screen in automatic mode. Parameter 1 is the number of seconds of silence after which recording stops by itself, with one decimal (for example 1.5). \'s\' is the abbreviation for seconds.</string>
+    <string name="recording_hint_redo_pass">Lowercase hint on the recording screen when the user is recording words again, after marking them for redo during review.</string>
+    <string name="recording_state_listening">Lowercase status on the recording screen: the microphone is on and waiting for the user to speak.</string>
+    <string name="recording_state_recording">Lowercase status on the recording screen: the user\'s voice is being recorded.</string>
+    <string name="recording_state_stopping">Lowercase status on the recording screen: recording will stop after a short silence. Parameter 1 is the seconds left, with one decimal. \'s\' is the abbreviation for seconds.</string>
+    <string name="recording_state_manual_idle">Lowercase status on the recording screen in manual mode, before the user taps Record.</string>
+    <string name="recording_hint_manual_idle">Lowercase hint in manual mode. \'Record\' is the button translated in the message \'recording_manual_record\'; keep them consistent.</string>
+    <string name="recording_hint_manual_recording">Lowercase hint in manual mode while recording. \'Stop\' is the button translated in the message \'recording_manual_stop\'; keep them consistent.</string>
+    <string name="recording_hint_manual_recorded">Lowercase hint in manual mode after a word was recorded. \'Next\' and \'Record\' are the buttons translated in \'recording_manual_next\' and \'recording_manual_record\'; keep them consistent.</string>
+    <string name="recording_difficulty_banner">Banner shown when automatic mode keeps failing to tell when the user starts and stops speaking. Manual mode means the user taps buttons to start and stop.</string>
+    <string name="action_redo">Button to record the current word again.</string>
+    <string name="action_skip">Button to skip the current word without recording it.</string>
+    <string name="action_stop_session">Button that ends the recording session early.</string>
+    <string name="recording_manual_mode_on">Label of the toggle when manual mode is on: the user starts and stops each recording with buttons.</string>
+    <string name="recording_manual_mode_off">Label of the toggle when automatic mode is on: the app starts and stops recording by detecting the voice.</string>
+    <string name="recording_manual_record">Button in manual mode that starts recording a word.</string>
+    <string name="recording_manual_stop">Button in manual mode that stops recording.</string>
+    <string name="recording_manual_next">Button in manual mode that moves on to the next word.</string>
+    <string name="mic_blocked_title">Headline shown when the app has no permission to use the microphone.</string>
+    <string name="mic_blocked_body">Explanation shown when the microphone permission is off, reassuring the user about privacy. \'Contribute\' refers to the button that uploads the recordings.</string>
+    <string name="mic_blocked_kicker">Small lowercase heading above the instructions for turning on the microphone permission.</string>
+    <string name="mic_blocked_instructions">Path through the Android system settings to the microphone permission. Use the names Android shows in your language for these menus; keep the app name.</string>
+    <string name="mic_blocked_open_settings">Button that opens the Android system settings for this app.</string>
+    <string name="mic_blocked_back">Button that goes back to the word list.</string>
+    <string name="interrupted_nothing_kept">Small lowercase note after recording was interrupted: the half-finished recording was not saved.</string>
+    <string name="interrupted_why_kicker">Small lowercase heading above the reason the recording was interrupted.</string>
+    <string name="interrupted_why_body">Explanation when recording stopped because a phone call took over the microphone.</string>
+    <string name="interrupted_noise_body">Extra warning after an interruption, when the recent recordings had a lot of background noise.</string>
+    <string name="interrupted_carry_on">Button to continue recording after an interruption. Parameter 1 is the word the session will continue from.</string>
+
+    <string name="review_counter">Lowercase progress counter on the review screen. Parameter 1 is the number of the recording being reviewed; parameter 2 is the total.</string>
+    <string name="review_listen_back">Lowercase status on the review screen, before a recording is played back to the user.</string>
+    <string name="review_playing_back">Lowercase status on the review screen while the recording is playing.</string>
+    <string name="review_decision_prompt">Lowercase prompt after playback: the user may redo or drop the recording, otherwise it is kept automatically. Parameter 1 is the seconds left to decide, with one decimal. \'s\' is the abbreviation for seconds.</string>
+    <string name="action_drop">Button that throws away a recording (it will not be uploaded).</string>
+
+    <string name="summary_kicker">Small heading on the summary screen after all words in the session were recorded.</string>
+    <string name="summary_blurb_ready">Explanation on the summary screen of how the recordings were processed. Ogg Vorbis is an audio format name; keep it as is. \'s\' is the abbreviation for seconds.</string>
+    <string name="summary_blurb_empty">Explanation on the summary screen when no recordings were kept.</string>
+    <string name="summary_nothing_to_send_kicker">Small lowercase heading when there are no recordings to upload.</string>
+    <string name="summary_nothing_to_send_body">Suggestion shown when there are no recordings to upload.</string>
+    <string name="summary_contribute_button">Main button on the summary screen: upload the recordings to Wikimedia Commons and link them from Wikidata.</string>
+    <string name="summary_cc0_note">Note about the license the recordings are published under. Creative Commons Zero (CC0) is a license name; use its official name in your language if one exists.</string>
+    <string name="summary_abandon_button">Button that ends the session and deletes the recordings without uploading them.</string>
+    <string name="summary_back_to_start_button">Button that returns to the first step of setting up a session.</string>
+    <string name="summary_replay_action">Accessibility label for the button that plays a recording in the summary list.</string>
+    <string name="summary_rerecord_action">Accessibility label for the button that records a word in the summary list again.</string>
+    <string name="summary_abandon_dialog_title">Title of the confirmation dialog shown before abandoning the session.</string>
+    <string name="summary_abandon_confirm">Button in the abandon dialog: delete the recordings and exit.</string>
+    <string name="summary_abandon_cancel">Button in the abandon dialog: cancel and keep the session.</string>
+    <string name="tag_item">Small tag on a recording in the summary list: the recording is for a Wikidata item (a thing, place, person or concept).</string>
+    <string name="tag_form">Small tag on a recording in the summary list: the recording is for a lexeme form (one inflected form of a word, such as a plural).</string>
+
+    <plurals name="summary_headline_ready">
+        <item quantity="other">Headline on the summary screen. The number of recordings is shown separately, in a very large font, just before this text, and chooses the plural form. Shown when the recordings are ready to upload.</item>
+    </plurals>
+
+    <plurals name="summary_headline_kept">
+        <item quantity="other">Headline on the summary screen. The number of recordings is shown separately, in a very large font, just before this text, and chooses the plural form. Shown when the session ended without any recordings to upload.</item>
+    </plurals>
+
+    <plurals name="summary_abandon_dialog_body">
+        <item quantity="other">Body of the confirmation dialog shown before abandoning the session. Parameter 1 is the number of recordings that will be deleted.</item>
+    </plurals>
+
+    <string name="contribution_kicker">Small heading on the upload screen while recordings are being uploaded.</string>
+    <string name="contribution_of_total">Progress text on the upload screen. The number of recordings already uploaded is shown separately, in a large font, just before this text. Parameter 1 is the total number of recordings.</string>
+    <string name="contribution_now_uploading">Small lowercase label above the recording currently being uploaded.</string>
+    <string name="contribution_step_commons">Lowercase progress step for the current upload: the audio file was uploaded to Wikimedia Commons.</string>
+    <string name="contribution_step_categories">Lowercase progress step for the current upload: categories were added to the file on Commons.</string>
+    <string name="contribution_step_p443">Lowercase progress step for the current upload: a pronunciation audio statement (Wikidata property P443) was added. Parameter 1 is the Wikidata identifier of the item or lexeme form (for example Q42 or L1-F1). Keep P443 as is.</string>
+    <string name="contribution_leaving_note">Note on the upload screen, explaining that uploads continue in the background while the app is open.</string>
+    <string name="contribution_connectivity_banner">Banner on the upload screen when the internet connection is lost.</string>
+    <string name="contribution_needs_attention_kicker">Small lowercase heading above the list of uploads that failed and need the user to act.</string>
+    <string name="contribution_status_retrying">Short lowercase status tag on a failed upload: the app is trying again.</string>
+    <string name="contribution_status_name_taken">Short lowercase status tag on a failed upload: a file with the same name already exists on Commons.</string>
+    <string name="contribution_status_waiting">Short lowercase status tag on a failed upload: waiting before trying again.</string>
+    <string name="contribution_failed_step_commons">Error shown when uploading a file to Commons failed. Parameter 1 is the error description, which may be in English.</string>
+    <string name="contribution_failed_step_p443">Error shown when adding the pronunciation statement (Wikidata property P443) failed. Parameter 1 is the error description, which may be in English. Keep P443 as is.</string>
+    <string name="action_rename_and_upload">Button on an upload that failed because the file name is taken: upload it again under a different name.</string>
+    <string name="action_discard_this_one">Button on a failed upload: delete this recording and do not upload it.</string>
+    <string name="action_leave_for_later">Button: stop trying the failed uploads for now and keep them on the device.</string>
+    <string name="contribution_leave_for_later_note">Note explaining what happens to recordings left for later.</string>
+    <plurals name="contribution_retry_all_now">
+        <item quantity="other">Button that retries all failed uploads at once. Parameter 1 is the number of failed uploads.</item>
+    </plurals>
+
+    <string name="done_explainer">Explanation on the final screen after every recording was uploaded and linked. P443 is the Wikidata pronunciation audio property; keep it as is.</string>
+    <string name="done_commons_uploads">Link that opens the user\'s list of uploads on Wikimedia Commons.</string>
+    <string name="done_wikidata_edits">Link that opens the user\'s list of edits (contributions) on Wikidata.</string>
+    <string name="done_record_another_list">Button that starts a new session with a different word list.</string>
+
+    <plurals name="done_headline">
+        <item quantity="other">Headline on the final screen. Parameter 1 is the number of recordings that are now published and playable on Wikidata.</item>
+    </plurals>
+
+    <plurals name="done_explainer_partial">
+        <item quantity="other">Explanation on the final screen when some uploads did not finish. Parameter 1 is the number of recordings that were not uploaded.</item>
+    </plurals>
+
+    <string name="settings_title">Title of the Settings screen.</string>
+    <string name="settings_auto_use_last_profile_title">Title of a setting: skip the profile-selection step and use the most recently used speaker profile.</string>
+    <string name="settings_auto_use_last_profile_explainer">Explanation of the auto-use-last-profile setting. Step 1 is choosing a speaker profile.</string>
+    <string name="settings_trim_silence_title">Title of a setting: cut silence off the start and end of each recording.</string>
+    <string name="settings_trim_silence_explainer">Explanation of the trim-silence setting. Ogg Vorbis is an audio format name; keep it as is. \'s\' is the abbreviation for seconds.</string>
+    <string name="settings_interface_language_label">Label of the setting for the language of the app\'s interface (the language of these messages).</string>
+    <string name="settings_interface_language_note">Note under the interface language setting. translatewiki.net is a website name; keep it as is.</string>
+    <string name="settings_silence_threshold_label">Label of the setting for how long a silence ends a recording in automatic mode. It is followed by a slider showing a number of seconds.</string>
+    <string name="settings_seconds_format">Value next to the silence slider: a number of seconds with one decimal (for example 1.5). \'s\' is the abbreviation for seconds.</string>
+    <string name="settings_max_list_size_label">Label of the setting for the largest number of entries a word list may contain.</string>
+    <string name="settings_max_list_size_note">Explanation of the maximum list size setting. LIMIT is a SPARQL keyword and must not be translated.</string>
+    <string name="settings_skipped_label">Label of the section about words the user skipped during recording.</string>
+    <string name="settings_skipped_note">Explanation of what happens to skipped words and what forgetting them does.</string>
+    <string name="settings_account_label">Label of the account section in Settings.</string>
+    <string name="settings_log_out_button">Button that logs the user out. Parameter 1 is the Wikimedia username.</string>
+    <string name="settings_back_to_session">Button that leaves Settings and returns to the recording session.</string>
+
+    <string name="stats_title">Title of the statistics screen.</string>
+    <string name="stats_recordings">Lowercase label under a large number on the statistics screen: the total number of recordings the user made.</string>
+    <string name="stats_items">Lowercase label under a large number on the statistics screen: how many recordings were for Wikidata items.</string>
+    <string name="stats_forms">Lowercase label under a large number on the statistics screen: how many recordings were for lexeme forms (inflected forms of words).</string>
+    <string name="stats_col_month">Column heading in the statistics table: the month.</string>
+    <string name="stats_col_items">Column heading in the statistics table: number of recordings for Wikidata items.</string>
+    <string name="stats_col_forms">Column heading in the statistics table: number of recordings for lexeme forms.</string>
+    <string name="stats_col_all">Column heading in the statistics table: total number of recordings (items and forms together).</string>
+    <string name="stats_earlier_years">Heading of the statistics section for years before the current one.</string>
+
+    <string name="about_version_line">Line on the About screen. Parameter 1 is the app version number. Apache-2.0 is the license name and CREDITS is a file name; keep both as they are.</string>
+    <string name="about_purpose">Description of the app on the About screen. Lingua Libre and LinguaRecorder are names of other projects; keep them as they are.</string>
+    <string name="about_credits_heading">Heading of the credits section on the About screen.</string>
+    <string name="about_closing_note">Closing note on the About screen about licensing and privacy.</string>
+
+    <plurals name="settings_forget_skipped_button">
+        <item quantity="other">Button in Settings that clears the list of skipped words so they can appear in lists again. Parameter 1 is the number of skipped words.</item>
+    </plurals>
+
+    <plurals name="interrupted_stop_review">
+        <item quantity="other">Button after an interruption: end recording and go to review. Parameter 1 is the number of recordings (\'takes\') made so far.</item>
+    </plurals>
+
+    <plurals name="list_entries_found_count">
+        <item quantity="other">Count shown above the finished word list. Parameter 1 is the number of entries in the list.</item>
+    </plurals>
+
+    <plurals name="list_filtered_already_recorded">
+        <item quantity="other">Note above the word list. Parameter 1 is the number of entries left out because they already have a recording.</item>
+    </plurals>
+
+    <plurals name="list_filtered_previously_skipped">
+        <item quantity="other">Note above the word list. Parameter 1 is the number of entries left out because the user skipped them in earlier sessions.</item>
+    </plurals>
+
+    <plurals name="empty_title">
+        <item quantity="other">Headline when every entry in the list already has a recording. Parameter 1 is the number of entries.</item>
+    </plurals>
+
+    <plurals name="profile_recordings_count">
+        <item quantity="other">Line on a speaker profile card. Parameter 1 is how many recordings this profile has made.</item>
+    </plurals>
+</resources>

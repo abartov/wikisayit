@@ -34,6 +34,28 @@ welcome.
 - **Write a clear commit message and PR description** explaining *why*
   the change is needed, not just what it does.
 
+## Translations
+
+Wiki-Say-It! is translated on [translatewiki.net](https://translatewiki.net).
+To help translate, sign up there — please don't send pull requests that
+edit `app/src/main/res/values-<lang>/strings.xml`; those files are
+exported from translatewiki.net and manual changes will be overwritten.
+
+When changing user-facing text in code:
+
+- **Edit only the English source**, `app/src/main/res/values/strings.xml`.
+- **Document every new message** in `app/src/main/res/values-qq/strings.xml`
+  (same key): where it appears, what each parameter is, and any length
+  limits. Describe parameters in words — don't paste `%1$s`-style
+  placeholders into that file, as lint checks them against the English.
+- **Changing a message's meaning? Use a new key**, so translators see it
+  as new work instead of the old translations silently going stale. Fixing
+  a typo or wording without changing meaning can keep the key.
+- **Use numbered placeholders** (`%1$s`, `%2$d`) whenever a message has
+  more than one, since other languages may need a different order, and
+  don't assemble sentences by concatenating separate strings.
+- **Use `<plurals>`** for any message that includes a count.
+
 ## Filing issues
 
 Bug reports and feature requests are welcome. Please include steps to
