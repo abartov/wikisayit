@@ -11,6 +11,10 @@ Wiki-Say-It! is inspired by [Lingua Libre](https://lingualibre.org/), the browse
   <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/09-contribution.png" width="200" alt="Contributing to Commons and Wikidata">
 </p>
 
+## Download
+
+Get the latest APK from the [Wiki-Say-It! page on Meta-Wiki](https://meta.wikimedia.org/wiki/User:Ijon/Wiki-Say-It!). An F-Droid listing is on its way.
+
 ## Free, no ads, no tracking
 
 - **Completely free.** No price, no in-app purchases, no premium tier. It's free and open-source software under the [Apache License 2.0](LICENSE), written by a volunteer as a public service with no financial motive.
