@@ -9,7 +9,7 @@ class WikidataCannedQueriesTest {
         val query = CannedSparqlQuery.ALL_LEXEMES.buildQuery("en")
 
         assertTrue(query.contains("SELECT DISTINCT ?lexeme WHERE"))
-        assertTrue(query.contains("?language wdt:P218 \"en\" ."))
+        assertTrue(query.contains("?language wdt:P218|wdt:P220|wdt:P424 \"en\" ."))
         assertTrue(!query.contains("wikibase:lexicalCategory"))
     }
 
@@ -17,8 +17,15 @@ class WikidataCannedQueriesTest {
     fun `category-scoped queries filter by lexicalCategory`() {
         val query = CannedSparqlQuery.NOUNS.buildQuery("fr")
 
-        assertTrue(query.contains("?language wdt:P218 \"fr\" ."))
+        assertTrue(query.contains("?language wdt:P218|wdt:P220|wdt:P424 \"fr\" ."))
         assertTrue(query.contains("?lexeme wikibase:lexicalCategory wd:Q1084 ."))
+    }
+
+    @Test
+    fun `a language with only an ISO 639-3 code is matched via P220 or the Wikimedia code`() {
+        val query = CannedSparqlQuery.ALL_LEXEMES.buildQuery("dag")
+
+        assertTrue(query.contains("?language wdt:P218|wdt:P220|wdt:P424 \"dag\" ."))
     }
 
     @Test

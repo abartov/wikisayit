@@ -9,6 +9,7 @@ import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -16,7 +17,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import wiki.asaf.wikisayit.data.language.LanguageCatalog
 
-/** Typing combobox for picking a language name from [LanguageCatalog]; selection fills in the ISO code. */
+/** Typing combobox for picking a language name from [LanguageCatalog]; selection fills in the language code. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WsLanguageAutocompleteField(
@@ -29,7 +30,9 @@ fun WsLanguageAutocompleteField(
     modifier: Modifier = Modifier,
 ) {
     var expanded by remember { mutableStateOf(false) }
-    val options = remember(query) { LanguageCatalog.search(query) }
+    // Re-search when the full Wikimedia list replaces the offline fallback while the sheet is open.
+    val installed by LanguageCatalog.languages.collectAsState()
+    val options = remember(query, installed) { LanguageCatalog.search(query) }
     val menuVisible = expanded && options.isNotEmpty()
 
     ExposedDropdownMenuBox(

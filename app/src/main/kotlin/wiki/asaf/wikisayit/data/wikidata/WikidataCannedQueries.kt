@@ -17,8 +17,11 @@ enum class CannedSparqlQuery(val lexicalCategoryQid: String?) {
     PHRASES(lexicalCategoryQid = "Q187931"),
 }
 
-/** Builds this query's SPARQL text for [isoCode] (a two-letter ISO 639-1 code, matched against
- * Wikidata's P218 statement on the language item — the same code [LanguageCatalog] uses). */
+/** Builds this query's SPARQL text for [isoCode], a Wikimedia language code as [LanguageCatalog]
+ * offers it. That is a two-letter ISO 639-1 code (Wikidata P218) for most languages, but a
+ * language with no such code — Dagbani, say — has only its ISO 639-3 code (P220), so both are
+ * tried, along with P424 ("Wikimedia language code"), which also covers the codes (like
+ * `be-tarask`) that are neither. */
 fun CannedSparqlQuery.buildQuery(isoCode: String): String {
     val lines =
         mutableListOf(
@@ -28,7 +31,7 @@ fun CannedSparqlQuery.buildQuery(isoCode: String): String {
             "PREFIX dct: <http://purl.org/dc/terms/>",
             "SELECT DISTINCT ?lexeme WHERE {",
             "  ?lexeme dct:language ?language .",
-            "  ?language wdt:P218 \"$isoCode\" .",
+            "  ?language wdt:P218|wdt:P220|wdt:P424 \"$isoCode\" .",
         )
     lexicalCategoryQid?.let { lines += "  ?lexeme wikibase:lexicalCategory wd:$it ." }
     lines += "}"
