@@ -1,8 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Authors:
+* Psychoslave
+-->
 <resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="all">
   <string name="app_name">The name of the app. It is a brand name: keep it as is, or transliterate it into your script only if that is the usual practice in your language.</string>
   <string name="nav_menu_open">Accessibility label for the button that opens the navigation (hamburger) menu.</string>
-  <string name="nav_menu_signed_in_as">Line at the top of the navigation menu. Parameter 1 is the Wikimedia username of the signed-in user.</string>
+  <string name="nav_menu_signed_in_as">Line at the top of the navigation menu. Parameter 1 is the Wikimedia username of the signed-in user, `%1$s` means string typed parameter number one.</string>
   <string name="top_bar_reset_action">Accessibility label for the top-bar button that resets the current recording session and returns to the first step (choosing a speaker profile).</string>
   <string name="top_bar_reset_dialog_title">Title of the confirmation dialog shown before resetting the current session.</string>
   <string name="top_bar_reset_dialog_body">Body text of the confirmation dialog shown before resetting the current session.</string>
